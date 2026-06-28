@@ -109,6 +109,51 @@ export default function Landing() {
         },
     ];
 
+    const changelog = [
+        {
+            version: 'v0.4.0',
+            date: 'Jun 28, 2026',
+            title: 'Landing and login page redesign',
+            description: 'Overhauled the landing page with a sticky frosted navbar, how-it-works section, stats strip, 6-feature grid, and a full-width CTA banner. Login page now includes trust signal pills, SVG icons, and an improved dark right panel.',
+            tags: ['feat', 'ui', 'responsive']
+        },
+        {
+            version: 'v0.3.2',
+            date: 'Jun 27, 2026',
+            title: 'Firebase Hosting target configured',
+            description: 'Pointed deployment to prep-iq.web.app via hosting target in .firebaserc. Added .firebase/ cache folder to .gitignore.',
+            tags: ['chore', 'deploy']
+        },
+        {
+            version: 'v0.3.1',
+            date: 'Jun 27, 2026',
+            title: 'SEO meta tags and smooth scroll',
+            description: 'Added Open Graph, Twitter Card, and keyword meta tags to index.html. Enabled smooth anchor scrolling via scroll-behavior: smooth. Fixed misplaced meta tags that were outside <head>.',
+            tags: ['fix', 'seo']
+        },
+        {
+            version: 'v0.3.0',
+            date: 'Jun 26, 2026',
+            title: 'TypeScript errors resolved',
+            description: 'Fixed unused PlaceholderPage declaration, missing JSX namespace reference in App.tsx, and unused trackOffset variable in Weaknesses.tsx.',
+            tags: ['fix', 'typescript']
+        },
+        {
+            version: 'v0.2.0',
+            date: 'Jun 25, 2026',
+            title: 'README and project documentation',
+            description: 'Replaced default Vite README with full project documentation — tech stack table, setup instructions, environment variables, folder structure, and contributing guide.',
+            tags: ['docs']
+        },
+        {
+            version: 'v0.1.0',
+            date: 'Jun 24, 2026',
+            title: 'Initial release',
+            description: 'First working version of PrepIQ. Includes JD analysis with Gemini AI, adaptive quiz sandbox, weakness radar, and day-by-day study plan. Fully serverless on Firebase and Firestore.',
+            tags: ['feat', 'launch']
+        }
+    ];
+
     return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans antialiased text-slate-900 selection:bg-indigo-100">
 
@@ -234,7 +279,6 @@ export default function Landing() {
             {/* CTA BANNER */}
             <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
                 <div className="bg-[#6366F1] rounded-3xl px-6 sm:px-12 py-12 sm:py-16 text-center relative overflow-hidden">
-                    {/* Subtle decorative circles */}
                     <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/5 rounded-full pointer-events-none" />
                     <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-white/5 rounded-full pointer-events-none" />
 
@@ -255,7 +299,7 @@ export default function Landing() {
             </section>
 
             {/* ABOUT THE DEVELOPER */}
-            <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 border-t border-gray-100 pt-14 sm:pt-20">
+            <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20 border-t border-gray-100 pt-14 sm:pt-20">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 items-start">
                     <div className="space-y-2">
                         <span className="text-[10px] font-bold tracking-widest text-[#6366F1] uppercase bg-indigo-50 border border-indigo-100/50 px-2.5 py-0.5 rounded-md inline-block">
@@ -276,12 +320,52 @@ export default function Landing() {
                             By treating large language models as strict JSON schema engines rather than conversational nodes, PrepIQ extracts precise, predictable tech stacks from raw JD text — tracking confidence loops using responsive, dependency-free inline vector graphics.
                         </p>
                         <div className="flex flex-wrap gap-2 pt-1">
-                            {['React 19', 'TypeScript', 'Vite', 'Firebase', 'Gemini AI', 'Tailwind CSS'].map((tag) => (
+                            {['React', 'TypeScript', 'Vite', 'Firebase', 'Gemini AI', 'Tailwind CSS'].map((tag) => (
                                 <span key={tag} className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
                                     {tag}
                                 </span>
                             ))}
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* CHANGELOG SECTION MATCHING image_32ecbc.jpg */}
+            <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 border-t border-gray-100 pt-14 sm:pt-20">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
+                    
+                    <div className="space-y-2">
+                        <span className="text-[10px] font-bold tracking-widest text-[#6366F1] uppercase bg-indigo-50 border border-indigo-100/50 px-2.5 py-0.5 rounded-md inline-block">
+                            What's new
+                        </span>
+                        <h2 className="text-xl font-extrabold text-slate-950 tracking-tight">Changelog</h2>
+                        <p className="text-xs text-slate-400 font-medium">System releases, patches, and deployment milestones.</p>
+                    </div>
+
+                    <div className="md:col-span-2 space-y-8">
+                        {changelog.map((log, index) => (
+                            <div key={log.version} className="relative pl-6 border-l-2 border-slate-200 last:border-transparent space-y-2">
+                                {/* Chronological indicator point matching image timelines */}
+                                <div className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ring-4 ring-[#F8FAFC] ${
+                                    index === 0 ? 'bg-indigo-500' : index < 3 ? 'bg-amber-500' : 'bg-slate-400'
+                                }`} />
+                                
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">{log.version}</span>
+                                    <span className="text-[11px] font-bold text-slate-400 tracking-wide">{log.date}</span>
+                                </div>
+                                <h3 className="text-sm font-bold text-slate-900">{log.title}</h3>
+                                <p className="text-xs font-medium text-slate-500 leading-relaxed">{log.description}</p>
+                                
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {log.tags.map((tag) => (
+                                        <span key={tag} className="text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
