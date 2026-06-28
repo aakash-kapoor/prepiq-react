@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "prep-iq-7b6f3"
-  }
+  },
+  "targets": {
+    "prep-iq-7b6f3": {
+      "hosting": {
+        "default": [
+          "prep-iq"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
