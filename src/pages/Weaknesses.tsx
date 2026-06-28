@@ -187,8 +187,6 @@ export default function Weaknesses() {
                   const currentStatus = getStatusConfig(item.avgConfidence);
                   const barWidthPercent = item.avgConfidence > 0 ? (item.avgConfidence / 5) * 100 : 0;
 
-                  // Localized micro circular track indicators for row entries
-                  const trackOffset = circumference - (Math.min(item.avgConfidence, 5) / 5) * circumference;
 
                   return (
                     /* Upgraded container to a 5-column grid layout for desktop balance */

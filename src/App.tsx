@@ -9,13 +9,10 @@ import Questions from './pages/Questions';
 import Quiz from './pages/Quiz';
 import Weaknesses from './pages/Weaknesses';
 import StudyPlan from './pages/StudyPlan';
-
-// Quick placeholder component for initial views
-// const DashboardHome = () => <div className="text-2xl font-bold text-slate-800">Welcome to your PrepIQ Dashboard! 👋</div>;
-const PlaceholderPage = ({ title }: { title: string }) => <div className="text-slate-600">{title} Component Coming Next!</div>;
+import React from 'react';
 
 // Component Route Guard
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" replace />;
 }
