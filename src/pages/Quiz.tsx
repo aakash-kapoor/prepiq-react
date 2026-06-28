@@ -1,0 +1,207 @@
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../config/firebase';
+import { collection, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
+
+export default function Quiz() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const appId = location.state?.appId;
+  const appName = location.state?.appName || 'Target Position';
+
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+
+  // MODAL STATE CONTROLLER ENGINE
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user || !appId) {
+      navigate('/dashboard/questions');
+      return;
+    }
+    const questionsRef = collection(db, 'users', user.uid, 'jobApplications', appId, 'questions');
+    getDocs(questionsRef).then((snapshot) => {
+      const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Randomize array order slightly to simulate real conditions
+      setQuestions(qList.sort(() => 0.5 - Math.random()));
+      setLoading(false);
+    });
+  }, [appId, user, navigate]);
+
+  const handleRateConfidence = async (score: number) => {
+    if (!user || !appId) return;
+    const currentQ = questions[currentIndex];
+
+    const docRef = doc(db, 'users', user.uid, 'jobApplications', appId, 'questions', currentQ.id);
+    await updateDoc(docRef, {
+      timesAnswered: increment(1),
+      lastConfidence: score,
+      averageConfidence: score
+    });
+
+    if (currentIndex < questions.length - 1) {
+      setShowAnswer(false);
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      setSessionCompleted(true);
+      setTimeout(() => {
+        navigate('/dashboard/questions', { state: { preSelectedAppId: appId } });
+      }, 2500);
+    }
+  };
+
+  // Triggers exit and returns safely to parent application track state
+  const confirmExitSession = () => {
+    setIsExitModalOpen(false);
+    navigate('/dashboard/questions', { state: { preSelectedAppId: appId } });
+  };
+
+  if (loading) return <div className="text-center p-12 text-sm text-gray-500">Assembling interactive session modules...</div>;
+  if (questions.length === 0) return <div className="text-center p-12">No evaluation content synchronized.</div>;
+
+  if (sessionCompleted) {
+    return (
+      <div className="max-w-md mx-auto py-24 text-center space-y-4 px-4 animate-fadeIn">
+        <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm border border-emerald-100">
+          ✓
+        </div>
+        <h2 className="text-xl font-black text-slate-900 tracking-tight">Practice Cycle Synchronized!</h2>
+        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+          Your technical confidence metrics have been securely saved to your ledger. Compiling updated knowledge gaps on your Weak Spots tab now...
+        </p>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentIndex];
+
+  return (
+    <div className="max-w-2xl mx-auto py-4 relative">
+
+      {/* 1. TOP HEADER STRIP CONTROLS */}
+      <div className="flex justify-between items-center text-xs text-slate-500 mb-4 font-medium">
+        <span>Session Track: <strong className="text-slate-700">{appName}</strong></span>
+
+        {/* Softened trigger mechanism to shift modal hook instead of blocking thread */}
+        <button
+          onClick={() => setIsExitModalOpen(true)}
+          className="text-red-500 hover:text-red-700 font-bold uppercase tracking-wider text-[10px] transition bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-md border border-red-200/40"
+        >
+          🛑 End Session
+        </button>
+      </div>
+
+      <div className="flex justify-between text-[11px] font-bold text-slate-400 mb-1">
+        <span>Drill Progress</span>
+        <span>Question {currentIndex + 1} of {questions.length}</span>
+      </div>
+
+      <div className="w-full bg-gray-200 h-1.5 rounded-full mb-8 overflow-hidden shadow-inner">
+        <div
+          className="bg-[#6366F1] h-1.5 transition-all duration-300"
+          style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+        />
+      </div>
+
+      {/* 2. MAIN INTERACTIVE FLASH CARD */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 min-h-[340px] flex flex-col justify-between transition-all">
+        <div>
+          <div className="flex gap-2 mb-4">
+            <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-indigo-100/40">
+              {currentQuestion.topic}
+            </span>
+            <span className="text-[10px] bg-amber-50 text-amber-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-amber-100/40">
+              {currentQuestion.difficulty}
+            </span>
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 leading-snug mb-6">
+            {currentQuestion.question}
+          </h2>
+          {showAnswer && (
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-700 animate-fadeIn font-medium leading-relaxed">
+              <strong className="text-xs text-slate-400 block mb-1.5 uppercase tracking-wider font-bold">Ideal Structured Target Response:</strong>
+              {currentQuestion.idealAnswer}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 pt-4 border-t border-gray-100">
+          {!showAnswer ? (
+            <button
+              onClick={() => setShowAnswer(true)}
+              className="w-full bg-[#6366F1] hover:bg-opacity-95 transition text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10"
+            >
+              Reveal Ideal Answer
+            </button>
+          ) : (
+            <div className="space-y-4 text-center">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rate Your Technical Confidence:</p>
+              <div className="grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => handleRateConfidence(num)}
+                    className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                        num === 3 ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
+                          'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                      }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-400 px-1 font-bold uppercase tracking-wider">
+                <span>Struggled (1)</span>
+                <span>Nailed It (5)</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. PREMIUM TAILWIND CUSTOM MODAL OVERLAY PORTAL */}
+      {isExitModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div
+            className="bg-white max-w-sm w-full rounded-2xl border border-gray-100 shadow-2xl p-6 space-y-4 transform scale-100 transition-all animate-scaleUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 bg-red-50 border border-red-100 text-red-500 rounded-full flex items-center justify-center text-xl mx-auto shadow-sm">
+              ⚠️
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-black text-slate-900 tracking-tight">Exit Practice Drill?</h3>
+              <p className="text-xs text-slate-400 font-medium leading-normal px-2">
+                Are you sure you want to pause this active session? All score answers logged up to this card have been securely saved.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <button
+                onClick={() => setIsExitModalOpen(false)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200"
+              >
+                Continue Drill
+              </button>
+              <button
+                onClick={confirmExitSession}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition shadow-md shadow-red-600/10"
+              >
+                Yes, Exit Session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
