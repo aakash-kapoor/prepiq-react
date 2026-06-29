@@ -16,12 +16,11 @@ export default function LegalModal({ content, onClose }: LegalModalProps) {
                     <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest text-indigo-600">
                         {content.title}
                     </h3>
-                    <button 
-                        type="button"
+                    <button
                         onClick={onClose}
-                        className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-lg transition"
+                        className="w-8 h-8 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition"
                     >
-                        Close
+                        ✕
                     </button>
                 </div>
                 <p className="text-xs font-medium text-slate-500 leading-relaxed whitespace-pre-line">
