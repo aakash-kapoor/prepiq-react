@@ -95,7 +95,7 @@ export default function Questions() {
           <button
             key={app.id}
             onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${
               selectedApp?.id === app.id
                 ? 'bg-[#6366F1] text-white border-[#6366F1]'
                 : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
@@ -109,7 +109,7 @@ export default function Questions() {
       {selectedApp && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {/* Deck Status Overview Summary Card */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4 pb-6 border-b-2 md:border-b-0 md:border-gray-200">
             <div>
               <h3 className="text-lg font-bold text-slate-900 tracking-tight">{selectedApp.role}</h3>
               <p className="text-xs text-slate-500 font-medium">Core Target: {selectedApp.company}</p>

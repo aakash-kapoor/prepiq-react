@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useGemini } from '../hooks/useGemini';
 import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,8 @@ export default function Analyze() {
     
     const { analyzeJobDescription, isLoading, error: apiError } = useGemini();
     const { user } = useAuth();
+
+    const resultsSectionRef = useRef<HTMLDivElement>(null);
 
     const handleRunAnalysis = async () => {
         setValidationError(null);
@@ -31,6 +33,15 @@ export default function Analyze() {
         const data = await analyzeJobDescription(jdText);
         if (data) {
             setAnalysisResult(data);
+            if (window.innerWidth < 1024) {
+                setTimeout(() => {
+                    resultsSectionRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 100);
+            }
+           
         }
     };
 
@@ -130,7 +141,8 @@ export default function Analyze() {
             </div>
 
             {/* RIGHT PANEL: Extracted Blueprint Analysis Outputs */}
-            <div className="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-between min-h-[500px]">
+            <div ref={resultsSectionRef}
+             className="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-between min-h-[200px] lg:min-h-[500px] scroll-mt-5">
                 {!analysisResult ? (
                     <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 p-8 my-auto">
                         <span className="text-4xl mb-2">🤖</span>

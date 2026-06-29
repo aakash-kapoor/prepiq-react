@@ -238,7 +238,7 @@ export default function AppLayout() {
                 isActive ? 'text-[#6366F1]' : 'text-slate-400'
               }`}
             >
-              <span className="text-slate-400 group-hover:text-white transition-colors">{item.icon}</span>
+              <span className={isActive ? 'text-[#6366F1]' : 'text-slate-400'}>{item.icon}</span>
               <span className="text-[9px] font-bold tracking-wider uppercase">{item.label}</span>
             </Link>
           );

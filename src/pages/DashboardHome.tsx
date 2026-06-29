@@ -87,11 +87,13 @@ export default function DashboardHome() {
       </div>
 
       {/* 2. RESPONSIVE DYNAMIC STAT CARDS METRIC ROW*/}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active JDs</p>
           <h3 className="text-2xl font-extrabold text-slate-900 mt-1">{applications.length}</h3>
-          <p className="text-[11px] text-slate-400 mt-1 truncate">In compilation sync pipeline</p>
+          <p className="text-[11px] text-slate-400 mt-1 truncate" title="In compilation sync pipeline">
+            In compilation sync pipeline
+          </p>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
@@ -108,7 +110,10 @@ export default function DashboardHome() {
 
         <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Next Target</p>
-          <h3 className="text-xl font-extrabold text-orange-500 mt-1.5 truncate">
+          <h3
+            className="text-xl font-extrabold text-orange-500 mt-1.5 truncate"
+            title={applications[0]?.company || 'None Active'}
+          >
             {applications[0]?.company || 'None Active'}
           </h3>
           <p className="text-[11px] text-slate-400 mt-1 truncate">Ready for drill routines</p>

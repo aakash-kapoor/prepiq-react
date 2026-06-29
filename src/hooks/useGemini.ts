@@ -4,7 +4,7 @@ export const useGemini = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
+  const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   // Helper to strip markdown formatting backticks from AI string responses

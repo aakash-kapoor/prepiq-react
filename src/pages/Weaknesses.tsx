@@ -131,6 +131,7 @@ export default function Weaknesses() {
                     cx="40"
                     cy="40"
                     r={radius}
+                    viewBox="0 0 80 80"
                     stroke="#6366F1"
                     strokeWidth="6"
                     fill="transparent"
@@ -174,7 +175,7 @@ export default function Weaknesses() {
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
             <div className="mb-6">
               <h3 className="text-base font-bold text-slate-900">Topic-Wise Technical Confidence Index</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Calculated in real time based on your manual confidence evaluations[cite: 2].</p>
+              <p className="text-xs text-gray-500 mt-0.5">Calculated in real time based on your manual confidence evaluations.</p>
             </div>
 
             {isLoading ? (
@@ -190,7 +191,7 @@ export default function Weaknesses() {
 
                   return (
                     /* Upgraded container to a 5-column grid layout for desktop balance */
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-5 items-center gap-4 border-b border-gray-50 pb-4 last:border-0 last:pb-0 group">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-5 items-center gap-3 border-b border-gray-50 pb-4 last:border-0 last:pb-0 group">
 
                       {/* Column 1: Metadata (Upgraded to take up 2 full columns for broad text safety) */}
                       <div className="flex items-center gap-3 md:col-span-2 min-w-0">
@@ -225,14 +226,14 @@ export default function Weaknesses() {
                       </div>
 
                       {/* Column 2: Status Pill Tag (Takes 1 column slot cleanly) */}
-                      <div className="md:col-span-1 flex items-center">
+                      <div className="md:col-span-1 flex items-center -mt-1 md:mt-0">
                         <span className={`text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-md border inline-block ${currentStatus.color}`}>
                           {currentStatus.label}
                         </span>
                       </div>
 
                       {/* Column 3: Custom UI Progress Metrics Rail (Takes up the remaining 2 column slots) */}
-                      <div className="md:col-span-2 space-y-1.5 w-full">
+                      <div className="md:col-span-2 space-y-1.5 w-full col-span-1 sm:col-span-2 md:col-span-2">
                         <div className="flex justify-between items-center text-[11px] font-bold text-slate-400">
                           <span>Target Metric</span>
                           <span className="text-slate-700 font-extrabold">{item.avgConfidence > 0 ? `${item.avgConfidence} / 5.0` : 'Not evaluated'}</span>
