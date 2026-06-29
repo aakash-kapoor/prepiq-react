@@ -1,9 +1,12 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function Login() {
   const { loginWithGoogle, user } = useAuth();
   const navigate = useNavigate();
+
+  const [legalContent, setLegalContent] = useState<{ title: string; text: string } | null>(null);
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -121,13 +124,27 @@ export default function Login() {
 
           <p className="text-[10px] text-slate-300 text-center font-medium leading-relaxed">
             By signing in, you agree to our{' '}
-            <span className="text-slate-400 underline underline-offset-2 cursor-pointer hover:text-slate-600 transition">
-              Terms
-            </span>{' '}
+            <button
+              type="button"
+              onClick={() => setLegalContent({
+                title: "Terms of Service",
+                text: "Welcome to PrepIQ. By authenticating with Google Sign-In and utilizing this platform, you agree that your data is processed entirely serverless via isolated Cloud Firestore instances. PrepIQ is a developmental technical interview preparation framework built for educational and benchmarking use. All generative insights are produced via the Gemini API as structural schema models."
+              })}
+              className="text-slate-500 hover:text-slate-700 underline font-bold transition"
+            >
+              Terms of Service
+            </button>{' '}
             and{' '}
-            <span className="text-slate-400 underline underline-offset-2 cursor-pointer hover:text-slate-600 transition">
+            <button
+              type="button"
+              onClick={() => setLegalContent({
+                title: "Privacy Policy",
+                text: "Your privacy is fully protected under our serverless data pipeline architecture. PrepIQ does not manage local user credential databases; authentication relies exclusively on secure Google OAuth tokens. Application data—including analyzed job descriptions, confidence logs, and flashcard metrics—is securely mapped to your isolated user identity record via Firebase Security Rules."
+              })}
+              className="text-slate-500 hover:text-slate-700 underline font-bold transition"
+            >
               Privacy Policy
-            </span>
+            </button>
             .
           </p>
         </div>
@@ -201,6 +218,29 @@ export default function Login() {
         </div>
       </div>
 
-    </div>
+  {/* LEGAL POPUP OVERLAY */}
+            {legalContent && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+                    <div className="bg-white border border-slate-100 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 transform animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest text-indigo-600">
+                                {legalContent.title}
+                            </h3>
+                            <button 
+                                type="button"
+                                onClick={() => setLegalContent(null)}
+                                className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-lg transition"
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <p className="text-xs font-medium text-slate-500 leading-relaxed whitespace-pre-line">
+                            {legalContent.text}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+        </div>
   );
 }
