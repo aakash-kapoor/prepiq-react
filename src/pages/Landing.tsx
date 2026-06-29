@@ -1,10 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
+import { changelog } from '../config/changelog';
+import LegalModal from '../components/LegalModal';
 
 export default function Landing() {
+    const [isChangelogOpen, setIsChangelogOpen] = useState(false);
     const navigate = useNavigate();
     const { user } = useAuth();
 
+    const [legalContent, setLegalContent] = useState<{ title: string; text: string } | null>(null);
     const handleCTA = () => {
         if (user) {
             navigate('/dashboard');
@@ -109,50 +114,50 @@ export default function Landing() {
         },
     ];
 
-    const changelog = [
-        {
-            version: 'v0.4.0',
-            date: 'Jun 28, 2026',
-            title: 'Landing and login page redesign',
-            description: 'Overhauled the landing page with a sticky frosted navbar, how-it-works section, stats strip, 6-feature grid, and a full-width CTA banner. Login page now includes trust signal pills, SVG icons, and an improved dark right panel.',
-            tags: ['feat', 'ui', 'responsive']
-        },
-        {
-            version: 'v0.3.2',
-            date: 'Jun 27, 2026',
-            title: 'Firebase Hosting target configured',
-            description: 'Pointed deployment to prep-iq.web.app via hosting target in .firebaserc. Added .firebase/ cache folder to .gitignore.',
-            tags: ['chore', 'deploy']
-        },
-        {
-            version: 'v0.3.1',
-            date: 'Jun 27, 2026',
-            title: 'SEO meta tags and smooth scroll',
-            description: 'Added Open Graph, Twitter Card, and keyword meta tags to index.html. Enabled smooth anchor scrolling via scroll-behavior: smooth. Fixed misplaced meta tags that were outside <head>.',
-            tags: ['fix', 'seo']
-        },
-        {
-            version: 'v0.3.0',
-            date: 'Jun 26, 2026',
-            title: 'TypeScript errors resolved',
-            description: 'Fixed unused PlaceholderPage declaration, missing JSX namespace reference in App.tsx, and unused trackOffset variable in Weaknesses.tsx.',
-            tags: ['fix', 'typescript']
-        },
-        {
-            version: 'v0.2.0',
-            date: 'Jun 25, 2026',
-            title: 'README and project documentation',
-            description: 'Replaced default Vite README with full project documentation — tech stack table, setup instructions, environment variables, folder structure, and contributing guide.',
-            tags: ['docs']
-        },
-        {
-            version: 'v0.1.0',
-            date: 'Jun 24, 2026',
-            title: 'Initial release',
-            description: 'First working version of PrepIQ. Includes JD analysis with Gemini AI, adaptive quiz sandbox, weakness radar, and day-by-day study plan. Fully serverless on Firebase and Firestore.',
-            tags: ['feat', 'launch']
-        }
-    ];
+    // const changelog = [
+    //     {
+    //         version: 'v0.4.0',
+    //         date: 'Jun 28, 2026',
+    //         title: 'Landing and login page redesign',
+    //         description: 'Overhauled the landing page with a sticky frosted navbar, how-it-works section, stats strip, 6-feature grid, and a full-width CTA banner. Login page now includes trust signal pills, SVG icons, and an improved dark right panel.',
+    //         tags: ['feat', 'ui', 'responsive']
+    //     },
+    //     {
+    //         version: 'v0.3.2',
+    //         date: 'Jun 27, 2026',
+    //         title: 'Firebase Hosting target configured',
+    //         description: 'Pointed deployment to prep-iq.web.app via hosting target in .firebaserc. Added .firebase/ cache folder to .gitignore.',
+    //         tags: ['chore', 'deploy']
+    //     },
+    //     {
+    //         version: 'v0.3.1',
+    //         date: 'Jun 27, 2026',
+    //         title: 'SEO meta tags and smooth scroll',
+    //         description: 'Added Open Graph, Twitter Card, and keyword meta tags to index.html. Enabled smooth anchor scrolling via scroll-behavior: smooth. Fixed misplaced meta tags that were outside <head>.',
+    //         tags: ['fix', 'seo']
+    //     },
+    //     {
+    //         version: 'v0.3.0',
+    //         date: 'Jun 26, 2026',
+    //         title: 'TypeScript errors resolved',
+    //         description: 'Fixed unused PlaceholderPage declaration, missing JSX namespace reference in App.tsx, and unused trackOffset variable in Weaknesses.tsx.',
+    //         tags: ['fix', 'typescript']
+    //     },
+    //     {
+    //         version: 'v0.2.0',
+    //         date: 'Jun 25, 2026',
+    //         title: 'README and project documentation',
+    //         description: 'Replaced default Vite README with full project documentation — tech stack table, setup instructions, environment variables, folder structure, and contributing guide.',
+    //         tags: ['docs']
+    //     },
+    //     {
+    //         version: 'v0.1.0',
+    //         date: 'Jun 24, 2026',
+    //         title: 'Initial release',
+    //         description: 'First working version of PrepIQ. Includes JD analysis with Gemini AI, adaptive quiz sandbox, weakness radar, and day-by-day study plan. Fully serverless on Firebase and Firestore.',
+    //         tags: ['feat', 'launch']
+    //     }
+    // ];
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans antialiased text-slate-900 selection:bg-indigo-100">
@@ -361,46 +366,6 @@ export default function Landing() {
                 </div>
             </section>
 
-            {/* CHANGELOG SECTION MATCHING image_32ecbc.jpg */}
-            <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 border-t border-gray-100 pt-14 sm:pt-20">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
-                    
-                    <div className="space-y-2">
-                        <span className="text-[10px] font-bold tracking-widest text-[#6366F1] uppercase bg-indigo-50 border border-indigo-100/50 px-2.5 py-0.5 rounded-md inline-block">
-                            What's new
-                        </span>
-                        <h2 className="text-xl font-extrabold text-slate-950 tracking-tight">Changelog</h2>
-                        <p className="text-xs text-slate-400 font-medium">System releases, patches, and deployment milestones.</p>
-                    </div>
-
-                    <div className="md:col-span-2 space-y-8">
-                        {changelog.map((log, index) => (
-                            <div key={log.version} className="relative pl-6 border-l-2 border-slate-200 last:border-transparent space-y-2">
-                                {/* Chronological indicator point matching image timelines */}
-                                <div className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ring-4 ring-[#F8FAFC] ${
-                                    index === 0 ? 'bg-indigo-500' : index < 3 ? 'bg-amber-500' : 'bg-slate-400'
-                                }`} />
-                                
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">{log.version}</span>
-                                    <span className="text-[11px] font-bold text-slate-400 tracking-wide">{log.date}</span>
-                                </div>
-                                <h3 className="text-sm font-bold text-slate-900">{log.title}</h3>
-                                <p className="text-xs font-medium text-slate-500 leading-relaxed">{log.description}</p>
-                                
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                    {log.tags.map((tag) => (
-                                        <span key={tag} className="text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100">
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* FOOTER */}
             <footer className="border-t border-gray-100 bg-white py-8">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -410,8 +375,37 @@ export default function Landing() {
                         </div>
                         <span className="text-xs font-bold text-slate-400">PrepIQ</span>
                     </div>
+                    <div className="flex gap-6 text-xs font-semibold text-slate-400">
+                        <button
+                            type="button"
+                            onClick={() => setLegalContent({
+                                title: "Privacy Policy",
+                                text: "Your privacy is fully protected under our serverless data pipeline architecture. PrepIQ does not manage local user credential databases; authentication relies exclusively on secure Google OAuth tokens. Application data—including analyzed job descriptions, confidence logs, and flashcard metrics—is securely mapped to your isolated user identity record via Firebase Security Rules."
+                            })}
+                            className="hover:text-slate-900 transition"
+                        >
+                            Privacy Policy
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLegalContent({
+                                title: "Terms of Service",
+                                text: "Welcome to PrepIQ. By authenticating with Google Sign-In and utilizing this platform, you agree that your data is processed entirely serverless via isolated Cloud Firestore instances. PrepIQ is a developmental technical interview preparation framework built for educational and benchmarking use. All generative insights are produced via the Gemini API as structural schema models."
+                            })}
+                            className="hover:text-slate-900 transition"
+                        >
+                            Terms of Service
+                        </button>
+                        {/* CHANGELOG MODAL TRIGGER */}
+                        <button
+                            onClick={() => setIsChangelogOpen(true)}
+                            className="hover:text-indigo-600 transition"
+                        >
+                            Changelog
+                        </button>
+                    </div>
                     <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest text-center">
-                        © {new Date().getFullYear()} PrepIQ · All rights reserved · Serverless pipeline secure
+                        © {new Date().getFullYear()} PrepIQ · All rights reserved
                     </p>
                     <div className="flex items-center gap-4">
                         <a href="https://github.com/aakash-kapoor/prepiq-react" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition">
@@ -420,7 +414,64 @@ export default function Landing() {
                     </div>
                 </div>
             </footer>
+            {/* CHANGELOG MODAL OVERLAY */}
+            {isChangelogOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/40 backdrop-blur-sm animate-fadeIn">
+                    <div
+                        className="bg-white border border-slate-100 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh] animate-scaleUp"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight">System Changelog</h3>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">System releases, patches, and deployment milestones.</p>
+                            </div>
+                            <button
+                                onClick={() => setIsChangelogOpen(false)}
+                                className="w-8 h-8 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
 
+                        {/* Modal Scrollable Content Area */}
+                        <div className="p-5 sm:p-6 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
+
+                            {changelog.map((log, index) => (
+                                <div key={log.version} className="relative pl-6 border-l-2 border-slate-200 last:border-transparent space-y-2">
+                                    {/* Chronological indicator point matching image timelines */}
+                                    <div className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ring-4 ring-[#F8FAFC] ${index === 0 ? 'bg-indigo-500' : index < 3 ? 'bg-amber-500' : 'bg-slate-400'
+                                        }`} />
+
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">{log.version}</span>
+                                        <span className="text-[11px] font-bold text-slate-400 tracking-wide">{log.date}</span>
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-900">{log.title}</h3>
+                                    <p className="text-xs font-medium text-slate-500 leading-relaxed">{log.description}</p>
+
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                        {log.tags.map((tag) => (
+                                            <span key={tag} className="text-[9px] font-bold tracking-wide uppercase px-2 py-0.5 rounded bg-slate-50 text-slate-400 border border-slate-100">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* LEGAL POPUP OVERLAY */}
+            {legalContent && (
+            <LegalModal
+                content={legalContent}
+                onClose={() => setLegalContent(null)}
+            />
+            )}
         </div>
     );
 }

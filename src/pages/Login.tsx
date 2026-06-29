@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useState } from 'react';
+import LegalModal from '../components/LegalModal';
 
 export default function Login() {
   const { loginWithGoogle, user } = useAuth();
@@ -218,28 +219,13 @@ export default function Login() {
         </div>
       </div>
 
-  {/* LEGAL POPUP OVERLAY */}
-            {legalContent && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
-                    <div className="bg-white border border-slate-100 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 transform animate-in fade-in zoom-in-95 duration-150">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest text-indigo-600">
-                                {legalContent.title}
-                            </h3>
-                            <button 
-                                type="button"
-                                onClick={() => setLegalContent(null)}
-                                className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-lg transition"
-                            >
-                                Close
-                            </button>
-                        </div>
-                        <p className="text-xs font-medium text-slate-500 leading-relaxed whitespace-pre-line">
-                            {legalContent.text}
-                        </p>
-                    </div>
-                </div>
-            )}
+      {/* LEGAL POPUP OVERLAY */}
+      {legalContent && (
+        <LegalModal
+          content={legalContent}
+          onClose={() => setLegalContent(null)}
+        />
+      )}
 
         </div>
   );
