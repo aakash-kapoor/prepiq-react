@@ -8,6 +8,7 @@ export type ChangelogTag =
   | 'typescript'
   | 'seo'
   | 'launch'
+  | 'refactor'
   | 'chore';
 
 export interface ChangelogEntry {
@@ -19,6 +20,14 @@ export interface ChangelogEntry {
 }
 
 export const changelog: readonly ChangelogEntry[] = [
+  {
+  version: 'v0.5.0',
+  date: 'Jun 29, 2026',
+  title: 'Legal pages, project organization, and landing page refinements',
+  description:
+    'Improved the overall user experience by introducing reusable Terms of Service and Privacy Policy modal dialogs, reorganized project data with a dedicated changelog module, refined responsive layouts and component styling, and enhanced the landing page with better navigation and footer structure for a more polished SaaS experience.',
+  tags: ['feat', 'ui', 'refactor', 'responsive']
+},
   {
     version: 'v0.4.0',
     date: 'Jun 28, 2026',
