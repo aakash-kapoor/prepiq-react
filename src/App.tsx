@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import DashboardHome from './pages/DashboardHome';
 import Analyze from './pages/Analyze';
 import Questions from './pages/Questions';
+import QuizLauncher from './pages/QuizLauncher';
 import Quiz from './pages/Quiz';
 import Weaknesses from './pages/Weaknesses';
 import StudyPlan from './pages/StudyPlan';
@@ -40,7 +41,8 @@ function App() {
             <Route index element={<DashboardHome />} />
             <Route path="analyze" element={<Analyze />} />
             <Route path="questions" element={<Questions />} />
-            <Route path="quiz" element={<Quiz />} />
+            <Route path="quiz" element={<QuizLauncher />} />
+            <Route path="quiz-session" element={<Quiz />} />
             <Route path="weaknesses" element={<Weaknesses />} />
             <Route path="study-plan" element={<StudyPlan />} />
           </Route>

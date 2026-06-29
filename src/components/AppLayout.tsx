@@ -8,6 +8,23 @@ export default function AppLayout() {
 
   if (!user) return null;
 
+  const routeLabels: { [key: string]: string } = {
+    dashboard: 'Workspace',
+    analyze: 'JD Analyzer',
+    questions: 'Question Bank',
+    quiz: 'Quiz Mode',
+    'quiz-session': 'Quiz Mode',
+    weaknesses: 'Weak Spots',
+    'study-plan': 'Study Plan'
+  };
+
+  const getCurrentPageTitle = () => {
+    const pathnames = location.pathname.split('/').filter((x) => x);
+    if (pathnames.length <= 1) return routeLabels.dashboard;
+    const last = pathnames[pathnames.length - 1];
+    return routeLabels[last.toLowerCase()] || last;
+  };
+
   const menuItems = [
     { 
       name: 'Dashboard', 
@@ -31,6 +48,16 @@ export default function AppLayout() {
       )
     },
     { 
+      name: 'Question Bank', 
+      path: '/dashboard/questions', 
+      label: 'BANK',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm0 5.25h.007v.008H3.75v-.008Zm0 5.25h.007v.008H3.75v-.008Z" />
+        </svg>
+      )
+    },
+    { 
       name: 'Quiz Mode', 
       path: '/dashboard/quiz', 
       label: 'QUIZ',
@@ -43,7 +70,7 @@ export default function AppLayout() {
     { 
       name: 'Weak Spots', 
       path: '/dashboard/weaknesses', 
-      label: 'WEAK SPOTS',
+      label: 'WEAK',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -53,7 +80,7 @@ export default function AppLayout() {
     { 
       name: 'Study Plan', 
       path: '/dashboard/study-plan', 
-      label: 'STUDY PLAN',
+      label: 'PLAN',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -65,16 +92,6 @@ export default function AppLayout() {
   // --- DYNAMIC BREADCRUMB BUILDER ENGINE ---
   const generateBreadcrumbs = () => {
     const pathnames = location.pathname.split('/').filter((x) => x);
-    
-    // Custom friendly mapping to match your high-fidelity UI specifications
-    const routeLabels: { [key: string]: string } = {
-      dashboard: 'Workspace',
-      analyze: 'JD Analyzer',
-      questions: 'Question Bank',
-      quiz: 'Quiz Mode',
-      weaknesses: 'Weak Spots',
-      'study-plan': 'Study Plan'
-    };
 
     return pathnames.map((value, index) => {
       const last = index === pathnames.length - 1;
@@ -112,7 +129,7 @@ export default function AppLayout() {
         
         <nav className="flex-1 p-4 space-y-1">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || (item.name === 'Quiz Mode' && location.pathname === '/dashboard/quiz-session');
             return (
               <Link
                 key={item.path}
@@ -168,41 +185,50 @@ export default function AppLayout() {
       </aside>
 
       {/* 2. MOBILE TOP NAVIGATION BAR */}
-      <header className="md:hidden h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-[#6366F1] rounded-lg flex items-center justify-center font-bold text-xs text-white">
-            IQ
+      <header className="md:hidden bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm">
+        <div className="h-14 flex items-center justify-between px-4 gap-2">
+          <Link to="/dashboard" className="flex items-center gap-2 shrink-0 min-w-0">
+            <div className="w-7 h-7 bg-[#6366F1] rounded-lg flex items-center justify-center font-bold text-xs text-white">
+              IQ
+            </div>
+            <span className="font-bold text-sm text-slate-900 tracking-tight truncate max-w-[72px] sm:max-w-none">PrepIQ</span>
+          </Link>
+
+          <div className="flex-1 min-w-0 text-center px-1">
+            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate">
+              {location.pathname === '/dashboard' ? 'Dashboard' : 'Workspace'}
+            </p>
+            <p className="text-xs font-bold text-slate-900 truncate">{getCurrentPageTitle()}</p>
           </div>
-          <span className="font-bold text-base text-slate-900 tracking-tight">PrepIQ</span>
-        </div>
-        
-        {/* Mobile Profile & Logout Actions */}
-        <div className="flex items-center gap-3">
-          <img
+
+          {/* Mobile Profile & Logout Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <img
               src={user.photoURL || 'https://via.placeholder.com/150'}
               className="w-8 h-8 rounded-full border border-gray-200 shadow-sm"
               alt="user avatar"
-          />
-          <button
+            />
+            <button
               onClick={() => logout().then(() => navigate('/'))}
               className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
               title="Log Out"
-          >
+            >
               <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2.5}
-                  stroke="currentColor"
-                  className="w-5 h-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+                className="w-5 h-5"
               >
-                  <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
-                  />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
+                />
               </svg>
-          </button>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -227,19 +253,19 @@ export default function AppLayout() {
       </div>
 
       {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR: Visible strictly on small screens */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 z-30 shadow-2xl">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-16 flex items-stretch px-1 z-30 shadow-2xl">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || (item.name === 'Quiz Mode' && location.pathname === '/dashboard/quiz-session');
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+              className={`flex flex-col items-center justify-center flex-1 min-w-0 px-0.5 h-full transition-colors ${
                 isActive ? 'text-[#6366F1]' : 'text-slate-400'
               }`}
             >
               <span className={isActive ? 'text-[#6366F1]' : 'text-slate-400'}>{item.icon}</span>
-              <span className="text-[9px] font-bold tracking-wider uppercase">{item.label}</span>
+              <span className="text-[8px] font-bold tracking-wide uppercase truncate w-full text-center mt-0.5">{item.label}</span>
             </Link>
           );
         })}

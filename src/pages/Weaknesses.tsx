@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs } from 'firebase/firestore';
-
+import EmptyState from '../components/EmptyState';
 interface TopicStats {
   topic: string;
   totalQuestions: number;
@@ -90,6 +90,17 @@ export default function Weaknesses() {
   const globalAvgNum = parseFloat(globalAvg);
   const strokeDashoffset = circumference - (Math.min(globalAvgNum, 5) / 5) * circumference;
 
+  if (!applications || applications.length === 0) {
+    return (
+        <div className="max-w-6xl mx-auto p-6">
+            <EmptyState 
+                icon="🎯"
+                title="No Weakness Metrics Found"
+                description="Your visual confidence charts and skill tracking data will display here once you seed your first workplace target application."
+            />
+        </div>
+    );
+}
   return (
     <div className="max-w-6xl mx-auto space-y-6">
 
@@ -100,10 +111,11 @@ export default function Weaknesses() {
           <button
             key={app.id}
             onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition ${selectedApp?.id === app.id
+            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${selectedApp?.id === app.id
                 ? 'bg-[#6366F1] text-white border-[#6366F1]'
                 : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
               }`}
+            title={`${app.company} — ${app.role}`}
           >
             {app.company} — {app.role}
           </button>
@@ -125,13 +137,12 @@ export default function Weaknesses() {
 
               {/* Premium Inline SVG Donut Progress Circle */}
               <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
-                <svg className="w-full h-full transform -rotate-90">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r={radius} stroke="#F1F5F9" strokeWidth="6" fill="transparent" />
                   <circle
                     cx="40"
                     cy="40"
                     r={radius}
-                    viewBox="0 0 80 80"
                     stroke="#6366F1"
                     strokeWidth="6"
                     fill="transparent"

@@ -18,18 +18,16 @@ export default function Quiz() {
   const [loading, setLoading] = useState(true);
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
-  // MODAL STATE CONTROLLER ENGINE
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
   useEffect(() => {
     if (!user || !appId) {
-      navigate('/dashboard/questions');
+      navigate('/dashboard/quiz');
       return;
     }
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', appId, 'questions');
     getDocs(questionsRef).then((snapshot) => {
       const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Randomize array order slightly to simulate real conditions
       setQuestions(qList.sort(() => 0.5 - Math.random()));
       setLoading(false);
     });
@@ -52,15 +50,14 @@ export default function Quiz() {
     } else {
       setSessionCompleted(true);
       setTimeout(() => {
-        navigate('/dashboard/questions', { state: { preSelectedAppId: appId } });
+        navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
       }, 2500);
     }
   };
 
-  // Triggers exit and returns safely to parent application track state
   const confirmExitSession = () => {
     setIsExitModalOpen(false);
-    navigate('/dashboard/questions', { state: { preSelectedAppId: appId } });
+    navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
   };
 
   if (loading) return <div className="text-center p-12 text-sm text-gray-500">Assembling interactive session modules...</div>;
@@ -84,15 +81,13 @@ export default function Quiz() {
 
   return (
     <div className="max-w-2xl mx-auto py-4 relative">
-
-      {/* 1. TOP HEADER STRIP CONTROLS */}
-      <div className="flex justify-between items-center text-xs text-slate-500 mb-4 font-medium">
-        <span>Session Track: <strong className="text-slate-700">{appName}</strong></span>
-
-        {/* Softened trigger mechanism to shift modal hook instead of blocking thread */}
+      <div className="flex justify-between items-center gap-3 text-xs text-slate-500 mb-4 font-medium min-w-0">
+        <span className="truncate min-w-0">
+          Session Track: <strong className="text-slate-700">{appName}</strong>
+        </span>
         <button
           onClick={() => setIsExitModalOpen(true)}
-          className="text-red-500 hover:text-red-700 font-bold uppercase tracking-wider text-[10px] transition bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-md border border-red-200/40"
+          className="text-red-500 hover:text-red-700 font-bold uppercase tracking-wider text-[10px] transition bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-md border border-red-200/40 shrink-0"
         >
           🛑 End Session
         </button>
@@ -110,7 +105,6 @@ export default function Quiz() {
         />
       </div>
 
-      {/* 2. MAIN INTERACTIVE FLASH CARD */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 min-h-[340px] flex flex-col justify-between transition-all">
         <div>
           <div className="flex gap-2 mb-4">
@@ -166,7 +160,6 @@ export default function Quiz() {
         </div>
       </div>
 
-      {/* 3. PREMIUM TAILWIND CUSTOM MODAL OVERLAY PORTAL */}
       {isExitModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div
@@ -176,14 +169,12 @@ export default function Quiz() {
             <div className="w-12 h-12 bg-red-50 border border-red-100 text-red-500 rounded-full flex items-center justify-center text-xl mx-auto shadow-sm">
               ⚠️
             </div>
-
             <div className="text-center space-y-1">
               <h3 className="text-base font-black text-slate-900 tracking-tight">Exit Practice Drill?</h3>
               <p className="text-xs text-slate-400 font-medium leading-normal px-2">
                 Are you sure you want to pause this active session? All score answers logged up to this card have been securely saved.
               </p>
             </div>
-
             <div className="grid grid-cols-2 gap-2.5 pt-2">
               <button
                 onClick={() => setIsExitModalOpen(false)}
@@ -201,7 +192,6 @@ export default function Quiz() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

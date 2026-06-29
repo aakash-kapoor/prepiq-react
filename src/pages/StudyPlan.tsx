@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs } from 'firebase/firestore';
+import EmptyState from '../components/EmptyState';
 
 interface JobApp {
   id: string;
@@ -120,6 +121,17 @@ export default function StudyPlan() {
 
   }, [selectedApp, user]);
 
+  if (!applications || applications.length === 0) {
+    return (
+        <div className="max-w-6xl mx-auto p-6">
+            <EmptyState 
+                icon="📅"
+                title="No Study Plan Generated"
+                description="A custom day-by-day interview preparation timeline will compile automatically once a target job description is parsed."
+            />
+        </div>
+    );
+}
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       
@@ -130,11 +142,12 @@ export default function StudyPlan() {
           <button
             key={app.id}
             onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${
               selectedApp?.id === app.id
                 ? 'bg-[#6366F1] text-white border-[#6366F1]'
                 : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
             }`}
+            title={`${app.company} — ${app.role}`}
           >
             {app.company} — {app.role}
           </button>

@@ -167,22 +167,22 @@ export default function Landing() {
                         <span className="font-bold text-lg tracking-tight text-slate-900">PrepIQ</span>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <a
                             href="#how-it-works"
-                            className="hidden sm:block text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+                            className="text-[10px] sm:text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
                         >
                             How it works
                         </a>
                         <a
                             href="#features"
-                            className="hidden sm:block text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+                            className="text-[10px] sm:text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
                         >
                             Features
                         </a>
                         <button
                             onClick={handleCTA}
-                            className="text-xs font-bold bg-[#6366F1] hover:bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-sm shadow-indigo-500/20 transition"
+                            className="text-[10px] sm:text-xs font-bold bg-[#6366F1] hover:bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-xl shadow-sm shadow-indigo-500/20 transition shrink-0"
                         >
                             {user ? 'Go to workspace →' : 'Get started free'}
                         </button>
@@ -220,8 +220,39 @@ export default function Landing() {
                     </a>
                 </div>
 
+                <div className="mt-16 relative mx-auto max-w-5xl rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl shadow-indigo-500/10 animate-section-fade">
+                    {/* Browser Header Bar Chrome Mockup */}
+                    <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-100 bg-slate-50 rounded-t-xl">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                        <div className="ml-4 bg-white border border-slate-100 px-16 py-0.5 rounded text-[9px] font-medium text-slate-400 select-none">
+                            prepiq.web.app/dashboard/analyze
+                        </div>
+                    </div>
+                    {/* Internal Miniature Layout Screen Simulation Preview */}
+                    <div className="bg-[#F8FAFC] p-4 rounded-b-xl grid grid-cols-3 gap-3 text-left pointer-events-none select-none">
+                        <div className="bg-white p-3 rounded-xl border border-slate-100 space-y-2 shadow-sm">
+                            <div className="h-2.5 w-2/3 bg-slate-200 rounded" />
+                            <div className="h-10 w-full bg-slate-50 rounded border border-dashed border-slate-200" />
+                            <div className="h-6 w-full bg-indigo-500 rounded-lg" />
+                        </div>
+                        <div className="col-span-2 bg-white p-3 rounded-xl border border-slate-100 space-y-3 shadow-sm">
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-50">
+                                <div className="h-3 w-1/3 bg-slate-200 rounded" />
+                                <div className="h-3 w-12 bg-amber-100 rounded" />
+                            </div>
+                            <div className="flex gap-1.5">
+                                <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold">• React 19</span>
+                                <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold">• TypeScript</span>
+                                <span className="text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 font-bold">• System Architecture</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* STATS STRIP */}
-                <div className="mt-14 grid grid-cols-3 divide-x divide-gray-100 border border-gray-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 border border-gray-100 rounded-2xl bg-white overflow-hidden shadow-sm">
                     {stats.map((stat) => (
                         <div key={stat.label} className="px-4 py-5 text-center">
                             <p className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">{stat.value}</p>
@@ -262,7 +293,7 @@ export default function Landing() {
                     {features.map((f) => (
                         <div
                             key={f.title}
-                            className={`bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4 transition-all duration-200 ${f.hoverBorder} hover:shadow-md`}
+                            className={`bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4 transition-all duration-300 ease-out ${f.hoverBorder} hover:shadow-md hover:-translate-y-1 hover:shadow-indigo-500/5`}
                         >
                             <div className={`w-10 h-10 rounded-xl ${f.bgClass} ${f.textClass} flex items-center justify-center`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">

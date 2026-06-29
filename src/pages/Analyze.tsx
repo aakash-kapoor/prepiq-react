@@ -142,7 +142,7 @@ export default function Analyze() {
 
             {/* RIGHT PANEL: Extracted Blueprint Analysis Outputs */}
             <div ref={resultsSectionRef}
-             className="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-between min-h-[200px] lg:min-h-[500px] scroll-mt-5">
+             className="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-between min-h-[200px] lg:min-h-[500px] scroll-mt-20 md:scroll-mt-5">
                 {!analysisResult ? (
                     <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 p-8 my-auto">
                         <span className="text-4xl mb-2">🤖</span>
@@ -152,13 +152,13 @@ export default function Analyze() {
                 ) : (
                     <div className="space-y-6 h-full flex flex-col justify-between">
                         <div className="space-y-5">
-                            <div className="border-b border-gray-100 pb-3 flex justify-between items-center">
-                                <div>
+                            <div className="border-b border-gray-100 pb-3 flex flex-wrap justify-between items-start gap-2">
+                                <div className="min-w-0 flex-1">
                                     <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                                         🟢 Analysis Complete ✓
                                     </span>
-                                    <h3 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">{analysisResult.roleTitle || 'Ionic Angular Developer'}</h3>
-                                    <p className="text-[11px] text-slate-400 font-semibold tracking-wide">Targeting: {analysisResult.companyType || 'Generic Tech Company/Agency'}</p>
+                                    <h3 className="text-base font-bold text-slate-900 tracking-tight mt-0.5 break-words">{analysisResult.roleTitle || 'Ionic Angular Developer'}</h3>
+                                    <p className="text-[11px] text-slate-400 font-semibold tracking-wide break-words">Targeting: {analysisResult.companyType || 'Generic Tech Company/Agency'}</p>
                                 </div>
                                 <span className="text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide shrink-0">
                                     {analysisResult.estimatedDifficulty || 'Mid-Level'}
