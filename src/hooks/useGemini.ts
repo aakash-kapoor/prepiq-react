@@ -7,6 +7,10 @@ export const useGemini = () => {
   const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
+  if (!apiKey) {
+    throw new Error('Missing Gemini API key. Please set VITE_GEMINI_API_KEY in your environment variables.');
+  }
+
   // Helper to strip markdown formatting backticks from AI string responses
   const cleanJsonResponse = (rawText: string) => {
     let cleanText = rawText.trim();
