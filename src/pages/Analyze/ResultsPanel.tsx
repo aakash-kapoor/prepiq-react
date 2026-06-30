@@ -7,6 +7,14 @@ interface ResultsPanelProps {
     onSave: () => void;
 }
 
+function getDifficultyClasses(difficulty: string): string {
+    const normalized = difficulty?.toLowerCase() || '';
+    if (normalized.includes('senior')) return 'bg-red-50 text-red-700 border-red-200';
+    if (normalized.includes('junior')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    // Mid-Level and any unrecognized value fall back to amber
+    return 'bg-amber-50 text-amber-700 border-amber-200';
+}
+
 export default function ResultsPanel({ analysisResult, isSaving, panelRef, onSave }: ResultsPanelProps) {
     return (
         <div
@@ -30,7 +38,7 @@ export default function ResultsPanel({ analysisResult, isSaving, panelRef, onSav
                                 <h3 className="text-base font-bold text-slate-900 tracking-tight mt-0.5 break-words">{analysisResult.roleTitle || 'Ionic Angular Developer'}</h3>
                                 <p className="text-[11px] text-slate-400 font-semibold tracking-wide break-words">Targeting: {analysisResult.companyType || 'Generic Tech Company/Agency'}</p>
                             </div>
-                            <span className="text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-md uppercase tracking-wide shrink-0">
+                            <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-md uppercase tracking-wide shrink-0 ${getDifficultyClasses(analysisResult.estimatedDifficulty || 'Mid-Level')}`}>
                                 {analysisResult.estimatedDifficulty || 'Mid-Level'}
                             </span>
                         </div>
