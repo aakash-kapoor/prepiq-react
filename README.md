@@ -40,9 +40,10 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
-- A Firebase project (Auth + Firestore enabled)
-- A Google Gemini API key
+- npm
+- A Firebase project with Authentication and Firestore enabled
+- Google sign-in enabled in Firebase Authentication
+- A Gemini API key
 
 ### Installation
 
@@ -69,7 +70,9 @@ VITE_FIREBASE_APP_ID=your_app_id
 VITE_GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### Running the App
+Firebase configuration is read from [src/config/firebase.ts](src/config/firebase.ts). Gemini requests are made from [src/hooks/useGemini.ts](src/hooks/useGemini.ts).
+
+### Run Locally
 
 ```bash
 npm run dev
@@ -83,70 +86,58 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start the development server with HMR |
+| `npm run dev` | Start the Vite dev server |
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run Oxlint for code quality checks |
+| `npm run lint` | Run Oxlint |
 
 ---
 
 ## 📁 Project Structure
 
-```
-prepiq-react/
-├── public/
-│   ├── favicon.svg
-│   └── icons.svg
-├── src/
-│   ├── assets/                       # Static images and icons
-│   ├── components/
-│   │   ├── AppLayout.tsx             # Shared dashboard layout wrapper ├── ErrorBoundary.tsx         # Error Boundary
-│   │   ├── EmptyState.tsx            # Reusable empty state 
-component
-│   │   └── LegalModal.tsx            # Privacy / Terms modal dialog
-│   ├── config/
-│   │   ├── changelog.ts              # Typed changelog entries
-│   │   ├── firebase.ts               # Firebase initialization
-│   │   └── smokeTest.ts              # Firebase connection test
-│   ├── context/
-│   │   └── AuthContext.tsx           # Auth state and provider
-│   ├── hooks/
-│   │   └── useGemini.ts              # Gemini AI integration hook
-│   ├── pages/
-│   │   ├── Landing/
-│   │   │   ├── index.tsx             # Orchestrator — composes all sections
-│   │   │   ├── Navbar.tsx            # Sticky frosted navbar
-│   │   │   ├── Hero.tsx              # Headline, CTAs, app preview, stats
-│   │   │   ├── HowItWorks.tsx        # 4-step workflow section
-│   │   │   ├── Features.tsx          # 6-feature grid
-│   │   │   ├── CTA.tsx               # Full-width CTA banner
-│   │   │   ├── AboutDeveloper.tsx    # Developer bio and tech tags
-│   │   │   └── Footer.tsx            # Footer, changelog modal, legal modal
-│   │   ├── Analyze/
-│   │   │   ├── index.tsx             # Orchestrator — state and Firebase logic
-│   │   │   ├── InputPanel.tsx        # Company input, JD textarea, analyze button
-│   │   │   └── ResultsPanel.tsx      # Extracted skills, focus areas, save button
-│   │   ├── Weaknesses/
-│   │   │   ├── index.tsx             # Orchestrator — Firestore sync and aggregation
-│   │   │   ├── types.ts              # TopicStats interface and getStatusConfig()
-│   │   │   ├── AppSelector.tsx       # Job track selector pills
-│   │   │   ├── SummaryCards.tsx      # Score, gaps, and mastered metric cards
-│   │   │   └── TopicRail.tsx         # Per-topic confidence bars
-│   │   ├── DashboardHome.tsx
-│   │   ├── Login.tsx
-│   │   ├── Questions.tsx
-│   │   ├── QuizLauncher.tsx
-│   │   ├── Quiz.tsx
-│   │   └── StudyPlan.tsx
-│   ├── App.tsx                       # Route definitions
-│   ├── main.tsx                      # App entry point
-│   ├── index.css
-│   └── App.css
-├── index.html
-├── vite.config.ts
-├── tailwind.config.js
-├── tsconfig.json
-└── package.json
+```text
+prepiq/
+|-- public/
+|   |-- favicon.svg
+|   `-- icons.svg
+|-- src/
+|   |-- assets/
+|   |   |-- hero.png
+|   |   |-- react.svg
+|   |   `-- vite.svg
+|   |-- components/
+|   |   |-- AppLayout.tsx
+|   |   |-- EmptyState.tsx
+|   |   |-- ErrorBoundary.tsx
+|   |   `-- LegalModal.tsx
+|   |-- config/
+|   |   |-- changelog.ts
+|   |   |-- firebase.ts
+|   |   `-- smokeTest.ts
+|   |-- context/
+|   |   `-- AuthContext.tsx
+|   |-- hooks/
+|   |   `-- useGemini.ts
+|   |-- pages/
+|   |   |-- Analyze/
+|   |   |-- Landing/
+|   |   |-- Weaknesses/
+|   |   |-- DashboardHome.tsx
+|   |   |-- Login.tsx
+|   |   |-- Questions.tsx
+|   |   |-- Quiz.tsx
+|   |   |-- QuizLauncher.tsx
+|   |   `-- StudyPlan.tsx
+|   |-- App.tsx
+|   |-- App.css
+|   |-- index.css
+|   `-- main.tsx
+|-- firebase.json
+|-- index.html
+|-- package.json
+|-- tailwind.config.js
+|-- tsconfig.json
+`-- vite.config.ts
 ```
 
 ---
@@ -177,9 +168,20 @@ Full release notes are available in [`src/config/changelog.ts`](src/config/chang
 
 ---
 
+## Deployment
+
+The app is configured for Firebase Hosting in [firebase.json](firebase.json). Production builds are emitted to `dist/`.
+
+```bash
+npm run build
+firebase deploy
+```
+
+---
+
 ## 🤝 Contributing
 
-This is a personal project but issues and suggestions are welcome. Open a GitHub issue or fork and submit a PR.
+This is a personal project, but issues and suggestions are welcome. Open a GitHub issue or fork the project and submit a pull request.
 
 ---
 
