@@ -1,4 +1,5 @@
 import { type RefObject } from 'react';
+import Spinner from '../../components/Spinner';
 
 interface ResultsPanelProps {
     analysisResult: any;
@@ -87,9 +88,10 @@ export default function ResultsPanel({ analysisResult, isSaving, panelRef, onSav
                     <button
                         onClick={onSave}
                         disabled={isSaving}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition text-xs uppercase tracking-wide shadow-md mt-4"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl transition text-xs uppercase tracking-wide shadow-md mt-4 flex items-center justify-center gap-2.5 text-center"
                     >
-                        {isSaving ? 'Syncing to profile...' : 'Save & Track Position →'}
+                        {isSaving && <Spinner size="sm" colorClass="text-white" />}
+                        <span>{isSaving ? 'Syncing to profile...' : 'Save & Track Position →'}</span>
                     </button>
                 </div>
             )}

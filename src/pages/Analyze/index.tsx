@@ -3,6 +3,7 @@ import { useGemini } from '../../hooks/useGemini';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { showSuccessToast, showErrorToast } from '../../lib/toast';
 import InputPanel from './InputPanel';
 import ResultsPanel from './ResultsPanel';
 
@@ -11,8 +12,6 @@ export default function Analyze() {
     const [company, setCompany] = useState('');
     const [analysisResult, setAnalysisResult] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [validationError, setValidationError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const { analyzeJobDescription, isLoading, error: apiError } = useGemini();
     const { user } = useAuth();
@@ -20,43 +19,43 @@ export default function Analyze() {
 
     const handleCompanyChange = (value: string) => {
         setCompany(value);
-        if (validationError) setValidationError(null);
     };
 
     const handleJdTextChange = (value: string) => {
         setJdText(value);
-        if (validationError) setValidationError(null);
     };
 
     const handleRunAnalysis = async () => {
-        setValidationError(null);
-        setSuccessMessage(null);
-
         if (!company.trim()) {
-            setValidationError('⚠️ Company Name cannot be left blank.');
+            showErrorToast('Company Name cannot be left blank.');
             return;
         }
         if (!jdText.trim() || jdText.trim().length < 50) {
-            setValidationError('⚠️ Please paste a comprehensive job description (minimum 50 characters) to analyze.');
+            showErrorToast('Please paste a comprehensive job description (minimum 50 characters) to analyze.');
+            return;
+        }
+        if (jdText.trim().length > 8000) {
+            showErrorToast('Job description is too long. Please paste under 8,000 characters.');
             return;
         }
 
         const data = await analyzeJobDescription(jdText);
         if (data) {
             setAnalysisResult(data);
+            showSuccessToast('Analysis complete — review your results below.');
             if (window.innerWidth < 1024) {
                 setTimeout(() => {
                     resultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
             }
+        } else if (apiError) {
+            showErrorToast(apiError);
         }
     };
 
     const handleSaveToDashboard = async () => {
         if (!user || !analysisResult) return;
         setIsSaving(true);
-        setValidationError(null);
-        setSuccessMessage(null);
 
         try {
             const jobApplicationsRef = collection(db, 'users', user.uid, 'jobApplications');
@@ -71,13 +70,13 @@ export default function Analyze() {
                 createdAt: serverTimestamp(),
                 overallProgress: 0,
             });
-            setSuccessMessage(`🎉 ${analysisResult.roleTitle || 'Position'} track successfully saved to your workspace layout!`);
+            showSuccessToast(`${analysisResult.roleTitle || 'Position'} saved to your workspace.`);
             setJdText('');
             setCompany('');
             setAnalysisResult(null);
         } catch (err) {
             console.error('Firestore save failed:', err);
-            setValidationError('❌ Database synchronization failed. Please inspect your connection parameters.');
+            showErrorToast('Database synchronization failed. Please check your connection.');
         } finally {
             setIsSaving(false);
         }
@@ -89,9 +88,6 @@ export default function Analyze() {
                 company={company}
                 jdText={jdText}
                 isLoading={isLoading}
-                validationError={validationError}
-                apiError={apiError}
-                successMessage={successMessage}
                 onCompanyChange={handleCompanyChange}
                 onJdTextChange={handleJdTextChange}
                 onAnalyze={handleRunAnalysis}

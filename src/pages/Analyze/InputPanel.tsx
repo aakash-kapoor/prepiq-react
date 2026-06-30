@@ -1,10 +1,10 @@
+import ProgressBar from '../../components/ProgressBar';
+import Spinner from '../../components/Spinner';
+
 interface InputPanelProps {
     company: string;
     jdText: string;
     isLoading: boolean;
-    validationError: string | null;
-    apiError: string | null;
-    successMessage: string | null;
     onCompanyChange: (value: string) => void;
     onJdTextChange: (value: string) => void;
     onAnalyze: () => void;
@@ -14,9 +14,6 @@ export default function InputPanel({
     company,
     jdText,
     isLoading,
-    validationError,
-    apiError,
-    successMessage,
     onCompanyChange,
     onJdTextChange,
     onAnalyze,
@@ -28,18 +25,6 @@ export default function InputPanel({
                     <h2 className="text-lg font-bold text-slate-900 mt-1">Analyze New Role</h2>
                     <p className="text-xs text-slate-400 font-medium">Paste the company details and job description to extract core priorities.</p>
                 </div>
-
-                {(validationError || apiError) && (
-                    <div className="bg-red-50 border border-red-100 text-red-700 p-3 rounded-xl text-xs font-medium animate-fadeIn">
-                        {validationError || apiError}
-                    </div>
-                )}
-
-                {successMessage && (
-                    <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 p-3 rounded-xl text-xs font-semibold animate-fadeIn">
-                        {successMessage}
-                    </div>
-                )}
 
                 <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Company Name</label>
@@ -63,12 +48,17 @@ export default function InputPanel({
                 </div>
             </div>
 
+            {isLoading && (
+                <ProgressBar isActive={isLoading} message="Extracting skills with Gemini" />
+            )}
+
             <button
                 onClick={onAnalyze}
                 disabled={isLoading}
-                className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white font-bold py-3.5 rounded-xl transition disabled:opacity-50 text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10 mt-2"
+                className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white font-bold py-3.5 px-4 rounded-xl transition disabled:opacity-50 text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10 mt-2 flex items-center justify-center gap-2.5 text-center"
             >
-                {isLoading ? 'Running secure tokenization extraction...' : '🔒 SECURE ENCRYPT & ANALYZE'}
+                {isLoading && <Spinner size="sm" colorClass="text-white" />}
+                <span>{isLoading ? 'Running secure tokenization extraction...' : '🔒 SECURE ENCRYPT & ANALYZE'}</span>
             </button>
         </div>
     );

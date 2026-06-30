@@ -5,6 +5,10 @@ import { db } from '../config/firebase';
 import { collection, onSnapshot, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { useLocation } from 'react-router-dom';
 import EmptyState from '../components/EmptyState';
+import LoadingState from '../components/LoadingState';
+import ProgressBar from '../components/ProgressBar';
+import Spinner from '../components/Spinner';
+import { showSuccessToast, showErrorToast } from '../lib/toast';
 
 // Sub-component to manage individual accordion state safely
 const QuestionCard = ({ q, index }: { q: any, index: number }) => {
@@ -39,7 +43,7 @@ const QuestionCard = ({ q, index }: { q: any, index: number }) => {
 
 export default function Questions() {
   const { user } = useAuth();
-  const { generateQuestions, isLoading: isAiLoading } = useGemini();
+  const { generateQuestions, isLoading: isAiLoading, error: aiError } = useGemini();
   const location = useLocation();
 
   const [applications, setApplications] = useState<any[]>([]);
@@ -109,6 +113,9 @@ export default function Questions() {
 
       const updatedSnapshot = await getDocs(questionsRef);
       setQuestions(updatedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      showSuccessToast(`${generated.length} questions added to your deck.`);
+    } else {
+      showErrorToast(aiError || 'Failed to generate questions. Please try again.');
     }
   };
 
@@ -152,8 +159,9 @@ export default function Questions() {
             </div>
 
             {isAiLoading && (
-              <div className="bg-indigo-50 text-indigo-700 border border-indigo-100 p-3 rounded-xl text-xs font-medium animate-pulse">
-                🚀 Gemini is engineering exactly {questionCount} tailored target questions...
+              <div className="bg-indigo-50 text-indigo-700 border border-indigo-100 p-3 rounded-xl space-y-2">
+                <p className="text-xs font-medium">🚀 Gemini is engineering exactly {questionCount} tailored target questions...</p>
+                <ProgressBar isActive={isAiLoading} message="Generating questions" />
               </div>
             )}
 
@@ -182,9 +190,10 @@ export default function Questions() {
                 <button
                   onClick={handleBuildDeck}
                   disabled={isAiLoading}
-                  className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider"
+                  className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center"
                 >
-                  {isAiLoading ? 'Building Deck via Gemini...' : 'Generate AI Question Bank'}
+                  {isAiLoading && <Spinner size="sm" colorClass="text-white" />}
+                  <span>{isAiLoading ? 'Building Deck via Gemini...' : 'Generate AI Question Bank'}</span>
                 </button>
               </div>
             )}
@@ -192,7 +201,7 @@ export default function Questions() {
 
           <div className="md:col-span-2 space-y-3">
             {fetchingQuestions ? (
-              <p className="text-sm text-gray-500 font-medium">Syncing local questions storage ledger...</p>
+              <LoadingState message="Syncing local questions storage ledger..." size="md" />
             ) : questions.length === 0 ? (
               <div className="bg-dashed border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center text-slate-400 text-xs font-medium">
                 No active mock tracking deck created yet for this role position. Click "Generate" to populate tailored content.

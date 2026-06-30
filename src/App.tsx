@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -23,6 +24,14 @@ function App() {
   return (
     // Level 1 — catches anything that escapes all inner boundaries
     <ErrorBoundary variant="page">
+      <Toaster
+        position="top-center"
+        gutter={8}
+        containerStyle={{ top: 16, left: 16, right: 16 }}
+        toastOptions={{
+          style: { maxWidth: '420px' },
+        }}
+      />
       <AuthProvider>
         <Router>
           <Routes>
