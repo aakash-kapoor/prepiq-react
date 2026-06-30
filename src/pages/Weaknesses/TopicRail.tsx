@@ -1,4 +1,5 @@
 import { type TopicStats, getStatusConfig } from './types';
+import LoadingState from '../../components/LoadingState';
 
 interface TopicRailProps {
     topicMetrics: TopicStats[];
@@ -14,7 +15,7 @@ export default function TopicRail({ topicMetrics, isLoading }: TopicRailProps) {
             </div>
 
             {isLoading ? (
-                <p className="text-sm text-gray-400 p-4 font-medium">Compiling structural analytics data matrices...</p>
+                <LoadingState message="Compiling structural analytics data matrices..." size="md" />
             ) : topicMetrics.length === 0 ? (
                 <p className="text-sm text-gray-400 p-4 text-center font-medium">No active question configurations initialized. Go to your Question Bank to build a tracking deck.</p>
             ) : (
