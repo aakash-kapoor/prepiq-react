@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
+import LoadingState from '../components/LoadingState';
 
 interface JobApp {
   id: string;
@@ -187,7 +188,7 @@ export default function StudyPlan() {
           {/* Right Column: Custom Tailored SVG-Style Timeline Rail */}
           <div className="md:col-span-2 space-y-6">
             {isLoading ? (
-              <p className="text-sm text-slate-400 font-medium">Computing schedule intervals...</p>
+              <LoadingState message="Computing schedule intervals..." size="md" />
             ) : (
               <div className="relative border-l-2 border-slate-200 ml-4 md:ml-6 space-y-6">
                 {timeline.map((day) => {

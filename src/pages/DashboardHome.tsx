@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import LoadingState from '../components/LoadingState';
 
 interface JobApp {
   id: string;
@@ -62,7 +63,7 @@ export default function DashboardHome() {
   }, [user]);
 
   if (loading) {
-    return <div className="text-center p-12 text-sm text-slate-400 font-medium">Syncing real-time workspace metrics...</div>;
+    return <LoadingState message="Syncing real-time workspace metrics..." />;
   }
 
   return (

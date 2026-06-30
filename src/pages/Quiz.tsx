@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
+import LoadingState from '../components/LoadingState';
 
 export default function Quiz() {
   const location = useLocation();
@@ -60,7 +61,7 @@ export default function Quiz() {
     navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
   };
 
-  if (loading) return <div className="text-center p-12 text-sm text-gray-500">Assembling interactive session modules...</div>;
+  if (loading) return <LoadingState message="Assembling interactive session modules..." />;
   if (questions.length === 0) return <div className="text-center p-12">No evaluation content synchronized.</div>;
 
   if (sessionCompleted) {
