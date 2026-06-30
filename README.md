@@ -28,6 +28,7 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 | Build Tool | Vite 8 |
 | Routing | React Router DOM 7 |
 | Styling | Tailwind CSS 3 |
+| Notifications | react-hot-toast |
 | Auth / Database | Firebase 12 (Auth + Firestore) |
 | AI | Google Gemini AI |
 | Linting | Oxlint |
@@ -109,7 +110,10 @@ prepiq/
 |   |   |-- AppLayout.tsx
 |   |   |-- EmptyState.tsx
 |   |   |-- ErrorBoundary.tsx
-|   |   `-- LegalModal.tsx
+|   |   |-- LegalModal.tsx
+|   |   |-- LoadingState.tsx
+|   |   |-- ProgressBar.tsx
+|   |   `-- Spinner.tsx
 |   |-- config/
 |   |   |-- changelog.ts
 |   |   |-- firebase.ts
@@ -118,10 +122,28 @@ prepiq/
 |   |   `-- AuthContext.tsx
 |   |-- hooks/
 |   |   `-- useGemini.ts
+|   |-- lib/
+|   |   `-- toast.ts
 |   |-- pages/
 |   |   |-- Analyze/
+|   |   |   |-- index.tsx
+|   |   |   |-- InputPanel.tsx
+|   |   |   `-- ResultsPanel.tsx
 |   |   |-- Landing/
+|   |   |   |-- index.tsx
+|   |   |   |-- Navbar.tsx
+|   |   |   |-- Hero.tsx
+|   |   |   |-- HowItWorks.tsx
+|   |   |   |-- Features.tsx
+|   |   |   |-- CTA.tsx
+|   |   |   |-- AboutDeveloper.tsx
+|   |   |   `-- Footer.tsx
 |   |   |-- Weaknesses/
+|   |   |   |-- index.tsx
+|   |   |   |-- types.ts
+|   |   |   |-- AppSelector.tsx
+|   |   |   |-- SummaryCards.tsx
+|   |   |   `-- TopicRail.tsx
 |   |   |-- DashboardHome.tsx
 |   |   |-- Login.tsx
 |   |   |-- Questions.tsx
@@ -150,12 +172,15 @@ prepiq/
 
 **Component-first page structure.** Large pages (`Landing`, `Analyze`, `Weaknesses`) are split into focused sub-components, each owning its own data and UI. Orchestrator `index.tsx` files handle state and wire props down — keeping business logic separate from presentation.
 
+**Layered error boundaries.** `ErrorBoundary` wraps the app at three levels — the whole app, the dashboard shell, and each individual dashboard route — so a crash on one page doesn't take down the whole workspace.
+
 ---
 
 ## 📋 Changelog
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.6.0 | Jun 30, 2026 | Error boundaries, loading states, toast notifications, difficulty badge fix |
 | v0.5.0 | Jun 29, 2026 | Legal modals, component refactor, landing refinements |
 | v0.4.0 | Jun 28, 2026 | Landing and login page redesign |
 | v0.3.2 | Jun 27, 2026 | Firebase Hosting target configured |

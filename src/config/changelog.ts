@@ -21,6 +21,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.6.0',
+    date: 'Jun 30, 2026',
+    title: 'Error boundaries, loading states, and toast notifications',
+    description:
+      'Added error boundaries so a crash on one page no longer breaks the whole app, replaced loading text with spinners and progress bars, introduced toast notifications for a smoother feedback experience, and fixed the difficulty badge on the JD Analyzer to correctly show Junior, Mid-Level, or Senior.',
+    tags: ['feat', 'fix', 'ui', 'responsive'],
+  },
+  {
   version: 'v0.5.0',
   date: 'Jun 29, 2026',
   title: 'Legal pages, project organization, and landing page refinements',
