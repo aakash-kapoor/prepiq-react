@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { NavigationItem } from "../../config/navigation";
 import { LayoutGroup, motion } from "motion/react";
+import { isNavItemActive } from "../../config/navigation";
 
 type LiquidBottomNavProps = {
     items: NavigationItem[];
@@ -34,13 +35,7 @@ export default function LiquidBottomNav({
   onMoreClick,
   isMoreMenuOpen,
 }: LiquidBottomNavProps) {
-  const isMoreSectionActive =
-    isMoreMenuOpen ||
-    moreItems.some(
-      (item) =>
-        pathname === item.path ||
-        (item.name === "Quiz Mode" && pathname === "/dashboard/quiz-session")
-    );
+  const isMoreSectionActive = isMoreMenuOpen || moreItems.some((item) => isNavItemActive(item, pathname));
 
   return (
     <nav
@@ -94,10 +89,7 @@ export default function LiquidBottomNav({
       <LayoutGroup>
         <div className="relative flex h-full w-full items-center">
           {items.map((item) => {
-            const isActive =
-              pathname === item.path ||
-              (item.name === "Quiz Mode" &&
-                pathname === "/dashboard/quiz-session");
+            const isActive = isNavItemActive(item, pathname);
             return (
               <div
                 key={item.path}
@@ -123,10 +115,10 @@ export default function LiquidBottomNav({
                   "
                     animate={{
                       boxShadow: [
-                        "...small...",
-                        "...larger...",
-                        "...small..."
-                      ]
+                        "0 4px 14px rgba(99,102,241,0.18)",
+                        "0 4px 20px rgba(99,102,241,0.35)",
+                        "0 4px 14px rgba(99,102,241,0.18)",
+                      ],
                     }}
                   />
                 )}
@@ -183,10 +175,10 @@ export default function LiquidBottomNav({
               "
                 animate={{
                   boxShadow: [
-                    "...small...",
-                    "...larger...",
-                    "...small..."
-                  ]
+                        "0 4px 14px rgba(99,102,241,0.18)",
+                        "0 4px 20px rgba(99,102,241,0.35)",
+                        "0 4px 14px rgba(99,102,241,0.18)",
+                      ],
                 }}
               />
             )}

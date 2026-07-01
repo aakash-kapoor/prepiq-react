@@ -7,6 +7,13 @@ export type NavigationItem = {
   icon: ReactNode;
 };
 
+export function isNavItemActive(item: NavigationItem, pathname: string): boolean {
+  return (
+    pathname === item.path ||
+    (item.name === "Quiz Mode" && pathname === "/dashboard/quiz-session")
+  );
+}
+
 export const primaryNavigation: NavigationItem[] = [
    { 
       name: 'Dashboard', 

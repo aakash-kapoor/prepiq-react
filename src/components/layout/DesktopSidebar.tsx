@@ -1,16 +1,11 @@
 import { Link } from "react-router-dom";
 import type { User } from "firebase/auth";
-
-type MenuItem = {
-    name: string;
-    path: string;
-    label: string;
-    icon: React.ReactNode;
-};
+import type { NavigationItem } from "../../config/navigation";
+import { isNavItemActive } from "../../config/navigation";
 
 type DesktopSidebarProps = {
     user: User;
-    menuItems: MenuItem[];
+    menuItems: NavigationItem[];
     pathname: string;
     onLogout: () => void;
 };
@@ -32,7 +27,7 @@ export default function DesktopSidebar({
 
             <nav className="flex-1 p-4 space-y-1">
                 {menuItems.map((item) => {
-                    const isActive = pathname === item.path || (item.name === 'Quiz Mode' && pathname === '/dashboard/quiz-session');
+                     const isActive = isNavItemActive(item, pathname);
                     return (
                         <Link
                             key={item.path}
@@ -42,7 +37,7 @@ export default function DesktopSidebar({
                                     : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
                                 }`}
                         >
-                            <span className="text-slate-400 group-hover:text-white transition-colors">{item.icon}</span>
+                            <span className="transition-colors">{item.icon}</span>
                             {item.name}
                         </Link>
                     );
