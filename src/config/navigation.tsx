@@ -7,7 +7,7 @@ export type NavigationItem = {
   icon: ReactNode;
 };
 
-export const navigationItems: NavigationItem[] = [
+export const primaryNavigation: NavigationItem[] = [
    { 
       name: 'Dashboard', 
       path: '/dashboard', 
@@ -38,8 +38,11 @@ export const navigationItems: NavigationItem[] = [
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm0 5.25h.007v.008H3.75v-.008Zm0 5.25h.007v.008H3.75v-.008Z" />
         </svg>
       )
-    },
-    { 
+    }
+];
+
+export const secondaryNavigation: NavigationItem[] = [
+  { 
       name: 'Quiz Mode', 
       path: '/dashboard/quiz', 
       label: 'QUIZ',
@@ -69,4 +72,4 @@ export const navigationItems: NavigationItem[] = [
         </svg>
       )
     }
-];
+]

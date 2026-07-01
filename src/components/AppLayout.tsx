@@ -3,12 +3,29 @@ import { useAuth } from '../context/AuthContext';
 import DesktopSidebar from './layout/DesktopSidebar';
 import MobileHeader from './layout/MobileHeader';
 import LiquidBottomNav from "./layout/LiquidBottomNav";
-import { navigationItems } from "../config/navigation";
+import MoreMenu from "./layout/MoreMenu";
+import { primaryNavigation, secondaryNavigation } from "../config/navigation";
+import { useEffect, useState } from 'react';
 
 export default function AppLayout() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+
+  // 1. Auto-close menu on route change
+  useEffect(() => {  
+    setIsMoreMenuOpen(false);
+  }, [location.pathname]);
+
+  // 2. Accessibility: Close menu on Escape key press
+  useEffect(() => {  
+    if (!isMoreMenuOpen) return;  
+    const handler = (e: KeyboardEvent) => e.key === 'Escape' && setIsMoreMenuOpen(false);  
+    window.addEventListener('keydown', handler);  
+    return () => window.removeEventListener('keydown', handler);
+  }, [isMoreMenuOpen]);
 
   if (!user) return null;
 
@@ -28,8 +45,6 @@ export default function AppLayout() {
     const last = pathnames[pathnames.length - 1];
     return routeLabels[last.toLowerCase()] || last;
   };
-
-  const menuItems = navigationItems;
 
   // --- DYNAMIC BREADCRUMB BUILDER ENGINE ---
   const generateBreadcrumbs = () => {
@@ -63,7 +78,7 @@ export default function AppLayout() {
       {/* 1. DESKTOP SIDEBAR: Visible on medium screens and up */}
       <DesktopSidebar
         user={user}
-        menuItems={menuItems}
+        menuItems={[...primaryNavigation, ...secondaryNavigation]}
         pathname={location.pathname}
         onLogout={() => logout().then(() => navigate('/'))}
       />
@@ -73,7 +88,6 @@ export default function AppLayout() {
         user={user}
         pathname={location.pathname}
         currentPageTitle={getCurrentPageTitle()}
-        onLogout={() => logout().then(() => navigate('/'))}
       />
 
       {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
@@ -93,8 +107,21 @@ export default function AppLayout() {
 
       {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR: Visible strictly on small screens */}
       <LiquidBottomNav
-        items={menuItems}
+        items={primaryNavigation}
+        moreItems={secondaryNavigation}
         pathname={location.pathname}
+        onMoreClick={() => setIsMoreMenuOpen(true)}
+        isMoreMenuOpen={isMoreMenuOpen}
+      />
+
+      <MoreMenu
+        open={isMoreMenuOpen}
+        items={secondaryNavigation}
+        onClose={() => setIsMoreMenuOpen(false)}
+        onLogout={() => {
+          setIsMoreMenuOpen(false);
+          logout().then(() => navigate("/"));
+        }}
       />
 
     </div>
