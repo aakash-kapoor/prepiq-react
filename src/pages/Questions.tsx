@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useGemini } from '../hooks/useGemini';
 import { db } from '../config/firebase';
@@ -52,6 +52,8 @@ export default function Questions() {
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const [questionCount, setQuestionCount] = useState<number>(15);
 
+  const hasAutoSelected = useRef(false);
+
   useEffect(() => {
     if (!user) return;
     const q = collection(db, 'users', user.uid, 'jobApplications');
@@ -64,12 +66,16 @@ export default function Questions() {
         const foundApp = apps.find(a => a.id === stateTargetId);
         if (foundApp) {
           setSelectedApp(foundApp);
+          hasAutoSelected.current = true;
           return;
         }
       }
 
-      if (apps.length > 0 && !selectedApp) {
+      // Only auto-select the first app once — never override the user's
+      // manual selection on subsequent snapshot updates (stale closure fix).
+      if (apps.length > 0 && !hasAutoSelected.current) {
         setSelectedApp(apps[0]);
+        hasAutoSelected.current = true;
       }
     });
     return () => unsubscribe();
