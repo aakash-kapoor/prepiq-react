@@ -26,7 +26,29 @@ export default function Analyze() {
         setJdText(value);
     };
 
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+
+    const minDate = today.toISOString().split("T")[0];
+
     const handleInterviewDateChange = (value: string) => {
+        if (!value) {
+            setInterviewDate("");
+            return;
+        }
+
+        const parsedDate = new Date(value);
+        if (isNaN(parsedDate.getTime())) {
+            showErrorToast("Please enter a valid interview date.");
+            setInterviewDate("");
+            return;
+        }
+
+        if (value < minDate) {
+            showErrorToast("Interview date cannot be in the past.");
+            return;
+        }
+
         setInterviewDate(value);
     };
 

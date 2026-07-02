@@ -1,5 +1,6 @@
 import ProgressBar from '../../components/ProgressBar';
 import Spinner from '../../components/Spinner';
+import { showErrorToast } from '../../lib/toast';
 
 interface InputPanelProps {
     company: string;
@@ -11,6 +12,11 @@ interface InputPanelProps {
     onInterviewDateChange: (value: string) => void;
     onAnalyze: () => void;
 }
+
+const today = new Date();
+today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+
+const minDate = today.toISOString().split("T")[0];
 
 export default function InputPanel({
     company,
@@ -50,12 +56,19 @@ export default function InputPanel({
                         <span className="text-[10px] text-slate-300 font-medium">optional</span>
                     </div>
                     <input
-                        type="date"
-                        min={new Date().toISOString().split('T')[0]}
-                        value={interviewDate}
-                        disabled={isLoading}
-                        onChange={(e) => onInterviewDateChange(e.target.value)}
-                        className="w-full p-3 border border-gray-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium text-slate-600 disabled:opacity-50 disabled:bg-slate-50 cursor-pointer"
+                    type="date"
+                    value={interviewDate}
+                    min={minDate}
+                    disabled={isLoading}
+                    onChange={(e) => onInterviewDateChange(e.target.value)}
+                    onBlur={(e) => {
+                        if (e.target.validity.badInput) {
+                            showErrorToast("Please enter a valid interview date.");
+                        } else if (e.target.validity.rangeUnderflow) {
+                            showErrorToast("Interview date cannot be in the past.");
+                        }
+                    }}
+                    className="w-full p-3 border border-gray-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium text-slate-600 disabled:opacity-50 disabled:bg-slate-50 cursor-pointer"
                     />
                     <p className="text-[10px] text-slate-300 font-medium leading-snug">
                         Sets your Study Plan countdown from day one.
