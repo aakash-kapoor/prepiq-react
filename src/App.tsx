@@ -15,21 +15,33 @@ import StudyPlan from './pages/StudyPlan';
 import Profile from './pages/Profile';
 import React from 'react';
 
-// Component Route Guard
+// Spinner shown while Firebase resolves auth state
+function AuthSpinner() {
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+      <div className="w-6 h-6 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
+    </div>
+  );
+}
+
+// Redirects unauthenticated users to /login
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   // Wait for Firebase to resolve auth state before making a routing decision.
   // Without this guard, auth init (~300-800ms) causes a false redirect to /login.
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <AuthSpinner />;
 
   return user ? children : <Navigate to="/login" replace />;
+}
+
+// Redirects already-authenticated users to /dashboard
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <AuthSpinner />;
+
+  return user ? <Navigate to="/dashboard" replace /> : children;
 }
 
 function App() {
@@ -54,11 +66,11 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
-            {/* Public Marketing Landing Root */}
-            <Route path="/" element={<Landing />} />
+            {/* Public Marketing Landing Root — redirects to dashboard if already logged in */}
+            <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
 
-            {/* Dedicated Authentication Access Node */}
-            <Route path="/login" element={<Login />} />
+            {/* Dedicated Authentication Access Node — same redirect behaviour */}
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
 
             {/* Secure Protected Dashboard App Scope */}
             <Route
