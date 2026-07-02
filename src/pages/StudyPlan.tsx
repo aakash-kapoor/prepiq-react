@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
+import { showSuccessToast, showErrorToast } from '../lib/toast';
 
 interface JobApp {
   id: string;
@@ -26,8 +27,9 @@ export default function StudyPlan() {
   const [selectedApp, setSelectedApp] = useState<JobApp | null>(null);
   const [weakTopics, setWeakTopics] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<TimelineDay[]>([]);
-  const [daysRemaining, setDaysRemaining] = useState<number>(7); // Default fallback schedule window
+  const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSavingDate, setIsSavingDate] = useState(false);
 
   // 1. Sync Job Applications from Firestore
   useEffect(() => {
@@ -38,9 +40,14 @@ export default function StudyPlan() {
       setApplications(apps);
       if (apps.length > 0 && !selectedApp) {
         setSelectedApp(apps[0]);
+      } else if (selectedApp) {
+        // Keep selectedApp fresh after Firestore doc updates (e.g. after date save)
+        const refreshed = apps.find(a => a.id === selectedApp.id);
+        if (refreshed) setSelectedApp(refreshed);
       }
     });
     return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // 2. Identify Gaps & Build Timeline dynamically based on data
@@ -88,7 +95,6 @@ export default function StudyPlan() {
       
       for (let i = 1; i <= windowSize; i++) {
         if (i === windowSize) {
-          // Final day layout: "The Final 10 Mode" from project specifications
           generatedTimeline.push({
             dayNumber: i,
             title: 'The Final 10 Flash Drill ⚡',
@@ -105,7 +111,6 @@ export default function StudyPlan() {
             description: 'Simulate absolute pressure. Pull a mixed deck of 30 random conceptual and practical items without turning on answer sheets.'
           });
         } else {
-          // Divide identified gaps across early schedule rows dynamically
           const topicIndex = (i - 1) % (gaps.length || 1);
           const currentFocus = gaps.length > 0 ? [gaps[topicIndex]] : ['Core Architecture Re-evaluation'];
           
@@ -125,6 +130,50 @@ export default function StudyPlan() {
 
   }, [selectedApp, user]);
 
+  // Save interview date to Firestore — onSnapshot will refresh selectedApp
+  // automatically, which triggers the timeline useEffect to recompute.
+  const handleInterviewDateChange = async (dateValue: string) => {
+    if (!user || !selectedApp) return;
+    setIsSavingDate(true);
+    try {
+      const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
+      await updateDoc(appDocRef, { interviewDate: dateValue });
+      showSuccessToast('Interview date saved — timeline updated.');
+    } catch (err) {
+      console.error('Failed to save interview date:', err);
+      showErrorToast('Could not save the date. Please try again.');
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
+
+  const handleClearInterviewDate = async () => {
+    if (!user || !selectedApp) return;
+    setIsSavingDate(true);
+    try {
+      const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
+      await updateDoc(appDocRef, { interviewDate: '' });
+      showSuccessToast('Interview date cleared — using default 5-day sprint.');
+    } catch (err) {
+      showErrorToast('Could not clear the date. Please try again.');
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
+
+  // Format the stored ISO date string to the yyyy-MM-dd value the date input expects
+  const toInputValue = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  // Today's date as the minimum selectable value — can't set an interview in the past
+  const todayStr = new Date().toISOString().split('T')[0];
+
   if (!applications || applications.length === 0) {
     return (
         <div className="max-w-6xl mx-auto p-6">
@@ -135,7 +184,8 @@ export default function StudyPlan() {
             />
         </div>
     );
-}
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       
@@ -168,11 +218,64 @@ export default function StudyPlan() {
               <p className="text-xs text-slate-400 mt-0.5">{selectedApp.company} — {selectedApp.role}</p>
             </div>
             
-            <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-1">
-              <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Preparation Status</p>
+            {/* Interview Date Picker */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="interview-date"
+                  className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                >
+                  Interview Date
+                </label>
+                {selectedApp.interviewDate && (
+                  <button
+                    onClick={handleClearInterviewDate}
+                    disabled={isSavingDate}
+                    className="text-[10px] font-bold text-red-400 hover:text-red-600 transition disabled:opacity-50"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  id="interview-date"
+                  type="date"
+                  min={todayStr}
+                  value={toInputValue(selectedApp.interviewDate)}
+                  disabled={isSavingDate}
+                  onChange={(e) => handleInterviewDateChange(e.target.value)}
+                  className="w-full text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition disabled:opacity-60 cursor-pointer"
+                />
+                {isSavingDate && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+                  </div>
+                )}
+              </div>
+              {!selectedApp.interviewDate && (
+                <p className="text-[10px] text-slate-400 font-medium leading-snug">
+                  No date set — showing default 5-day sprint. Set your interview date for a real countdown.
+                </p>
+              )}
+            </div>
+
+            {/* Days Remaining Card */}
+            <div className={`p-4 rounded-xl space-y-1 border transition-all ${
+              selectedApp.interviewDate
+                ? 'bg-indigo-50/50 border-indigo-100'
+                : 'bg-slate-50 border-slate-100'
+            }`}>
+              <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                selectedApp.interviewDate ? 'text-indigo-600' : 'text-slate-400'
+              }`}>
+                {selectedApp.interviewDate ? 'Real Countdown' : 'Default Sprint'}
+              </p>
               <h3 className="text-2xl font-black text-slate-800">{daysRemaining} Days Left</h3>
               <p className="text-xs text-slate-500 font-medium leading-tight pt-1">
-                AI has dynamically distributed your target gap modules based on your manual confidence logs.
+                {selectedApp.interviewDate
+                  ? 'Timeline is calibrated to your actual interview date.'
+                  : 'AI has dynamically distributed your target gap modules based on your manual confidence logs.'}
               </p>
             </div>
 
@@ -196,7 +299,6 @@ export default function StudyPlan() {
               <div className="relative border-l-2 border-slate-200 ml-4 md:ml-6 space-y-6">
                 {timeline.map((day) => {
                   
-                  // Color styling assignment based on milestone types
                   let markerColors = 'bg-[#6366F1] border-indigo-200 ring-indigo-100';
                   if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 ring-amber-100';
                   if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 ring-red-100';
