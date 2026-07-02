@@ -48,8 +48,11 @@ export default function Analyze() {
                     resultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
             }
-        } else if (apiError) {
-            showErrorToast(apiError);
+        } else {
+            // `apiError` is React state — it may not have flushed yet after the await.
+            // The hook always sets error before returning null, so we read it via the
+            // module-level `apiError` ref as a best-effort, with a safe fallback message.
+            showErrorToast(apiError || 'Analysis failed. Check your API key or connection and try again.');
         }
     };
 
