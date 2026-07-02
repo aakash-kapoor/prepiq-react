@@ -4,6 +4,11 @@
 
 PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact knowledge gaps, simulate adaptive flashcard drills, and compile a personalized day-by-day study timeline — so you walk into every interview fully prepared.
 
+![PrepIQ Tech Stack](https://img.shields.io/badge/React-19-6366F1?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
 🌐 **Live:** [prep-iq.web.app](https://prep-iq.web.app)
 
 ---
@@ -15,6 +20,7 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 - **Adaptive Flashcard Drills** — Interactive study cards that target your weakest areas for smarter repetition.
 - **Weakness Radar** — Visual confidence charts surface your blind spots across every topic you've practised.
 - **Automated Study Timelines** — Generates a day-by-day sprint schedule tailored to your lowest-confidence areas and interview date.
+- **User Profile & Account Management** — Edit your display name, sign out, or permanently delete your account with a secure email-confirmation gate that wipes all associated Firestore data.
 - **Zero Setup** — Sign in with Google and go. No backend, no API key wrangling — fully serverless on Firebase.
 
 ---
@@ -108,12 +114,18 @@ prepiq/
 |   |   `-- vite.svg
 |   |-- components/
 |   |   |-- AppLayout.tsx
+|   |   |-- DeleteAccountModal.tsx
 |   |   |-- EmptyState.tsx
 |   |   |-- ErrorBoundary.tsx
 |   |   |-- LegalModal.tsx
 |   |   |-- LoadingState.tsx
 |   |   |-- ProgressBar.tsx
-|   |   `-- Spinner.tsx
+|   |   |-- Spinner.tsx
+|   |   `-- layout/
+|   |       |-- DesktopSidebar.tsx
+|   |       |-- LiquidBottomNav.tsx
+|   |       |-- MobileHeader.tsx
+|   |       `-- MoreMenu.tsx
 |   |-- config/
 |   |   |-- changelog.ts
 |   |   |-- firebase.ts
@@ -123,6 +135,7 @@ prepiq/
 |   |-- hooks/
 |   |   `-- useGemini.ts
 |   |-- lib/
+|   |   |-- deleteUserData.ts
 |   |   `-- toast.ts
 |   |-- pages/
 |   |   |-- Analyze/
@@ -146,6 +159,7 @@ prepiq/
 |   |   |   `-- TopicRail.tsx
 |   |   |-- DashboardHome.tsx
 |   |   |-- Login.tsx
+|   |   |-- Profile.tsx
 |   |   |-- Questions.tsx
 |   |   |-- Quiz.tsx
 |   |   |-- QuizLauncher.tsx
@@ -180,6 +194,8 @@ prepiq/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.8.0 | Jul 2, 2026 | User profile page, display name editing, account deletion |
+| v0.7.0 | Jul 1, 2026 | UI hardening, modular routing, liquid glass mobile nav |
 | v0.6.0 | Jun 30, 2026 | Error boundaries, loading states, toast notifications, difficulty badge fix |
 | v0.5.0 | Jun 29, 2026 | Legal modals, component refactor, landing refinements |
 | v0.4.0 | Jun 28, 2026 | Landing and login page redesign |

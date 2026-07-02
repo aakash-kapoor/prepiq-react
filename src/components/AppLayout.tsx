@@ -15,15 +15,15 @@ export default function AppLayout() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   // 1. Auto-close menu on route change
-  useEffect(() => {  
+  useEffect(() => {
     setIsMoreMenuOpen(false);
   }, [location.pathname]);
 
   // 2. Accessibility: Close menu on Escape key press
-  useEffect(() => {  
-    if (!isMoreMenuOpen) return;  
-    const handler = (e: KeyboardEvent) => e.key === 'Escape' && setIsMoreMenuOpen(false);  
-    window.addEventListener('keydown', handler);  
+  useEffect(() => {
+    if (!isMoreMenuOpen) return;
+    const handler = (e: KeyboardEvent) => e.key === 'Escape' && setIsMoreMenuOpen(false);
+    window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [isMoreMenuOpen]);
 
@@ -36,7 +36,8 @@ export default function AppLayout() {
     quiz: 'Quiz Mode',
     'quiz-session': 'Quiz Mode',
     weaknesses: 'Weak Spots',
-    'study-plan': 'Study Plan'
+    'study-plan': 'Study Plan',
+    profile: 'Profile'
   };
 
   const getCurrentPageTitle = () => {
@@ -60,8 +61,8 @@ export default function AppLayout() {
         </span>
       ) : (
         <span key={to} className="flex items-center">
-          <Link 
-            to={to} 
+          <Link
+            to={to}
             className="text-indigo-600 hover:text-indigo-700 transition duration-150"
           >
             {label}
@@ -74,7 +75,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans antialiased text-slate-900">
-      
+
       {/* 1. DESKTOP SIDEBAR: Visible on medium screens and up */}
       <DesktopSidebar
         user={user}
