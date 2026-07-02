@@ -24,8 +24,8 @@ export default function MoreMenu({
             className="fixed inset-0 bg-black/20 z-40 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{
-                opacity: open ? 1 : 0,
-                pointerEvents: open ? "auto" : "none",
+              opacity: open ? 1 : 0,
+              pointerEvents: open ? "auto" : "none",
             }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
@@ -36,7 +36,7 @@ export default function MoreMenu({
           <motion.div
             className="fixed inset-x-4 bottom-4 z-50"
             style={{
-                willChange: "transform, opacity",
+              willChange: "transform, opacity",
             }}
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -176,7 +176,7 @@ export default function MoreMenu({
                     />
                   </svg>
                   <span className="font-medium text-red-500">
-                    Logout
+                    Sign Out
                   </span>
                 </motion.button>
               </div>

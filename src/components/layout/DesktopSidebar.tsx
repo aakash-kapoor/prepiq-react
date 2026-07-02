@@ -46,7 +46,10 @@ export default function DesktopSidebar({
 
             {/* Desktop Profile Badge Footer */}
             <div className="p-4 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
-                <div className="flex items-center gap-3 overflow-hidden">
+                 <Link
+                     to="/dashboard/profile"
+                     className="flex items-center gap-3 overflow-hidden rounded-xl hover:bg-slate-100 transition-colors p-1 -m-1"
+                 >
                     <img
                         src={user.photoURL || 'https://via.placeholder.com/150'}
                         className="w-9 h-9 rounded-full border border-slate-200 object-cover"
@@ -56,7 +59,7 @@ export default function DesktopSidebar({
                         <span className="text-sm font-semibold truncate text-slate-800">{user.displayName}</span>
                         <span className="text-[10px] text-slate-400 truncate">{user.email}</span>
                     </div>
-                </div>
+                </Link>
                 {/* Clean SVG Profile Logout Action Trigger */}
                 <button
                     onClick={onLogout}

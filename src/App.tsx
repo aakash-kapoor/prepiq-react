@@ -12,6 +12,7 @@ import QuizLauncher from './pages/QuizLauncher';
 import Quiz from './pages/Quiz';
 import Weaknesses from './pages/Weaknesses';
 import StudyPlan from './pages/StudyPlan';
+import Profile from './pages/Profile';
 import React from 'react';
 
 // Component Route Guard
@@ -30,6 +31,11 @@ function App() {
         containerStyle={{ top: 16, left: 16, right: 16 }}
         toastOptions={{
           style: { maxWidth: '420px' },
+          error: {
+            style: {
+              background: 'red',
+            },
+          }
         }}
       />
       <AuthProvider>
@@ -101,6 +107,14 @@ function App() {
                 element={
                   <ErrorBoundary variant="section" label="Study Plan">
                     <StudyPlan />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="profile"
+                element={
+                  <ErrorBoundary variant="section" label="Profile">
+                    <Profile />
                   </ErrorBoundary>
                 }
               />

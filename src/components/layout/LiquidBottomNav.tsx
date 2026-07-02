@@ -4,11 +4,11 @@ import { LayoutGroup, motion } from "motion/react";
 import { isNavItemActive } from "../../config/navigation";
 
 type LiquidBottomNavProps = {
-    items: NavigationItem[];
-    moreItems: NavigationItem[];
-    pathname: string;
-    onMoreClick: () => void;
-    isMoreMenuOpen: boolean;
+  items: NavigationItem[];
+  moreItems: NavigationItem[];
+  pathname: string;
+  onMoreClick: () => void;
+  isMoreMenuOpen: boolean;
 };
 
 const MotionLink = motion.create(Link);
@@ -16,7 +16,7 @@ const MotionLink = motion.create(Link);
 const MoreIcon = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className="w-6 h-6"
+    className="w-5 h-5"
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -175,24 +175,17 @@ export default function LiquidBottomNav({
               "
                 animate={{
                   boxShadow: [
-                        "0 4px 14px rgba(99,102,241,0.18)",
-                        "0 4px 20px rgba(99,102,241,0.35)",
-                        "0 4px 14px rgba(99,102,241,0.18)",
-                      ],
+                    "0 4px 14px rgba(99,102,241,0.18)",
+                    "0 4px 20px rgba(99,102,241,0.35)",
+                    "0 4px 14px rgba(99,102,241,0.18)",
+                  ],
                 }}
               />
             )}
-            <button
+            <motion.button
               onClick={onMoreClick}
-              className={`
-              relative z-10
-              flex flex-1 flex-col
-              items-center justify-center
-              gap-0.5
-              h-full
-              transition-all duration-300
-              ${isMoreSectionActive ? "text-[#6366F1]" : "text-slate-400"}
-              `}
+              whileTap={{ scale: 0.94 }}
+              className={`relative z-10 flex flex-col items-center justify-center flex-1 min-w-0 px-0.5 h-full w-full transition-all duration-300 ease-out ${isMoreSectionActive ? "text-[#6366F1]" : "text-slate-400"}`}
             >
               <motion.span
                 animate={{
@@ -207,10 +200,16 @@ export default function LiquidBottomNav({
               >
                 {MoreIcon}
               </motion.span>
-              <span className="text-[10px] font-bold tracking-wide uppercase mt-0.5">
+              <motion.span
+                animate={{
+                  opacity: isMoreSectionActive ? 1 : 0.7,
+                  y: isMoreSectionActive ? 0 : 1,
+                }}
+                className="text-[10px] font-bold tracking-wide uppercase truncate w-full text-center mt-0.5"
+              >
                 More
-              </span>
-            </button>
+              </motion.span>
+            </motion.button>
           </div>
         </div>
       </LayoutGroup>
