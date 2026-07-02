@@ -29,7 +29,13 @@ export default function Quiz() {
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', appId, 'questions');
     getDocs(questionsRef).then((snapshot) => {
       const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setQuestions(qList.sort(() => 0.5 - Math.random()));
+      // Fisher-Yates shuffle — produces a uniform random permutation.
+      // The old sort(() => 0.5 - Math.random()) approach is statistically biased.
+      for (let i = qList.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [qList[i], qList[j]] = [qList[j], qList[i]];
+      }
+      setQuestions(qList);
       setLoading(false);
     });
   }, [appId, user, navigate]);
