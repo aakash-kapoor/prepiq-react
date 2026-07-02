@@ -17,19 +17,19 @@ export default function Navbar({ user, onCTA }: NavbarProps) {
                 <div className="flex items-center gap-2 sm:gap-3">
                     <a
                         href="#how-it-works"
-                        className="text-[10px] sm:text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+                        className="hidden md:inline text-[10px] sm:text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
                     >
                         How it works
                     </a>
                     <a
                         href="#features"
-                        className="text-[10px] sm:text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+                        className="hidden md:inline text-[10px] sm:text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
                     >
                         Features
                     </a>
                     <button
                         onClick={onCTA}
-                        className="text-[10px] sm:text-xs font-bold bg-[#6366F1] hover:bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-xl shadow-sm shadow-indigo-500/20 transition shrink-0"
+                        className="text-[10px] sm:text-xs font-bold bg-[#6366F1] hover:bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-xl shadow-sm shadow-indigo-500/20 transition shrink-0 whitespace-nowrap"
                     >
                         {user ? 'Go to workspace →' : 'Get started free'}
                     </button>
