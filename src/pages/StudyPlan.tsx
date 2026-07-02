@@ -6,6 +6,10 @@ import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
 
+const today = new Date();
+today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+const minDate = today.toISOString().split("T")[0];
+
 interface JobApp {
   id: string;
   company: string;
@@ -134,6 +138,23 @@ export default function StudyPlan() {
   // automatically, which triggers the timeline useEffect to recompute.
   const handleInterviewDateChange = async (dateValue: string) => {
     if (!user || !selectedApp) return;
+
+    if (!dateValue) {
+      handleClearInterviewDate();
+      return;
+    }
+
+    const parsedDate = new Date(dateValue);
+    if (isNaN(parsedDate.getTime())) {
+      showErrorToast("Please enter a valid interview date.");
+      return;
+    }
+
+    if (dateValue < minDate) {
+      showErrorToast("Interview date cannot be in the past.");
+      return;
+    }
+
     setIsSavingDate(true);
     try {
       const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
@@ -170,9 +191,6 @@ export default function StudyPlan() {
       return '';
     }
   };
-
-  // Today's date as the minimum selectable value — can't set an interview in the past
-  const todayStr = new Date().toISOString().split('T')[0];
 
   if (!applications || applications.length === 0) {
     return (
@@ -241,10 +259,17 @@ export default function StudyPlan() {
                 <input
                   id="interview-date"
                   type="date"
-                  min={todayStr}
+                  min={minDate}
                   value={toInputValue(selectedApp.interviewDate)}
                   disabled={isSavingDate}
                   onChange={(e) => handleInterviewDateChange(e.target.value)}
+                  onBlur={(e) => {
+                    if (e.target.validity.badInput) {
+                      showErrorToast("Please enter a valid interview date.");
+                    } else if (e.target.validity.rangeUnderflow) {
+                      showErrorToast("Interview date cannot be in the past.");
+                    }
+                  }}
                   className="w-full text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition disabled:opacity-60 cursor-pointer"
                 />
                 {isSavingDate && (
