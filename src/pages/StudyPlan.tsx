@@ -75,8 +75,11 @@ export default function StudyPlan() {
       // Calculate real schedule window if an interview date is set, otherwise default to a 5-day rush sprint
       let windowSize = 5;
       if (selectedApp.interviewDate) {
-        const diffTime = Math.abs(new Date(selectedApp.interviewDate).getTime() - new Date().getTime());
-        windowSize = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 3);
+        // Do NOT use Math.abs — a past date should produce a negative diff
+        // and fall back to the minimum sprint, not a bogus positive window.
+        const diffTime = new Date(selectedApp.interviewDate).getTime() - new Date().getTime();
+        const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        windowSize = Math.max(daysUntil, 3);
       }
       setDaysRemaining(windowSize);
 
