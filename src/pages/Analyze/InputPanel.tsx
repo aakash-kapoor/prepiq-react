@@ -35,8 +35,9 @@ export default function InputPanel({
                     <input
                         type="text"
                         placeholder="e.g., Google, Stripe, Local Startup"
-                        className="w-full p-3 border border-gray-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium"
+                        className="w-full p-3 border border-gray-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium disabled:opacity-50 disabled:bg-slate-50"
                         value={company}
+                        disabled={isLoading}
                         onChange={(e) => onCompanyChange(e.target.value)}
                     />
                 </div>
@@ -54,7 +55,7 @@ export default function InputPanel({
                         value={interviewDate}
                         disabled={isLoading}
                         onChange={(e) => onInterviewDateChange(e.target.value)}
-                        className="w-full p-3 border border-gray-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium text-slate-600 disabled:opacity-50 cursor-pointer"
+                        className="w-full p-3 border border-gray-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium text-slate-600 disabled:opacity-50 disabled:bg-slate-50 cursor-pointer"
                     />
                     <p className="text-[10px] text-slate-300 font-medium leading-snug">
                         Sets your Study Plan countdown from day one.
@@ -64,9 +65,10 @@ export default function InputPanel({
                 <div className="flex flex-col gap-1 flex-1 min-h-[320px]">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Job Description Text</label>
                     <textarea
-                        className="w-full p-4 border border-gray-200 rounded-xl text-xs outline-none resize-none flex-1 focus:ring-1 focus:ring-indigo-500 transition font-medium leading-relaxed"
+                        className="w-full p-4 border border-gray-200 rounded-xl text-xs outline-none resize-none flex-1 focus:ring-1 focus:ring-indigo-500 transition font-medium leading-relaxed disabled:opacity-50 disabled:bg-slate-50"
                         placeholder="Paste everything from the job posting..."
                         value={jdText}
+                        disabled={isLoading}
                         onChange={(e) => onJdTextChange(e.target.value)}
                     />
                 </div>
