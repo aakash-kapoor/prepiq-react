@@ -10,6 +10,7 @@ import ResultsPanel from './ResultsPanel';
 export default function Analyze() {
     const [jdText, setJdText] = useState('');
     const [company, setCompany] = useState('');
+    const [interviewDate, setInterviewDate] = useState('');
     const [analysisResult, setAnalysisResult] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -23,6 +24,10 @@ export default function Analyze() {
 
     const handleJdTextChange = (value: string) => {
         setJdText(value);
+    };
+
+    const handleInterviewDateChange = (value: string) => {
+        setInterviewDate(value);
     };
 
     const handleRunAnalysis = async () => {
@@ -72,10 +77,13 @@ export default function Analyze() {
                 estimatedDifficulty: analysisResult.estimatedDifficulty || 'Mid-Level',
                 createdAt: serverTimestamp(),
                 overallProgress: 0,
+                // Only persist if the user actually filled it in
+                ...(interviewDate ? { interviewDate } : {}),
             });
             showSuccessToast(`${analysisResult.roleTitle || 'Position'} saved to your workspace.`);
             setJdText('');
             setCompany('');
+            setInterviewDate('');
             setAnalysisResult(null);
         } catch (err) {
             console.error('Firestore save failed:', err);
@@ -90,9 +98,11 @@ export default function Analyze() {
             <InputPanel
                 company={company}
                 jdText={jdText}
+                interviewDate={interviewDate}
                 isLoading={isLoading}
                 onCompanyChange={handleCompanyChange}
                 onJdTextChange={handleJdTextChange}
+                onInterviewDateChange={handleInterviewDateChange}
                 onAnalyze={handleRunAnalysis}
             />
             <ResultsPanel

@@ -4,18 +4,22 @@ import Spinner from '../../components/Spinner';
 interface InputPanelProps {
     company: string;
     jdText: string;
+    interviewDate: string;
     isLoading: boolean;
     onCompanyChange: (value: string) => void;
     onJdTextChange: (value: string) => void;
+    onInterviewDateChange: (value: string) => void;
     onAnalyze: () => void;
 }
 
 export default function InputPanel({
     company,
     jdText,
+    interviewDate,
     isLoading,
     onCompanyChange,
     onJdTextChange,
+    onInterviewDateChange,
     onAnalyze,
 }: InputPanelProps) {
     return (
@@ -35,6 +39,26 @@ export default function InputPanel({
                         value={company}
                         onChange={(e) => onCompanyChange(e.target.value)}
                     />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+                            Interview Date
+                        </label>
+                        <span className="text-[10px] text-slate-300 font-medium">optional</span>
+                    </div>
+                    <input
+                        type="date"
+                        min={new Date().toISOString().split('T')[0]}
+                        value={interviewDate}
+                        disabled={isLoading}
+                        onChange={(e) => onInterviewDateChange(e.target.value)}
+                        className="w-full p-3 border border-gray-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium text-slate-600 disabled:opacity-50 cursor-pointer"
+                    />
+                    <p className="text-[10px] text-slate-300 font-medium leading-snug">
+                        Sets your Study Plan countdown from day one.
+                    </p>
                 </div>
 
                 <div className="flex flex-col gap-1 flex-1 min-h-[320px]">
