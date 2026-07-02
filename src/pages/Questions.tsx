@@ -176,6 +176,61 @@ export default function Questions() {
               <p>⚡ <strong>Estimated Tier:</strong> {selectedApp.estimatedDifficulty}</p>
             </div>
 
+            {/* Core Skills, Nice to Have, and Red Flags */}
+            <div className="border-t border-slate-100 pt-4 space-y-4">
+              {selectedApp.extractedSkills?.some((s: any) => s.category === 'Core') && (
+                <div className="space-y-1.5">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Core Skills</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedApp.extractedSkills
+                      .filter((s: any) => s.category === 'Core')
+                      .map((s: any, idx: number) => (
+                        <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold">
+                          {s.skill}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedApp.extractedSkills?.some((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have') && (
+                <div className="space-y-1.5">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nice to Have</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedApp.extractedSkills
+                      .filter((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have')
+                      .map((s: any, idx: number) => (
+                        <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 font-bold">
+                          {s.skill}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {((selectedApp.redFlags && selectedApp.redFlags.length > 0) || selectedApp.extractedSkills?.some((s: any) => s.category === 'RedFlag')) && (
+                <div className="space-y-1.5">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Red Flags Identified</h4>
+                  <div className="flex flex-col gap-1">
+                    {selectedApp.redFlags?.map((flag: string, idx: number) => (
+                      <span key={`flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 text-rose-600 border border-rose-100 font-bold leading-tight flex items-start gap-1">
+                        <span>⚠️</span>
+                        <span>{flag}</span>
+                      </span>
+                    ))}
+                    {selectedApp.extractedSkills
+                      ?.filter((s: any) => s.category === 'RedFlag')
+                      .map((s: any, idx: number) => (
+                        <span key={`skill-flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 text-rose-600 border border-rose-100 font-bold leading-tight flex items-start gap-1">
+                          <span>⚠️</span>
+                          <span>{s.skill}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {questions.length === 0 && (
               <div className="space-y-3 pt-2">
                 <div className="flex flex-col gap-1.5">
