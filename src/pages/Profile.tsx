@@ -85,16 +85,20 @@ export default function Profile() {
             navigate('/');
         } catch (err: any) {
             dismissToast(toastId);
-            setDeleting(false);
-            setShowDeleteModal(false);
 
             // User closed the Google re-auth popup — not a real error, just bail quietly.
             if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+                setShowDeleteModal(false);
                 return;
             }
 
+            setShowDeleteModal(false);
             console.error('Account deletion failed:', err);
             showErrorToast('Something went wrong deleting your account. Please try again.');
+        } finally {
+            // Always reset the deleting spinner — even if navigate() is delayed
+            // or if an error was caught, so the modal/UI never stays stuck.
+            setDeleting(false);
         }
     };
 

@@ -5,11 +5,8 @@ export const useGemini = () => {
   const [error, setError] = useState<string | null>(null);
 
   const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('Missing Gemini API key. Please set VITE_GEMINI_API_KEY in your environment variables.');
-  }
+  // Read once at hook init — safe, this is just reading a constant env value.
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 
   // Helper to strip markdown formatting backticks from AI string responses
   const cleanJsonResponse = (rawText: string) => {
@@ -27,6 +24,10 @@ export const useGemini = () => {
 
   // Method 1: Job Description Analyzer
   const analyzeJobDescription = async (jdText: string) => {
+    if (!apiKey) {
+      setError('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY.');
+      return null;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -63,8 +64,12 @@ export const useGemini = () => {
     }
   };
 
-// Method 2: Question Generator (With dynamic quantity capability)
+  // Method 2: Question Generator (With dynamic quantity capability)
   const generateQuestions = async (roleTitle: string, skills: any[], focusAreas: string[], count: number = 15) => {
+    if (!apiKey) {
+      setError('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY.');
+      return null;
+    }
     setIsLoading(true);
     setError(null);
     

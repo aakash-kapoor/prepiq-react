@@ -17,7 +17,18 @@ import React from 'react';
 
 // Component Route Guard
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Wait for Firebase to resolve auth state before making a routing decision.
+  // Without this guard, auth init (~300-800ms) causes a false redirect to /login.
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   return user ? children : <Navigate to="/login" replace />;
 }
 
@@ -33,9 +44,11 @@ function App() {
           style: { maxWidth: '420px' },
           error: {
             style: {
-              background: 'red',
+              background: '#FEF2F2',
+              color: '#B91C1C',
+              border: '1px solid #FECACA',
             },
-          }
+          },
         }}
       />
       <AuthProvider>
