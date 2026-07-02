@@ -21,6 +21,22 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.8.0',
+    date: 'Jul 2, 2026',
+    title: 'User Profile Page & Account Management',
+    description:
+      'Introduced a dedicated Profile page accessible from the sidebar, mobile header, and More menu. Users can now edit their display name in place, sign out directly from the profile page, and permanently delete their account. Account deletion safely wipes all Firestore data before removing the Firebase Auth record. Fixed a modal backdrop stacking-context bug by rendering the confirmation dialog through a React Portal.',
+    tags: ['feat', 'ui', 'fix'],
+  },
+  {
+    version: 'v0.7.0',
+    date: 'Jul 1, 2026',
+    title: 'UI Hardening, Modular Routing & Mobile Nav Overhaul',
+    description:
+      'Re-architected the Quiz module into distinct Launcher and Active Session views. Upgraded mobile navigation with a premium "liquid glass" bottom bar and a slide-up "More" drawer. Abstracted LegalModal, EmptyState, and SVG Icons into reusable components to significantly DRY up the codebase.',
+    tags: ['feat', 'ui', 'responsive', 'chore'],
+  },
+  {
     version: 'v0.6.0',
     date: 'Jun 30, 2026',
     title: 'Error boundaries, loading states, and toast notifications',
@@ -29,13 +45,13 @@ export const changelog: readonly ChangelogEntry[] = [
     tags: ['feat', 'fix', 'ui', 'responsive'],
   },
   {
-  version: 'v0.5.0',
-  date: 'Jun 29, 2026',
-  title: 'Legal pages, project organization, and landing page refinements',
-  description:
-    'Improved the overall user experience by introducing reusable Terms of Service and Privacy Policy modal dialogs, reorganized project data with a dedicated changelog module, refined responsive layouts and component styling, and enhanced the landing page with better navigation and footer structure for a more polished SaaS experience.',
-  tags: ['feat', 'ui', 'refactor', 'responsive']
-},
+    version: 'v0.5.0',
+    date: 'Jun 29, 2026',
+    title: 'Legal pages, project organization, and landing page refinements',
+    description:
+      'Improved the overall user experience by introducing reusable Terms of Service and Privacy Policy modal dialogs, reorganized project data with a dedicated changelog module, refined responsive layouts and component styling, and enhanced the landing page with better navigation and footer structure for a more polished SaaS experience.',
+    tags: ['feat', 'ui', 'refactor', 'responsive']
+  },
   {
     version: 'v0.4.0',
     date: 'Jun 28, 2026',

@@ -29,7 +29,13 @@ export default function Quiz() {
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', appId, 'questions');
     getDocs(questionsRef).then((snapshot) => {
       const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setQuestions(qList.sort(() => 0.5 - Math.random()));
+      // Fisher-Yates shuffle — produces a uniform random permutation.
+      // The old sort(() => 0.5 - Math.random()) approach is statistically biased.
+      for (let i = qList.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [qList[i], qList[j]] = [qList[j], qList[i]];
+      }
+      setQuestions(qList);
       setLoading(false);
     });
   }, [appId, user, navigate]);
@@ -38,11 +44,19 @@ export default function Quiz() {
     if (!user || !appId) return;
     const currentQ = questions[currentIndex];
 
+    // Read the previous stored values to compute a true running average.
+    // timesAnswered is already stored on the doc; we increment it atomically,
+    // so we compute the new average from the OLD count before the increment.
+    const prevCount = currentQ.timesAnswered ?? 0;
+    const prevAvg = currentQ.averageConfidence ?? 0;
+    const newCount = prevCount + 1;
+    const newAvg = parseFloat(((prevAvg * prevCount + score) / newCount).toFixed(2));
+
     const docRef = doc(db, 'users', user.uid, 'jobApplications', appId, 'questions', currentQ.id);
     await updateDoc(docRef, {
       timesAnswered: increment(1),
       lastConfidence: score,
-      averageConfidence: score
+      averageConfidence: newAvg,
     });
 
     if (currentIndex < questions.length - 1) {

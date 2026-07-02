@@ -10,6 +10,7 @@ import ResultsPanel from './ResultsPanel';
 export default function Analyze() {
     const [jdText, setJdText] = useState('');
     const [company, setCompany] = useState('');
+    const [interviewDate, setInterviewDate] = useState('');
     const [analysisResult, setAnalysisResult] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -23,6 +24,32 @@ export default function Analyze() {
 
     const handleJdTextChange = (value: string) => {
         setJdText(value);
+    };
+
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+
+    const minDate = today.toISOString().split("T")[0];
+
+    const handleInterviewDateChange = (value: string) => {
+        if (!value) {
+            setInterviewDate("");
+            return;
+        }
+
+        const parsedDate = new Date(value);
+        if (isNaN(parsedDate.getTime())) {
+            showErrorToast("Please enter a valid interview date.");
+            setInterviewDate("");
+            return;
+        }
+
+        if (value < minDate) {
+            showErrorToast("Interview date cannot be in the past.");
+            return;
+        }
+
+        setInterviewDate(value);
     };
 
     const handleRunAnalysis = async () => {
@@ -48,8 +75,11 @@ export default function Analyze() {
                     resultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
             }
-        } else if (apiError) {
-            showErrorToast(apiError);
+        } else {
+            // `apiError` is React state — it may not have flushed yet after the await.
+            // The hook always sets error before returning null, so we read it via the
+            // module-level `apiError` ref as a best-effort, with a safe fallback message.
+            showErrorToast(apiError || 'Analysis failed. Check your API key or connection and try again.');
         }
     };
 
@@ -69,10 +99,13 @@ export default function Analyze() {
                 estimatedDifficulty: analysisResult.estimatedDifficulty || 'Mid-Level',
                 createdAt: serverTimestamp(),
                 overallProgress: 0,
+                // Only persist if the user actually filled it in
+                ...(interviewDate ? { interviewDate } : {}),
             });
             showSuccessToast(`${analysisResult.roleTitle || 'Position'} saved to your workspace.`);
             setJdText('');
             setCompany('');
+            setInterviewDate('');
             setAnalysisResult(null);
         } catch (err) {
             console.error('Firestore save failed:', err);
@@ -87,9 +120,11 @@ export default function Analyze() {
             <InputPanel
                 company={company}
                 jdText={jdText}
+                interviewDate={interviewDate}
                 isLoading={isLoading}
                 onCompanyChange={handleCompanyChange}
                 onJdTextChange={handleJdTextChange}
+                onInterviewDateChange={handleInterviewDateChange}
                 onAnalyze={handleRunAnalysis}
             />
             <ResultsPanel

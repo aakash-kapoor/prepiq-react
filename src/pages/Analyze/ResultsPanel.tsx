@@ -70,6 +70,20 @@ export default function ResultsPanel({ analysisResult, isSaving, panelRef, onSav
                                     </div>
                                 </div>
                             )}
+
+                            {analysisResult.redFlags && analysisResult.redFlags.length > 0 && (
+                                <div className="space-y-1.5">
+                                    <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Red Flags Identified</h4>
+                                    <div className="flex flex-col gap-1.5">
+                                        {analysisResult.redFlags.map((flag: string, i: number) => (
+                                            <span key={i} className="text-xs px-3 py-2 rounded-xl font-medium border bg-rose-50 text-rose-700 border-rose-100 flex items-start gap-2 leading-relaxed">
+                                                <span className="shrink-0 mt-0.5">⚠️</span>
+                                                <span>{flag}</span>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-2">

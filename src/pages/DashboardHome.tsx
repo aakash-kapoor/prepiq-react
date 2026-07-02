@@ -24,23 +24,41 @@ export default function DashboardHome() {
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [globalAvgConfidence, setGlobalAvgConfidence] = useState<number>(0);
 
-  // 1. Fetch real-time job applications tracker ledger
+  // 1. Fetch real-time job applications tracker ledger (lightweight — no subcollection reads here)
   useEffect(() => {
     if (!user) return;
 
     const appsRef = collection(db, 'users', user.uid, 'jobApplications');
-    const unsubscribe = onSnapshot(appsRef, async (snapshot) => {
+    const unsubscribe = onSnapshot(appsRef, (snapshot) => {
       const appsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobApp));
       setApplications(appsList);
+      setLoading(false);
+    });
 
-      // 2. Safely aggregate cross-subcollection structural question counts and metrics
+    return () => unsubscribe();
+  }, [user]);
+
+  // 2. Aggregate question stats separately — only re-runs when the applications list changes.
+  // Keeping this outside onSnapshot prevents a Firestore read storm (N getDocs calls
+  // firing every time any single jobApplication doc is updated).
+  useEffect(() => {
+    if (!user || applications.length === 0) {
+      setTotalQuestions(0);
+      setGlobalAvgConfidence(0);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchStats = async () => {
       let questionCounter = 0;
       let totalConfidenceSum = 0;
       let ratedQuestionsCount = 0;
 
-      for (const app of appsList) {
-        const qRef = collection(db, 'users', user.uid!, 'jobApplications', app.id, 'questions');
+      for (const app of applications) {
+        const qRef = collection(db, 'users', user.uid, 'jobApplications', app.id, 'questions');
         const qSnapshot = await getDocs(qRef);
+        if (cancelled) return; // Component unmounted or deps changed — discard result
         questionCounter += qSnapshot.size;
 
         qSnapshot.docs.forEach(doc => {
@@ -56,11 +74,12 @@ export default function DashboardHome() {
       setGlobalAvgConfidence(
         ratedQuestionsCount > 0 ? parseFloat((totalConfidenceSum / ratedQuestionsCount).toFixed(1)) : 0.0
       );
-      setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
-  }, [user]);
+    fetchStats();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, applications.length]);
 
   if (loading) {
     return <LoadingState message="Syncing real-time workspace metrics..." />;
