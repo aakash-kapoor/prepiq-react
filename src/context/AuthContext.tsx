@@ -81,7 +81,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         deleteAccount,
       }}
     >
-      {!loading && children}
+      {/* Always render children — public routes (Landing, Login) must not
+          wait for Firebase auth resolution. ProtectedRoute handles the gate. */}
+      {children}
     </AuthContext.Provider>
   );
 };
