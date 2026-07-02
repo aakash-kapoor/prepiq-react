@@ -136,7 +136,7 @@ export default function Profile() {
                             Display Name
                         </label>
                         {isEditingName ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                                 <input
                                     type="text"
                                     value={nameDraft}
@@ -144,23 +144,25 @@ export default function Profile() {
                                     disabled={savingName}
                                     autoFocus
                                     maxLength={60}
-                                    className="flex-1 text-sm font-medium text-slate-900 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 disabled:opacity-60"
+                                    className="w-full sm:flex-1 text-sm font-medium text-slate-900 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 disabled:opacity-60"
                                 />
-                                <button
-                                    onClick={handleSaveName}
-                                    disabled={savingName}
-                                    className="px-3 py-2 rounded-xl text-xs font-bold text-white bg-[#6366F1] hover:bg-indigo-600 transition disabled:opacity-60 flex items-center gap-1.5"
-                                >
-                                    {savingName && <Spinner size="sm" colorClass="text-white" />}
-                                    Save
-                                </button>
-                                <button
-                                    onClick={handleCancelEditName}
-                                    disabled={savingName}
-                                    className="px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition disabled:opacity-60"
-                                >
-                                    Cancel
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleSaveName}
+                                        disabled={savingName}
+                                        className="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold text-white bg-[#6366F1] hover:bg-indigo-600 transition disabled:opacity-60 flex items-center justify-center gap-1.5"
+                                    >
+                                        {savingName && <Spinner size="sm" colorClass="text-white" />}
+                                        Save
+                                    </button>
+                                    <button
+                                        onClick={handleCancelEditName}
+                                        disabled={savingName}
+                                        className="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition disabled:opacity-60"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div className="flex items-center justify-between">
