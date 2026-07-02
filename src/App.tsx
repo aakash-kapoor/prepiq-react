@@ -44,9 +44,11 @@ function App() {
           style: { maxWidth: '420px' },
           error: {
             style: {
-              background: 'red',
+              background: '#FEF2F2',
+              color: '#B91C1C',
+              border: '1px solid #FECACA',
             },
-          }
+          },
         }}
       />
       <AuthProvider>
