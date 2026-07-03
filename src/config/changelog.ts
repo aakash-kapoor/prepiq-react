@@ -21,6 +21,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.9.0',
+    date: 'Jul 3, 2026',
+    title: 'Track Selector Dropdown, Skeletons & Global Motion Overhaul',
+    description:
+      'Replaced the horizontal track selector button row with a custom, premium animatable dropdown (TrackSelector). Modularized the shimmer skeleton loaders by separating inner content bones from layout headers. Added smooth, flicker-free skeleton transition states (with a 400ms minimum loading delay on switch) by introducing a selection-tracking pattern (prevSelectedAppIdRef) that prevents double-load stutters on initial render. Added skeleton loader states to Profile (600ms minimum loading delay on visit) and JD Analyzer results column. Additionally, migrated animations to the new motion/react (v12) package, configured a unified spring configuration in src/main.tsx, and enabled automatic OS-level accessibility compliance via reducedMotion="user" in the layout.',
+    tags: ['feat', 'ui', 'fix', 'refactor'],
+  },
+  {
     version: 'v0.8.0',
     date: 'Jul 2, 2026',
     title: 'User Profile Page & Account Management',

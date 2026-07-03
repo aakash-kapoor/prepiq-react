@@ -120,7 +120,9 @@ prepiq/
 |   |   |-- LegalModal.tsx
 |   |   |-- LoadingState.tsx
 |   |   |-- ProgressBar.tsx
+|   |   |-- Skeleton.tsx
 |   |   |-- Spinner.tsx
+|   |   |-- TrackSelector.tsx
 |   |   `-- layout/
 |   |       |-- DesktopSidebar.tsx
 |   |       |-- LiquidBottomNav.tsx
@@ -133,7 +135,8 @@ prepiq/
 |   |-- context/
 |   |   `-- AuthContext.tsx
 |   |-- hooks/
-|   |   `-- useGemini.ts
+|   |   |-- useGemini.ts
+|   |   `-- useMinLoadingDelay.ts
 |   |-- lib/
 |   |   |-- deleteUserData.ts
 |   |   `-- toast.ts
@@ -154,7 +157,6 @@ prepiq/
 |   |   |-- Weaknesses/
 |   |   |   |-- index.tsx
 |   |   |   |-- types.ts
-|   |   |   |-- AppSelector.tsx
 |   |   |   |-- SummaryCards.tsx
 |   |   |   `-- TopicRail.tsx
 |   |   |-- DashboardHome.tsx
@@ -194,6 +196,7 @@ prepiq/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.9.0 | Jul 3, 2026 | Custom track selector dropdown, transition skeletons, profile & JD analyzer skeletons, upgraded motion/react, global spring configuration & reducedMotion |
 | v0.8.0 | Jul 2, 2026 | User profile page, display name editing, account deletion |
 | v0.7.0 | Jul 1, 2026 | UI hardening, modular routing, liquid glass mobile nav |
 | v0.6.0 | Jun 30, 2026 | Error boundaries, loading states, toast notifications, difficulty badge fix |
