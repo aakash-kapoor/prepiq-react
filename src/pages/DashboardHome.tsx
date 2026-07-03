@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-// import LoadingState from '../components/LoadingState';
 import { motion, useSpring, useTransform, AnimatePresence } from 'motion/react';
 import { DashboardSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
@@ -115,12 +114,7 @@ export default function DashboardHome() {
     <div className="space-y-8 max-w-6xl mx-auto px-1 md:px-0">
 
       {/* Dynamic Header Badge Text Context */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             Good morning, {user?.displayName?.split(' ')[0]} 👋
@@ -135,7 +129,7 @@ export default function DashboardHome() {
         >
           Analyze New JD →
         </button>
-      </motion.div>
+      </div>
 
       {/* 2. RESPONSIVE DYNAMIC STAT CARDS METRIC ROW */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -167,18 +161,15 @@ export default function DashboardHome() {
             ),
             sub: 'Ready for drill routines',
           },
-        ].map((stat, i) => (
-          <motion.div
+        ].map((stat) => (
+          <div
             key={stat.label}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.3, ease: 'easeOut' as const }}
             className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
           >
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
             <div className="mt-1">{stat.value}</div>
             <p className="text-[11px] text-slate-400 mt-1 truncate">{stat.sub}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
 

@@ -28,6 +28,12 @@ export default function AppLayout() {
     return () => window.removeEventListener('keydown', handler);
   }, [isMoreMenuOpen]);
 
+  // 3. Reset scroll position on route change — decoupled from popLayout's exit/enter
+  // animation timing so it fires immediately instead of ~150ms late.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   if (!user) return null;
 
   const routeLabels: { [key: string]: string } = {
@@ -94,7 +100,7 @@ export default function AppLayout() {
         />
 
         {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
-        <div className="flex-1 flex flex-col md:pl-64 min-w-0 pb-20 md:pb-0">
+        <div className="flex-1 flex flex-col md:pl-64 min-w-0 pb-20 md:pb-0 relative">
           {/* Desktop Header panel elements */}
           <header className="hidden md:flex h-16 border-b border-gray-200 bg-white items-center justify-between px-8 sticky top-0 z-10">
             <div className="flex items-center text-xs font-medium text-slate-500">
@@ -102,14 +108,16 @@ export default function AppLayout() {
             </div>
           </header>
 
-          {/* Content Render Outlet — AnimatePresence for route transitions */}
-          <AnimatePresence mode="wait">
+          {/* Content Render Outlet — AnimatePresence for route transitions.
+              Scroll reset is handled by the useEffect above, not onExitComplete,
+              since popLayout runs enter/exit concurrently. */}
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.main
               key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, transition: { duration: 0.15 } }}
-              transition={{ duration: 0.28, ease: 'easeOut' as const }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' as const }}
               className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto min-h-[60vh]"
             >
               <Outlet />

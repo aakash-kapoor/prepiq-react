@@ -16,6 +16,7 @@ export function useMinLoadingDelay(minMs = 600) {
   const startRef = useRef(Date.now());
 
   const markDone = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     const elapsed = Date.now() - startRef.current;
     const remaining = Math.max(0, minMs - elapsed);
     timerRef.current = setTimeout(() => setLoading(false), remaining);
