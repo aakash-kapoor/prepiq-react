@@ -61,42 +61,6 @@ export default function Hero({ onCTA }: HeroProps) {
                 </a>
             </motion.div>
 
-            {/* App Preview Mockup */}
-            <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.38 }}
-                className="mt-16 relative mx-auto max-w-5xl rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl shadow-indigo-500/10 overflow-hidden"
-            >
-                <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-100 bg-slate-50 rounded-t-xl overflow-hidden">
-                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
-                    <div className="mx-2 sm:mx-4 flex-1 bg-white border border-slate-100 py-0.5 rounded text-[9px] font-medium text-slate-400 text-center truncate select-none">
-                        prepiq.web.app/dashboard/analyze
-                    </div>
-                    <div className="w-10 shrink-0 hidden sm:block" />
-                </div>
-                <div className="bg-[#F8FAFC] p-3 sm:p-4 rounded-b-xl grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pointer-events-none select-none">
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 space-y-2 shadow-sm">
-                        <div className="h-2.5 w-2/3 bg-slate-200 rounded" />
-                        <div className="h-10 w-full bg-slate-50 rounded border border-dashed border-slate-200" />
-                        <div className="h-6 w-full bg-indigo-500 rounded-lg" />
-                    </div>
-                    <div className="sm:col-span-2 bg-white p-3 rounded-xl border border-slate-100 space-y-3 shadow-sm">
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-50">
-                            <div className="h-3 w-1/3 bg-slate-200 rounded" />
-                            <div className="h-3 w-12 bg-amber-100 rounded" />
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                            <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold whitespace-nowrap">• React 19</span>
-                            <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold whitespace-nowrap">• TypeScript</span>
-                            <span className="text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 font-bold whitespace-nowrap">• System Architecture</span>
-                        </div>
-                    </div>
-                </div>
-            </motion.div>
-
             {/* Stats Strip — staggered fade-in */}
             <motion.div
                 initial={{ opacity: 0, y: 16 }}

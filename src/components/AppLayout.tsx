@@ -82,7 +82,7 @@ export default function AppLayout() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans antialiased text-slate-900">
+      <div className="h-screen overflow-hidden bg-[#F8FAFC] flex flex-col md:flex-row font-sans antialiased text-slate-900">
 
         {/* 1. DESKTOP SIDEBAR: Visible on medium screens and up */}
         <DesktopSidebar
@@ -100,7 +100,7 @@ export default function AppLayout() {
         />
 
         {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
-        <div className="flex-1 flex flex-col md:pl-64 min-w-0 pb-20 md:pb-0 relative">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto pb-20 md:pb-0 relative">
           {/* Desktop Header panel elements */}
           <header className="hidden md:flex h-16 border-b border-gray-200 bg-white items-center justify-between px-8 sticky top-0 z-10">
             <div className="flex items-center text-xs font-medium text-slate-500">
