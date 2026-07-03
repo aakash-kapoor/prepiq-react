@@ -30,9 +30,9 @@ export default function AppLayout() {
 
   // 3. Reset scroll position on route change — decoupled from popLayout's exit/enter
   // animation timing so it fires immediately instead of ~150ms late.
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+  // useEffect(() => {
+  //   window.scrollTo(0, 0);
+  // }, [location.pathname]);
 
   if (!user) return null;
 

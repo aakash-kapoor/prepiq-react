@@ -4,8 +4,9 @@ import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EmptyState from '../components/EmptyState';
-import { QuizLauncherSkeleton } from '../components/Skeleton';
+import { QuizLauncherSkeleton, QuizLauncherContentSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
+import TrackSelector from '../components/TrackSelector';
 
 export default function QuizLauncher() {
   const { user } = useAuth();
@@ -15,9 +16,11 @@ export default function QuizLauncher() {
   const [applications, setApplications] = useState<any[]>([]);
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
+  const [contentLoading, setContentLoading] = useState(false);
   const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const hasAutoSelected = useRef(false);
+  const prevSelectedAppIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -49,9 +52,28 @@ export default function QuizLauncher() {
 
   useEffect(() => {
     if (!user || !selectedApp) return;
+
+    const isTrackSwitch = prevSelectedAppIdRef.current !== null && prevSelectedAppIdRef.current !== selectedApp.id;
+    prevSelectedAppIdRef.current = selectedApp.id;
+
+    if (isTrackSwitch) {
+      setContentLoading(true);
+    }
+    const startTime = Date.now();
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
     getDocs(questionsRef).then((snapshot) => {
-      setQuestions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const questionsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (isTrackSwitch) {
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, 400 - elapsed);
+        setTimeout(() => {
+          setQuestions(questionsList);
+          setContentLoading(false);
+        }, delay);
+      } else {
+        setQuestions(questionsList);
+        setContentLoading(false);
+      }
     });
   }, [selectedApp, user]);
 
@@ -74,24 +96,19 @@ export default function QuizLauncher() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-wrap gap-2 items-center shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-2">Select Target Track:</span>
-        {applications.map((app) => (
-          <button
-            key={app.id}
-            onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${selectedApp?.id === app.id
-                ? 'bg-[#6366F1] text-white border-[#6366F1]'
-                : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
-              }`}
-            title={`${app.company} — ${app.role}`}
-          >
-            {app.company} — {app.role}
-          </button>
-        ))}
+        <TrackSelector
+          label="Select Target Track:"
+          applications={applications}
+          selectedApp={selectedApp}
+          onSelect={setSelectedApp}
+        />
       </div>
 
       {selectedApp && (
-        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-gray-200 shadow-sm mt-8 animate-fadeIn">
+        contentLoading ? (
+          <QuizLauncherContentSkeleton />
+        ) : (
+          <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-gray-200 shadow-sm mt-8 animate-fadeIn">
             <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">{selectedApp.role}</h3>
             <p className="text-sm text-slate-500 font-medium mb-8">Core Target: {selectedApp.company}</p>
             
@@ -125,7 +142,8 @@ export default function QuizLauncher() {
                     </p>
                 </div>
             )}
-        </div>
+          </div>
+        )
       )}
     </div>
   );

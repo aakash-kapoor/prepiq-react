@@ -10,8 +10,9 @@ import LoadingState from '../components/LoadingState';
 import ProgressBar from '../components/ProgressBar';
 import Spinner from '../components/Spinner';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
-import { QuestionsSkeleton } from '../components/Skeleton';
+import { QuestionsSkeleton, QuestionsContentSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
+import TrackSelector from '../components/TrackSelector';
 
 // Sub-component to manage individual accordion state safely
 const QuestionCard = ({ q, index }: { q: any, index: number }) => {
@@ -62,10 +63,12 @@ export default function Questions() {
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState<number>(15);
   const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const hasAutoSelected = useRef(false);
+  const prevSelectedAppIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -97,12 +100,32 @@ export default function Questions() {
 
   useEffect(() => {
     if (!user || !selectedApp) return;
+
+    const isTrackSwitch = prevSelectedAppIdRef.current !== null && prevSelectedAppIdRef.current !== selectedApp.id;
+    prevSelectedAppIdRef.current = selectedApp.id;
+
+    if (isTrackSwitch) {
+      setContentLoading(true);
+    }
+    const startTime = Date.now();
     setFetchingQuestions(true);
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
 
     getDocs(questionsRef).then((snapshot) => {
-      setQuestions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setFetchingQuestions(false);
+      const questionsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (isTrackSwitch) {
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, 400 - elapsed);
+        setTimeout(() => {
+          setQuestions(questionsList);
+          setFetchingQuestions(false);
+          setContentLoading(false);
+        }, delay);
+      } else {
+        setQuestions(questionsList);
+        setFetchingQuestions(false);
+        setContentLoading(false);
+      }
     });
   }, [selectedApp, user]);
 
@@ -158,24 +181,19 @@ export default function Questions() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-wrap gap-2 items-center shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-2">Select Target Track:</span>
-        {applications.map((app) => (
-          <button
-            key={app.id}
-            onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${selectedApp?.id === app.id
-              ? 'bg-[#6366F1] text-white border-[#6366F1]'
-              : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
-              }`}
-            title={`${app.company} — ${app.role}`}
-          >
-            {app.company} — {app.role}
-          </button>
-        ))}
+        <TrackSelector
+          label="Select Target Track:"
+          applications={applications}
+          selectedApp={selectedApp}
+          onSelect={setSelectedApp}
+        />
       </div>
 
       {selectedApp && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        contentLoading ? (
+          <QuestionsContentSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4 pb-6 border-b-2 md:border-b-0 md:border-gray-200">
             <div>
               <h3 className="text-lg font-bold text-slate-900 tracking-tight">{selectedApp.role}</h3>
@@ -291,7 +309,8 @@ export default function Questions() {
               ))
             )}
           </div>
-        </div>
+          </div>
+        )
       )}
     </div>
   );

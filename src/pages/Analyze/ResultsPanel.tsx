@@ -1,8 +1,10 @@
 import { type RefObject } from 'react';
 import Spinner from '../../components/Spinner';
+import { AnalyzeResultsSkeleton } from '../../components/Skeleton';
 
 interface ResultsPanelProps {
     analysisResult: any;
+    isLoading: boolean;
     isSaving: boolean;
     panelRef: RefObject<HTMLDivElement | null>;
     onSave: () => void;
@@ -16,13 +18,15 @@ function getDifficultyClasses(difficulty: string): string {
     return 'bg-amber-50 text-amber-700 border-amber-200';
 }
 
-export default function ResultsPanel({ analysisResult, isSaving, panelRef, onSave }: ResultsPanelProps) {
+export default function ResultsPanel({ analysisResult, isLoading, isSaving, panelRef, onSave }: ResultsPanelProps) {
     return (
         <div
             ref={panelRef}
             className="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col justify-between min-h-[200px] lg:min-h-[500px] scroll-mt-20 md:scroll-mt-5"
         >
-            {!analysisResult ? (
+            {isLoading ? (
+                <AnalyzeResultsSkeleton />
+            ) : !analysisResult ? (
                 <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 p-8 my-auto">
                     <span className="text-4xl mb-2">🤖</span>
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Awaiting Source Upload Payload</p>
@@ -34,7 +38,7 @@ export default function ResultsPanel({ analysisResult, isSaving, panelRef, onSav
                         <div className="border-b border-gray-100 pb-3 flex flex-wrap justify-between items-start gap-2">
                             <div className="min-w-0 flex-1">
                                 <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                                    🟢 Analysis Complete ✓
+                                    Analysis Complete ✓
                                 </span>
                                 <h3 className="text-base font-bold text-slate-900 tracking-tight mt-0.5 break-words">{analysisResult.roleTitle || 'Ionic Angular Developer'}</h3>
                                 <p className="text-[11px] text-slate-400 font-semibold tracking-wide break-words">Targeting: {analysisResult.companyType || 'Generic Tech Company/Agency'}</p>
