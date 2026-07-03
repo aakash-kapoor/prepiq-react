@@ -18,7 +18,7 @@ export default function LegalModal({ content, onClose }: LegalModalProps) {
                     </h3>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition"
+                        className="w-8 h-8 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition shrink-0"
                     >
                         ✕
                     </button>

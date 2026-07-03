@@ -13,6 +13,7 @@ import Quiz from './pages/Quiz';
 import Weaknesses from './pages/Weaknesses';
 import StudyPlan from './pages/StudyPlan';
 import Profile from './pages/Profile';
+import ChangelogPage from './pages/Changelog';
 import React from 'react';
 
 // Spinner shown while Firebase resolves auth state
@@ -71,6 +72,9 @@ function App() {
 
             {/* Dedicated Authentication Access Node — same redirect behaviour */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+
+            {/* Public Changelog Page — accessible whether logged in or out */}
+            <Route path="/changelog" element={<ChangelogPage />} />
 
             {/* Secure Protected Dashboard App Scope */}
             <Route

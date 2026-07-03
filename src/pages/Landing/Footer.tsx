@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { changelog } from '../../config/changelog';
 import LegalModal from '../../components/LegalModal';
 
 export default function Footer() {
+    const navigate = useNavigate();
     const [isChangelogOpen, setIsChangelogOpen] = useState(false);
     const [legalContent, setLegalContent] = useState<{ title: string; text: string } | null>(null);
 
@@ -59,7 +61,7 @@ export default function Footer() {
             {isChangelogOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/40 backdrop-blur-sm animate-fadeIn">
                     <div
-                        className="bg-white border border-slate-100 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh] animate-scaleUp"
+                        className="bg-white border border-slate-100 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[80vh] max-h-[80dvh] animate-scaleUp"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
@@ -69,14 +71,14 @@ export default function Footer() {
                             </div>
                             <button
                                 onClick={() => setIsChangelogOpen(false)}
-                                className="w-8 h-8 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition"
+                                className="w-8 h-8 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition shrink-0"
                             >
                                 ✕
                             </button>
                         </div>
 
                         <div className="p-5 sm:p-6 overflow-y-auto space-y-8 flex-1 custom-scrollbar">
-                            {changelog.map((log, index) => (
+                            {changelog.slice(0, 3).map((log, index) => (
                                 <div key={log.version} className="relative pl-6 border-l-2 border-slate-200 last:border-transparent space-y-2">
                                     <div className={`absolute -left-[7px] top-1 w-3 h-3 rounded-full ring-4 ring-[#F8FAFC] ${index === 0 ? 'bg-indigo-500' : index < 3 ? 'bg-amber-500' : 'bg-slate-400'}`} />
                                     <div className="flex items-center gap-2">
@@ -94,6 +96,21 @@ export default function Footer() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        <div className="p-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/50 rounded-b-2xl">
+                            <span className="text-xs text-slate-500 font-semibold">
+                                Showing the latest 3 releases.
+                            </span>
+                            <button
+                                onClick={() => {
+                                    setIsChangelogOpen(false);
+                                    navigate('/changelog');
+                                }}
+                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
+                            >
+                                View Full Release History ({changelog.length} versions) →
+                            </button>
                         </div>
                     </div>
                 </div>
