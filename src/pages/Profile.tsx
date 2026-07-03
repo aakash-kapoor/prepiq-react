@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { deleteAllUserData } from '../lib/deleteUserData';
 import DeleteAccountModal from '../components/DeleteAccountModal';
 import Spinner from '../components/Spinner';
+import { ProfileSkeleton } from '../components/Skeleton';
+import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import {
     showSuccessToast,
     showErrorToast,
@@ -15,6 +17,15 @@ export default function Profile() {
     const { user, updateDisplayName, reauthenticateWithGoogle, deleteAccount, logout } =
         useAuth();
     const navigate = useNavigate();
+
+    const { loading, markDone, cancelTimer } = useMinLoadingDelay(600);
+
+    useEffect(() => {
+        if (user) {
+            markDone();
+        }
+        return () => cancelTimer();
+    }, [user, markDone, cancelTimer]);
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [nameDraft, setNameDraft] = useState(user?.displayName ?? '');
@@ -31,6 +42,7 @@ export default function Profile() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
+    if (loading) return <ProfileSkeleton />;
     if (!user) return null;
 
     const memberSince = user.metadata.creationTime

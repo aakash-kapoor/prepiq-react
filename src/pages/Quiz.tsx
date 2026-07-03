@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
 import LoadingState from '../components/LoadingState';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function Quiz() {
   const location = useLocation();
@@ -80,7 +81,12 @@ export default function Quiz() {
 
   if (sessionCompleted) {
     return (
-      <div className="max-w-md mx-auto py-24 text-center space-y-4 px-4 animate-fadeIn">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="max-w-md mx-auto py-24 text-center space-y-4 px-4"
+      >
         <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm border border-emerald-100">
           ✓
         </div>
@@ -88,7 +94,7 @@ export default function Quiz() {
         <p className="text-xs text-slate-500 font-medium leading-relaxed">
           Your technical confidence metrics have been securely saved to your ledger. Compiling updated knowledge gaps on your Weak Spots tab now...
         </p>
-      </div>
+      </motion.div>
     );
   }
 
@@ -113,100 +119,150 @@ export default function Quiz() {
         <span>Question {currentIndex + 1} of {questions.length}</span>
       </div>
 
+      {/* Animated progress bar */}
       <div className="w-full bg-gray-200 h-1.5 rounded-full mb-8 overflow-hidden shadow-inner">
-        <div
-          className="bg-[#6366F1] h-1.5 transition-all duration-300"
-          style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+        <motion.div
+          className="bg-[#6366F1] h-1.5 rounded-full"
+          animate={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+          transition={{ type: 'spring', damping: 25, stiffness: 80 }}
         />
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 min-h-[340px] flex flex-col justify-between transition-all">
-        <div>
-          <div className="flex gap-2 mb-4">
-            <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-indigo-100/40">
-              {currentQuestion.topic}
-            </span>
-            <span className="text-[10px] bg-amber-50 text-amber-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-amber-100/40">
-              {currentQuestion.difficulty}
-            </span>
-          </div>
-          <h2 className="text-lg font-bold text-slate-900 leading-snug mb-6">
-            {currentQuestion.question}
-          </h2>
-          {showAnswer && (
-            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-700 animate-fadeIn font-medium leading-relaxed">
-              <strong className="text-xs text-slate-400 block mb-1.5 uppercase tracking-wider font-bold">Ideal Structured Target Response:</strong>
-              {currentQuestion.idealAnswer}
+      {/* Animated question card — keyed by currentIndex for AnimatePresence transitions */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -24 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 min-h-[340px] flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex gap-2 mb-4">
+              <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-indigo-100/40">
+                {currentQuestion.topic}
+              </span>
+              <span className="text-[10px] bg-amber-50 text-amber-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-amber-100/40">
+                {currentQuestion.difficulty}
+              </span>
             </div>
-          )}
-        </div>
+            <h2 className="text-lg font-bold text-slate-900 leading-snug mb-6">
+              {currentQuestion.question}
+            </h2>
+            {/* Answer reveal with subtle upward fade */}
+            <AnimatePresence>
+              {showAnswer && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-700 font-medium leading-relaxed"
+                >
+                  <strong className="text-xs text-slate-400 block mb-1.5 uppercase tracking-wider font-bold">Ideal Structured Target Response:</strong>
+                  {currentQuestion.idealAnswer}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-        <div className="mt-8 pt-4 border-t border-gray-100">
-          {!showAnswer ? (
-            <button
-              onClick={() => setShowAnswer(true)}
-              className="w-full bg-[#6366F1] hover:bg-opacity-95 transition text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10"
+          <div className="mt-8 pt-4 border-t border-gray-100">
+            {!showAnswer ? (
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowAnswer(true)}
+                className="w-full bg-[#6366F1] hover:bg-opacity-95 transition text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10"
+              >
+                Reveal Ideal Answer
+              </motion.button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4 text-center"
+              >
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rate Your Technical Confidence:</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <motion.button
+                      key={num}
+                      whileTap={{ scale: 0.92 }}
+                      whileHover={{ y: -2 }}
+                      onClick={() => handleRateConfidence(num)}
+                      className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
+                          num === 3 ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
+                            'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                    >
+                      {num}
+                    </motion.button>
+                  ))}
+                </div>
+                <div className="flex justify-between text-[10px] text-slate-400 px-1 font-bold uppercase tracking-wider">
+                  <span>Struggled (1)</span>
+                  <span>Nailed It (5)</span>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Exit modal with AnimatePresence scale + backdrop */}
+      <AnimatePresence>
+        {isExitModalOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setIsExitModalOpen(false)}
+            />
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
-              Reveal Ideal Answer
-            </button>
-          ) : (
-            <div className="space-y-4 text-center">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rate Your Technical Confidence:</p>
-              <div className="grid grid-cols-5 gap-2">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => handleRateConfidence(num)}
-                    className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
-                        num === 3 ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
-                          'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                      }`}
+              <motion.div
+                className="bg-white max-w-sm w-full rounded-2xl border border-gray-100 shadow-2xl p-6 space-y-4 pointer-events-auto"
+                initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 12 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="w-12 h-12 bg-red-50 border border-red-100 text-red-500 rounded-full flex items-center justify-center text-xl mx-auto shadow-sm">
+                  ⚠️
+                </div>
+                <div className="text-center space-y-1">
+                  <h3 className="text-base font-black text-slate-900 tracking-tight">Exit Practice Drill?</h3>
+                  <p className="text-xs text-slate-400 font-medium leading-normal px-2">
+                    Are you sure you want to pause this active session? All score answers logged up to this card have been securely saved.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5 pt-2">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setIsExitModalOpen(false)}
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200"
                   >
-                    {num}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-between text-[10px] text-slate-400 px-1 font-bold uppercase tracking-wider">
-                <span>Struggled (1)</span>
-                <span>Nailed It (5)</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {isExitModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div
-            className="bg-white max-w-sm w-full rounded-2xl border border-gray-100 shadow-2xl p-6 space-y-4 transform scale-100 transition-all animate-scaleUp"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-12 h-12 bg-red-50 border border-red-100 text-red-500 rounded-full flex items-center justify-center text-xl mx-auto shadow-sm">
-              ⚠️
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-black text-slate-900 tracking-tight">Exit Practice Drill?</h3>
-              <p className="text-xs text-slate-400 font-medium leading-normal px-2">
-                Are you sure you want to pause this active session? All score answers logged up to this card have been securely saved.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5 pt-2">
-              <button
-                onClick={() => setIsExitModalOpen(false)}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200"
-              >
-                Continue Drill
-              </button>
-              <button
-                onClick={confirmExitSession}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition shadow-md shadow-red-600/10"
-              >
-                Yes, Exit Session
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                    Continue Drill
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={confirmExitSession}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition shadow-md shadow-red-600/10"
+                  >
+                    Yes, Exit Session
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

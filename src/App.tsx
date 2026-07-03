@@ -18,7 +18,7 @@ import React from 'react';
 // Spinner shown while Firebase resolves auth state
 function AuthSpinner() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+    <div className="fixed inset-0 bg-[#F8FAFC] flex items-center justify-center z-50">
       <div className="w-6 h-6 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
     </div>
   );

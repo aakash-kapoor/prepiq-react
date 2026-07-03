@@ -6,6 +6,7 @@ import LiquidBottomNav from "./layout/LiquidBottomNav";
 import MoreMenu from "./layout/MoreMenu";
 import { primaryNavigation, secondaryNavigation } from "../config/navigation";
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 
 export default function AppLayout() {
   const { logout, user } = useAuth();
@@ -26,6 +27,12 @@ export default function AppLayout() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [isMoreMenuOpen]);
+
+  // 3. Reset scroll position on route change — decoupled from popLayout's exit/enter
+  // animation timing so it fires immediately instead of ~150ms late.
+  // useEffect(() => {
+  //   window.scrollTo(0, 0);
+  // }, [location.pathname]);
 
   if (!user) return null;
 
@@ -74,57 +81,70 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans antialiased text-slate-900">
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row font-sans antialiased text-slate-900">
 
-      {/* 1. DESKTOP SIDEBAR: Visible on medium screens and up */}
-      <DesktopSidebar
-        user={user}
-        menuItems={[...primaryNavigation, ...secondaryNavigation]}
-        pathname={location.pathname}
-        onLogout={() => logout().then(() => navigate('/'))}
-      />
+        {/* 1. DESKTOP SIDEBAR: Visible on medium screens and up */}
+        <DesktopSidebar
+          user={user}
+          menuItems={[...primaryNavigation, ...secondaryNavigation]}
+          pathname={location.pathname}
+          onLogout={() => logout().then(() => navigate('/'))}
+        />
 
-      {/* 2. MOBILE TOP NAVIGATION BAR */}
-      <MobileHeader
-        user={user}
-        pathname={location.pathname}
-        currentPageTitle={getCurrentPageTitle()}
-      />
+        {/* 2. MOBILE TOP NAVIGATION BAR */}
+        <MobileHeader
+          user={user}
+          pathname={location.pathname}
+          currentPageTitle={getCurrentPageTitle()}
+        />
 
-      {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
-      <div className="flex-1 flex flex-col md:pl-64 min-w-0 pb-20 md:pb-0">
-        {/* Desktop Header panel elements */}
-        <header className="hidden md:flex h-16 border-b border-gray-200 bg-white items-center justify-between px-8 sticky top-0 z-10">
-          <div className="flex items-center text-xs font-medium text-slate-500">
-            {generateBreadcrumbs()}
-          </div>
-        </header>
+        {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
+        <div className="flex-1 flex flex-col md:pl-64 min-w-0 pb-20 md:pb-0 relative">
+          {/* Desktop Header panel elements */}
+          <header className="hidden md:flex h-16 border-b border-gray-200 bg-white items-center justify-between px-8 sticky top-0 z-10">
+            <div className="flex items-center text-xs font-medium text-slate-500">
+              {generateBreadcrumbs()}
+            </div>
+          </header>
 
-        {/* Content Render Outlet */}
-        <main className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto animate-fadeIn">
-          <Outlet />
-        </main>
+          {/* Content Render Outlet — AnimatePresence for route transitions.
+              Scroll reset is handled by the useEffect above, not onExitComplete,
+              since popLayout runs enter/exit concurrently. */}
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.main
+              key={location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' as const }}
+              className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto min-h-[60vh]"
+            >
+              <Outlet />
+            </motion.main>
+          </AnimatePresence>
+        </div>
+
+        {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR: Visible strictly on small screens */}
+        <LiquidBottomNav
+          items={primaryNavigation}
+          moreItems={secondaryNavigation}
+          pathname={location.pathname}
+          onMoreClick={() => setIsMoreMenuOpen(true)}
+          isMoreMenuOpen={isMoreMenuOpen}
+        />
+
+        <MoreMenu
+          open={isMoreMenuOpen}
+          items={secondaryNavigation}
+          onClose={() => setIsMoreMenuOpen(false)}
+          onLogout={() => {
+            setIsMoreMenuOpen(false);
+            logout().then(() => navigate("/"));
+          }}
+        />
+
       </div>
-
-      {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR: Visible strictly on small screens */}
-      <LiquidBottomNav
-        items={primaryNavigation}
-        moreItems={secondaryNavigation}
-        pathname={location.pathname}
-        onMoreClick={() => setIsMoreMenuOpen(true)}
-        isMoreMenuOpen={isMoreMenuOpen}
-      />
-
-      <MoreMenu
-        open={isMoreMenuOpen}
-        items={secondaryNavigation}
-        onClose={() => setIsMoreMenuOpen(false)}
-        onLogout={() => {
-          setIsMoreMenuOpen(false);
-          logout().then(() => navigate("/"));
-        }}
-      />
-
-    </div>
+    </MotionConfig>
   );
 }

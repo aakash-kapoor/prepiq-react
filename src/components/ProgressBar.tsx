@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 
 interface ProgressBarProps {
     /** Controls whether the simulated progress is running */
@@ -44,9 +45,10 @@ export default function ProgressBar({ isActive, message = 'Processing...' }: Pro
                 <span className="text-xs font-bold text-indigo-600 tabular-nums">{Math.round(progress)}%</span>
             </div>
             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                    className="h-full bg-[#6366F1] rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${progress}%` }}
+                <motion.div
+                    className="h-full bg-[#6366F1] rounded-full"
+                    animate={{ width: `${progress}%` }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 80 }}
                 />
             </div>
         </div>

@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
-import LoadingState from '../components/LoadingState';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
+import { StudyPlanSkeleton, StudyPlanContentSkeleton } from '../components/Skeleton';
+import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
+import TrackSelector from '../components/TrackSelector';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -34,6 +36,8 @@ export default function StudyPlan() {
   const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
+  const prevSelectedAppIdRef = useRef<string | null>(null);
+  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   // 1. Sync Job Applications from Firestore
   useEffect(() => {
@@ -42,6 +46,7 @@ export default function StudyPlan() {
     const unsubscribe = onSnapshot(appsRef, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobApp));
       setApplications(apps);
+      markDone();
       if (apps.length > 0 && !selectedApp) {
         setSelectedApp(apps[0]);
       } else if (selectedApp) {
@@ -50,15 +55,21 @@ export default function StudyPlan() {
         if (refreshed) setSelectedApp(refreshed);
       }
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); cancelTimer(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // 2. Identify Gaps & Build Timeline dynamically based on data
   useEffect(() => {
     if (!user || !selectedApp) return;
-    setIsLoading(true);
 
+    const isTrackSwitch = prevSelectedAppIdRef.current !== null && prevSelectedAppIdRef.current !== selectedApp.id;
+    prevSelectedAppIdRef.current = selectedApp.id;
+
+    if (isTrackSwitch) {
+      setIsLoading(true);
+    }
+    const startTime = Date.now();
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
     
     getDocs(questionsRef).then((snapshot) => {
@@ -80,8 +91,6 @@ export default function StudyPlan() {
         const avg = topicScores[topic].sum / topicScores[topic].count;
         return avg < 3.5;
       });
-
-      setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
       
       // Calculate real schedule window if an interview date is set, otherwise default to a 5-day rush sprint
       let windowSize = 5;
@@ -92,7 +101,6 @@ export default function StudyPlan() {
         const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         windowSize = Math.max(daysUntil, 3);
       }
-      setDaysRemaining(windowSize);
 
       // 3. Generate Custom Timeline Array Blueprint
       const generatedTimeline: TimelineDay[] = [];
@@ -128,8 +136,21 @@ export default function StudyPlan() {
         }
       }
 
-      setTimeline(generatedTimeline);
-      setIsLoading(false);
+      if (isTrackSwitch) {
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, 400 - elapsed);
+        setTimeout(() => {
+          setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
+          setDaysRemaining(windowSize);
+          setTimeline(generatedTimeline);
+          setIsLoading(false);
+        }, delay);
+      } else {
+        setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
+        setDaysRemaining(windowSize);
+        setTimeline(generatedTimeline);
+        setIsLoading(false);
+      }
     });
 
   }, [selectedApp, user]);
@@ -192,6 +213,10 @@ export default function StudyPlan() {
     }
   };
 
+  if (appsLoading) {
+    return <StudyPlanSkeleton />;
+  }
+
   if (!applications || applications.length === 0) {
     return (
         <div className="max-w-6xl mx-auto p-6">
@@ -207,27 +232,20 @@ export default function StudyPlan() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       
-      {/* Target Application Selector Bar */}
       <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-wrap gap-2 items-center shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-2">Track Timeline:</span>
-        {applications.map((app) => (
-          <button
-            key={app.id}
-            onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${
-              selectedApp?.id === app.id
-                ? 'bg-[#6366F1] text-white border-[#6366F1]'
-                : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
-            }`}
-            title={`${app.company} — ${app.role}`}
-          >
-            {app.company} — {app.role}
-          </button>
-        ))}
+        <TrackSelector
+          label="Track Timeline:"
+          applications={applications}
+          selectedApp={selectedApp}
+          onSelect={setSelectedApp}
+        />
       </div>
 
       {selectedApp && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        isLoading ? (
+          <StudyPlanContentSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           
           {/* Left Column: Schedule Overview Insights Panel */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
@@ -318,55 +336,50 @@ export default function StudyPlan() {
 
           {/* Right Column: Custom Tailored SVG-Style Timeline Rail */}
           <div className="md:col-span-2 space-y-6">
-            {isLoading ? (
-              <LoadingState message="Computing schedule intervals..." size="md" />
-            ) : (
-              <div className="relative border-l-2 border-slate-200 ml-4 md:ml-6 space-y-6">
-                {timeline.map((day) => {
-                  
-                  let markerColors = 'bg-[#6366F1] border-indigo-200 ring-indigo-100';
-                  if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 ring-amber-100';
-                  if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 ring-red-100';
+            <div className="relative border-l-2 border-slate-200 ml-4 md:ml-6 space-y-6">
+              {timeline.map((day) => {
+                
+                let markerColors = 'bg-[#6366F1] border-indigo-200 ring-indigo-100';
+                if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 ring-amber-100';
+                if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 ring-red-100';
 
-                  return (
-                    <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
-                      
-                      {/* Timeline Dot Marker */}
-                      <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
+                return (
+                  <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
+                    
+                    {/* Timeline Dot Marker */}
+                    <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
 
-                      {/* Timeline content details box card */}
-                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 transition">
-                        <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 pb-2">
-                          <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">
-                            Day {day.dayNumber} of {daysRemaining}
-                          </span>
-                          <h4 className="text-sm font-black text-slate-900">{day.title}</h4>
-                        </div>
-                        
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                          {day.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1 pt-1 items-center">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Target Module:</span>
-                          {day.focusTopics.map((topic, tIdx) => (
-                            <span key={tIdx} className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-                              {topic}
-                            </span>
-                          ))}
-                        </div>
+                    {/* Timeline content details box card */}
+                    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 transition">
+                      <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 pb-2">
+                        <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">
+                          Day {day.dayNumber} of {daysRemaining}
+                        </span>
+                        <h4 className="text-sm font-black text-slate-900">{day.title}</h4>
                       </div>
+                      
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                        {day.description}
+                      </p>
 
+                      <div className="flex flex-wrap gap-1 pt-1 items-center">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Target Module:</span>
+                        {day.focusTopics.map((topic, tIdx) => (
+                          <span key={tIdx} className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                  </div>
+                );
+              })}
+            </div>
           </div>
-
-        </div>
+          </div>
+        )
       )}
-
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useGemini } from '../hooks/useGemini';
 import { db } from '../config/firebase';
@@ -9,6 +10,9 @@ import LoadingState from '../components/LoadingState';
 import ProgressBar from '../components/ProgressBar';
 import Spinner from '../components/Spinner';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
+import { QuestionsSkeleton, QuestionsContentSkeleton } from '../components/Skeleton';
+import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
+import TrackSelector from '../components/TrackSelector';
 
 // Sub-component to manage individual accordion state safely
 const QuestionCard = ({ q, index }: { q: any, index: number }) => {
@@ -24,19 +28,28 @@ const QuestionCard = ({ q, index }: { q: any, index: number }) => {
         </div>
       </div>
       <p className="text-sm font-semibold text-slate-900 leading-snug mb-3">{q.question}</p>
-      
-      <button 
+
+      <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition underline"
       >
         {isExpanded ? 'Hide Ideal Answer' : 'View Ideal Answer'}
       </button>
 
-      {isExpanded && (
-        <div className="mt-3 p-4 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-700 font-medium leading-relaxed animate-fadeIn whitespace-pre-line">
-          {q.idealAnswer}
-        </div>
-      )}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            key="answer"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="mt-3 p-4 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line"
+          >
+            {q.idealAnswer}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -50,9 +63,12 @@ export default function Questions() {
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState<number>(15);
+  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const hasAutoSelected = useRef(false);
+  const prevSelectedAppIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -60,6 +76,7 @@ export default function Questions() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setApplications(apps);
+      markDone();
 
       const stateTargetId = location.state?.preSelectedAppId;
       if (stateTargetId) {
@@ -78,17 +95,37 @@ export default function Questions() {
         hasAutoSelected.current = true;
       }
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); cancelTimer(); };
   }, [user, location.state]);
 
   useEffect(() => {
     if (!user || !selectedApp) return;
+
+    const isTrackSwitch = prevSelectedAppIdRef.current !== null && prevSelectedAppIdRef.current !== selectedApp.id;
+    prevSelectedAppIdRef.current = selectedApp.id;
+
+    if (isTrackSwitch) {
+      setContentLoading(true);
+    }
+    const startTime = Date.now();
     setFetchingQuestions(true);
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
 
     getDocs(questionsRef).then((snapshot) => {
-      setQuestions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setFetchingQuestions(false);
+      const questionsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (isTrackSwitch) {
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, 400 - elapsed);
+        setTimeout(() => {
+          setQuestions(questionsList);
+          setFetchingQuestions(false);
+          setContentLoading(false);
+        }, delay);
+      } else {
+        setQuestions(questionsList);
+        setFetchingQuestions(false);
+        setContentLoading(false);
+      }
     });
   }, [selectedApp, user]);
 
@@ -125,6 +162,10 @@ export default function Questions() {
     }
   };
 
+  if (appsLoading) {
+    return <QuestionsSkeleton />;
+  }
+
   if (!applications || applications.length === 0) {
     return (
       <div className="max-w-6xl mx-auto p-6">
@@ -140,24 +181,19 @@ export default function Questions() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-wrap gap-2 items-center shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-2">Select Target Track:</span>
-        {applications.map((app) => (
-          <button
-            key={app.id}
-            onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${selectedApp?.id === app.id
-                ? 'bg-[#6366F1] text-white border-[#6366F1]'
-                : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
-              }`}
-            title={`${app.company} — ${app.role}`}
-          >
-            {app.company} — {app.role}
-          </button>
-        ))}
+        <TrackSelector
+          label="Select Target Track:"
+          applications={applications}
+          selectedApp={selectedApp}
+          onSelect={setSelectedApp}
+        />
       </div>
 
       {selectedApp && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        contentLoading ? (
+          <QuestionsContentSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4 pb-6 border-b-2 md:border-b-0 md:border-gray-200">
             <div>
               <h3 className="text-lg font-bold text-slate-900 tracking-tight">{selectedApp.role}</h3>
@@ -273,7 +309,8 @@ export default function Questions() {
               ))
             )}
           </div>
-        </div>
+          </div>
+        )
       )}
     </div>
   );

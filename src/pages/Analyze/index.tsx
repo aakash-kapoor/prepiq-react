@@ -129,6 +129,7 @@ export default function Analyze() {
             />
             <ResultsPanel
                 analysisResult={analysisResult}
+                isLoading={isLoading}
                 isSaving={isSaving}
                 panelRef={resultsSectionRef}
                 onSave={handleSaveToDashboard}

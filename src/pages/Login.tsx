@@ -2,6 +2,31 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import LegalModal from '../components/LegalModal';
+import { motion } from 'motion/react';
+
+const auroraBlobs = [
+  {
+    color: '#6366F1',
+    size: '60%',
+    style: { top: '-10%', left: '-10%' },
+    animate: { x: [0, 60, 0], y: [0, -40, 0], scale: [1, 1.15, 1] },
+    duration: 14,
+  },
+  {
+    color: '#8B5CF6',
+    size: '60%',
+    style: { bottom: '-15%', right: '-5%' },
+    animate: { x: [0, -40, 0], y: [0, -50, 0], scale: [1, 0.9, 1] },
+    duration: 18,
+  },
+  {
+    color: '#22D3B6',
+    size: '40%',
+    style: { top: '20%', right: '15%' },
+    animate: { x: [0, -70, 0], y: [0, 50, 0], scale: [1, 1.2, 1] },
+    duration: 11,
+  },
+];
 
 export default function Login() {
   const { loginWithGoogle, user } = useAuth();
@@ -160,17 +185,39 @@ export default function Login() {
       </div>
 
       {/* RIGHT COLUMN — hidden on mobile */}
-      <div className="hidden md:flex flex-1 bg-slate-950 relative overflow-hidden items-center justify-center p-10 xl:p-16 select-none">
+      <div className="hidden md:flex flex-1 bg-[#0A0E27] relative overflow-hidden items-center justify-center p-10 xl:p-16 select-none">
+
+        {/* Aurora blobs */}
+        {auroraBlobs.map((blob, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              ...blob.style,
+              width: blob.size,
+              height: blob.size,
+              background: blob.color,
+              filter: 'blur(80px)',
+              mixBlendMode: 'screen',
+              opacity: 0.45,
+            }}
+            animate={blob.animate}
+            transition={{
+              duration: blob.duration,
+              repeat: Infinity,
+              ease: 'easeInOut' as const,
+            }}
+          />
+        ))}
 
         {/* Grid backdrop */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+        {/* <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:4rem_4rem]" /> */}
 
-        {/* Ambient glows */}
-        <div className="absolute w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-3xl -top-24 -right-24 pointer-events-none" />
-        <div className="absolute w-[350px] h-[350px] bg-violet-500/5 rounded-full blur-3xl -bottom-16 -left-16 pointer-events-none" />
+        {/* Dark overlay to isolate content from aurora glow */}
+        <div className="absolute inset-0 bg-[#0A0E27]/60 backdrop-blur-[1px]" />
 
         {/* Content card */}
-        <div className="max-w-md w-full relative z-10 space-y-6">
+        <div className="max-w-md w-full relative z-10 space-y-6 bg-white/[0.03] border border-white/[0.07] rounded-2xl p-8 backdrop-blur-sm shadow-2xl">
 
           {/* Quote / headline */}
           <div className="space-y-3 pb-6 border-b border-white/5">
@@ -181,7 +228,7 @@ export default function Login() {
               Know your weak spots<br />
               <span className="text-indigo-400">before they do.</span>
             </h2>
-            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+            <p className="text-xs text-slate-300 font-medium leading-relaxed">
               PrepIQ reverse-engineers job descriptions with Gemini AI — mapping your exact knowledge gaps, drilling them with adaptive quizzes, and building a custom study sprint to your interview date.
             </p>
           </div>
@@ -198,7 +245,7 @@ export default function Login() {
                     <path strokeLinecap="round" strokeLinejoin="round" d={h.iconPath} />
                   </svg>
                 </div>
-                <p className="text-xs font-semibold text-slate-300">{h.label}</p>
+                <p className="text-xs font-semibold text-white">{h.label}</p>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-slate-600 ml-auto shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                 </svg>
@@ -212,9 +259,9 @@ export default function Login() {
               <div className="w-6 h-6 bg-[#6366F1] rounded-lg flex items-center justify-center font-black text-[9px] text-white">
                 IQ
               </div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">PrepIQ</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PrepIQ</span>
             </div>
-            <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest">100% Free · Serverless</span>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">100% Free · Serverless</span>
           </div>
         </div>
       </div>
@@ -227,6 +274,6 @@ export default function Login() {
         />
       )}
 
-        </div>
+    </div>
   );
 }

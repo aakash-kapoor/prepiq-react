@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { User } from "firebase/auth";
 import type { NavigationItem } from "../../config/navigation";
 import { isNavItemActive } from "../../config/navigation";
+import { motion } from "motion/react";
 
 type DesktopSidebarProps = {
     user: User;
@@ -32,13 +33,22 @@ export default function DesktopSidebar({
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                                    ? 'bg-[#6366F1] text-white shadow-lg shadow-indigo-500/20'
+                            className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-150 ${
+                                isActive
+                                    ? 'text-white'
                                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-                                }`}
+                            }`}
                         >
-                            <span className="transition-colors">{item.icon}</span>
-                            {item.name}
+                            {/* Sliding active pill — layoutId lets Motion animate it between nav items */}
+                            {isActive && (
+                                <motion.div
+                                    layoutId="sidebar-active-pill"
+                                    className="absolute inset-0 bg-[#6366F1] rounded-xl shadow-lg shadow-indigo-500/20"
+                                    transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+                                />
+                            )}
+                            <span className="relative z-10 transition-colors">{item.icon}</span>
+                            <span className="relative z-10">{item.name}</span>
                         </Link>
                     );
                 })}
@@ -61,9 +71,11 @@ export default function DesktopSidebar({
                     </div>
                 </Link>
                 {/* Clean SVG Profile Logout Action Trigger */}
-                <button
+                <motion.button
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.92 }}
                     onClick={onLogout}
-                    className="text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-all duration-150 group"
+                    className="text-slate-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors duration-150 group"
                     title="Log Out"
                 >
                     <svg
@@ -72,7 +84,7 @@ export default function DesktopSidebar({
                         viewBox="0 0 24 24"
                         strokeWidth={2}
                         stroke="currentColor"
-                        className="w-5 h-5 transition-transform group-hover:translate-x-0.5"
+                        className="w-5 h-5"
                     >
                         <path
                             strokeLinecap="round"
@@ -80,7 +92,7 @@ export default function DesktopSidebar({
                             d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
                         />
                     </svg>
-                </button>
+                </motion.button>
             </div>
         </aside>
     );
