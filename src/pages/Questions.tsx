@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useGemini } from '../hooks/useGemini';
 import { db } from '../config/firebase';
@@ -9,6 +10,8 @@ import LoadingState from '../components/LoadingState';
 import ProgressBar from '../components/ProgressBar';
 import Spinner from '../components/Spinner';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
+import { QuestionsSkeleton } from '../components/Skeleton';
+import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 
 // Sub-component to manage individual accordion state safely
 const QuestionCard = ({ q, index }: { q: any, index: number }) => {
@@ -24,19 +27,28 @@ const QuestionCard = ({ q, index }: { q: any, index: number }) => {
         </div>
       </div>
       <p className="text-sm font-semibold text-slate-900 leading-snug mb-3">{q.question}</p>
-      
-      <button 
+
+      <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition underline"
       >
         {isExpanded ? 'Hide Ideal Answer' : 'View Ideal Answer'}
       </button>
 
-      {isExpanded && (
-        <div className="mt-3 p-4 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-700 font-medium leading-relaxed animate-fadeIn whitespace-pre-line">
-          {q.idealAnswer}
-        </div>
-      )}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            key="answer"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="mt-3 p-4 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line"
+          >
+            {q.idealAnswer}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -51,6 +63,7 @@ export default function Questions() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const [questionCount, setQuestionCount] = useState<number>(15);
+  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const hasAutoSelected = useRef(false);
 
@@ -60,6 +73,7 @@ export default function Questions() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setApplications(apps);
+      markDone();
 
       const stateTargetId = location.state?.preSelectedAppId;
       if (stateTargetId) {
@@ -78,7 +92,7 @@ export default function Questions() {
         hasAutoSelected.current = true;
       }
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); cancelTimer(); };
   }, [user, location.state]);
 
   useEffect(() => {
@@ -125,6 +139,10 @@ export default function Questions() {
     }
   };
 
+  if (appsLoading) {
+    return <QuestionsSkeleton />;
+  }
+
   if (!applications || applications.length === 0) {
     return (
       <div className="max-w-6xl mx-auto p-6">
@@ -146,8 +164,8 @@ export default function Questions() {
             key={app.id}
             onClick={() => setSelectedApp(app)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${selectedApp?.id === app.id
-                ? 'bg-[#6366F1] text-white border-[#6366F1]'
-                : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
+              ? 'bg-[#6366F1] text-white border-[#6366F1]'
+              : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
               }`}
             title={`${app.company} — ${app.role}`}
           >

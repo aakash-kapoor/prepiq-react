@@ -4,6 +4,8 @@ import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EmptyState from '../components/EmptyState';
+import { QuizLauncherSkeleton } from '../components/Skeleton';
+import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 
 export default function QuizLauncher() {
   const { user } = useAuth();
@@ -13,6 +15,7 @@ export default function QuizLauncher() {
   const [applications, setApplications] = useState<any[]>([]);
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
+  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const hasAutoSelected = useRef(false);
 
@@ -22,6 +25,7 @@ export default function QuizLauncher() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setApplications(apps);
+      markDone();
 
       const stateTargetId = location.state?.preSelectedAppId;
       if (stateTargetId) {
@@ -40,7 +44,7 @@ export default function QuizLauncher() {
         hasAutoSelected.current = true;
       }
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); cancelTimer(); };
   }, [user, location.state]);
 
   useEffect(() => {
@@ -50,6 +54,10 @@ export default function QuizLauncher() {
       setQuestions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
   }, [selectedApp, user]);
+
+  if (appsLoading) {
+    return <QuizLauncherSkeleton />;
+  }
 
   if (!applications || applications.length === 0) {
     return (

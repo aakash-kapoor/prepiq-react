@@ -3,8 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
-import LoadingState from '../components/LoadingState';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
+import { StudyPlanSkeleton } from '../components/Skeleton';
+import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -34,6 +35,7 @@ export default function StudyPlan() {
   const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
+  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   // 1. Sync Job Applications from Firestore
   useEffect(() => {
@@ -42,6 +44,7 @@ export default function StudyPlan() {
     const unsubscribe = onSnapshot(appsRef, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobApp));
       setApplications(apps);
+      markDone();
       if (apps.length > 0 && !selectedApp) {
         setSelectedApp(apps[0]);
       } else if (selectedApp) {
@@ -50,7 +53,7 @@ export default function StudyPlan() {
         if (refreshed) setSelectedApp(refreshed);
       }
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); cancelTimer(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -192,6 +195,10 @@ export default function StudyPlan() {
     }
   };
 
+  if (appsLoading) {
+    return <StudyPlanSkeleton />;
+  }
+
   if (!applications || applications.length === 0) {
     return (
         <div className="max-w-6xl mx-auto p-6">
@@ -319,7 +326,20 @@ export default function StudyPlan() {
           {/* Right Column: Custom Tailored SVG-Style Timeline Rail */}
           <div className="md:col-span-2 space-y-6">
             {isLoading ? (
-              <LoadingState message="Computing schedule intervals..." size="md" />
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex gap-4 animate-pulse">
+                    <div className="shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-slate-200" />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-48 bg-slate-200 rounded-lg" />
+                      <div className="h-3 w-full bg-slate-100 rounded-lg" />
+                      <div className="h-3 w-4/5 bg-slate-100 rounded-lg" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="relative border-l-2 border-slate-200 ml-4 md:ml-6 space-y-6">
                 {timeline.map((day) => {

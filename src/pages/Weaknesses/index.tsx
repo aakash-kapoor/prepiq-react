@@ -7,6 +7,8 @@ import { type TopicStats } from './types';
 import AppSelector from './AppSelector';
 import SummaryCards from './SummaryCards';
 import TopicRail from './TopicRail';
+import { WeaknessesSkeleton } from '../../components/Skeleton';
+import { useMinLoadingDelay } from '../../hooks/useMinLoadingDelay';
 
 export default function Weaknesses() {
     const { user } = useAuth();
@@ -14,6 +16,7 @@ export default function Weaknesses() {
     const [selectedApp, setSelectedApp] = useState<any>(null);
     const [topicMetrics, setTopicMetrics] = useState<TopicStats[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
     // Sync job tracks from Firestore
     useEffect(() => {
@@ -22,11 +25,12 @@ export default function Weaknesses() {
         const unsubscribe = onSnapshot(appsRef, (snapshot) => {
             const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setApplications(apps);
+            markDone();
             if (apps.length > 0 && !selectedApp) {
                 setSelectedApp(apps[0]);
             }
         });
-        return () => unsubscribe();
+        return () => { unsubscribe(); cancelTimer(); };
     }, [user]);
 
     // Fetch and aggregate confidence metrics
@@ -72,6 +76,10 @@ export default function Weaknesses() {
     const globalAvg = practicedTopics.length > 0
         ? (topicMetrics.reduce((sum, item) => sum + item.avgConfidence, 0) / practicedTopics.length).toFixed(1)
         : '0.0';
+
+    if (appsLoading) {
+        return <WeaknessesSkeleton />;
+    }
 
     if (!applications || applications.length === 0) {
         return (

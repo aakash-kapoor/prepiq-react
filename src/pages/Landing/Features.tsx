@@ -1,3 +1,5 @@
+import { motion } from 'motion/react';
+
 const features = [
     {
         accent: 'indigo',
@@ -55,19 +57,39 @@ const features = [
     },
 ];
 
+const cardVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: (i: number) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * 0.08, duration: 0.35, ease: 'easeOut' as const },
+    }),
+};
+
 export default function Features() {
     return (
         <section id="features" className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-            <div className="text-center mb-12 sm:mb-16">
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.4 }}
+                className="text-center mb-12 sm:mb-16"
+            >
                 <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">System blueprint</p>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">Engineered to isolate gaps, optimize time.</h2>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {features.map((f) => (
-                    <div
+                {features.map((f, i) => (
+                    <motion.div
                         key={f.title}
-                        className={`bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4 transition-all duration-300 ease-out ${f.hoverBorder} hover:shadow-md hover:-translate-y-1 hover:shadow-indigo-500/5`}
+                        custom={i}
+                        variants={cardVariants}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: '-40px' }}
+                        className={`bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/[0.08] ${f.hoverBorder}`}
                     >
                         <div className={`w-10 h-10 rounded-xl ${f.bgClass} ${f.textClass} flex items-center justify-center`}>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
@@ -76,7 +98,7 @@ export default function Features() {
                         </div>
                         <h3 className="text-sm font-bold text-slate-900 tracking-tight">{f.title}</h3>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed">{f.description}</p>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
         </section>
