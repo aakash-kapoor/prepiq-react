@@ -120,6 +120,7 @@ prepiq/
 |   |   |-- LegalModal.tsx
 |   |   |-- LoadingState.tsx
 |   |   |-- ProgressBar.tsx
+|   |   |-- ScrollToTop.tsx
 |   |   |-- Skeleton.tsx
 |   |   |-- Spinner.tsx
 |   |   |-- TrackSelector.tsx
@@ -131,6 +132,7 @@ prepiq/
 |   |-- config/
 |   |   |-- changelog.ts
 |   |   |-- firebase.ts
+|   |   |-- navigation.tsx
 |   |   `-- smokeTest.ts
 |   |-- context/
 |   |   `-- AuthContext.tsx

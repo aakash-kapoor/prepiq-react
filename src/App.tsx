@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
+import ScrollToTop from './components/ScrollToTop';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import DashboardHome from './pages/DashboardHome';
@@ -66,6 +67,7 @@ function App() {
       />
       <AuthProvider>
         <Router>
+          <ScrollToTop />
           <Routes>
             {/* Public Marketing Landing Root — redirects to dashboard if already logged in */}
             <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />

@@ -83,9 +83,9 @@ export default function MoreMenu({
                 "
               />
 
-              <div className="relative p-6">
+              <div className="relative p-4">
                 {/* Drag Handle */}
-                <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-white/60 shadow-[0_1px_1px_rgba(255,255,255,0.6)]" />
+                <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-slate-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.10)]" />
 
                 {/* Title */}
                 <h2 className="mb-5 text-center text-lg font-semibold text-slate-800">
