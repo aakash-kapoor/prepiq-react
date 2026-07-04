@@ -21,6 +21,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.10.0',
+    date: 'Jul 4, 2026',
+    title: 'Collapsible Sidebar, Scroll Restoration & Profile Fixes',
+    description:
+      'Added a collapsible sidebar, automatic scroll restoration between pages, and fixed the Profile page Danger Zone rendering issue.',
+    tags: ['feat', 'ui', 'fix', 'responsive'],
+  },
+  {
     version: 'v0.9.0',
     date: 'Jul 3, 2026',
     title: 'Track Selector, Smoother Loading & Motion Improvements',
