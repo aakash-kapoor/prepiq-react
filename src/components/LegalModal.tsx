@@ -9,21 +9,21 @@ export default function LegalModal({ content, onClose }: LegalModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-fadeIn">
             <div 
-                className="bg-white border border-slate-100 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 transform animate-in fade-in zoom-in-95 duration-150"
+                className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 transform animate-in fade-in zoom-in-95 duration-150"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest text-indigo-600">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                         {content.title}
                     </h3>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition"
+                        className="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-full transition shrink-0"
                     >
                         ✕
                     </button>
                 </div>
-                <p className="text-xs font-medium text-slate-500 leading-relaxed whitespace-pre-line">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed whitespace-pre-line">
                     {content.text}
                 </p>
             </div>

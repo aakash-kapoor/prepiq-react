@@ -20,6 +20,19 @@
     <meta name="twitter:title" content="PrepIQ — AI Technical Interview Prep" />
     <meta name="twitter:description" content="Reverse-engineer job descriptions with Gemini AI to ace your next tech interview." />
     <title>PrepIQ | Know Your Weak Spots</title>
+    <!-- Prevent dark mode flash by applying theme synchronously -->
+    <script>
+      (function() {
+        try {
+          var savedTheme = localStorage.getItem('theme');
+          if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.add('light');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

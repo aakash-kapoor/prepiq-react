@@ -9,7 +9,8 @@ export type ChangelogTag =
   | 'seo'
   | 'launch'
   | 'refactor'
-  | 'chore';
+  | 'chore'
+  | 'theme';
 
 export interface ChangelogEntry {
   version: string;
@@ -20,6 +21,29 @@ export interface ChangelogEntry {
 }
 
 export const changelog: readonly ChangelogEntry[] = [
+  {
+    version: 'v0.6.0',
+    date: 'Jul 5, 2026',
+    title: 'Global Dark Mode Support',
+    description: 'Implemented comprehensive dark mode across the entire application in a single deployment. Upgraded the AppLayout, liquid glass navigation, and core components with targeted Tailwind dark utility classes for a seamless, high-contrast low-light experience.',
+    tags: ['feat', 'ui', 'theme'],
+  },
+  {
+    version: 'v0.10.0',
+    date: 'Jul 4, 2026',
+    title: 'Collapsible Sidebar, Scroll Restoration & Profile Fixes',
+    description:
+      'Added a collapsible sidebar, automatic scroll restoration between pages, and fixed the Profile page Danger Zone rendering issue.',
+    tags: ['feat', 'ui', 'fix', 'responsive'],
+  },
+  {
+    version: 'v0.9.0',
+    date: 'Jul 3, 2026',
+    title: 'Track Selector, Smoother Loading & Motion Improvements',
+    description:
+      'Introduced a new animated track selector dropdown for a cleaner experience. Redesigned loading skeletons across the app with smoother transitions to reduce flickering when switching tracks. Added loading states to the Profile page and JD Analyzer results for better visual feedback. Also improved animations throughout the app with more consistent motion and automatic support for users who prefer reduced motion.',
+    tags: ['feat', 'ui', 'fix', 'refactor'],
+  },
   {
     version: 'v0.8.0',
     date: 'Jul 2, 2026',

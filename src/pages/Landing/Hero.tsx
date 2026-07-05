@@ -1,3 +1,5 @@
+import { motion } from 'motion/react';
+
 interface HeroProps {
     onCTA: () => void;
 }
@@ -11,74 +13,68 @@ const stats = [
 export default function Hero({ onCTA }: HeroProps) {
     return (
         <section className="max-w-4xl mx-auto text-center px-4 sm:px-6 pt-16 sm:pt-20 pb-16 sm:pb-24">
-            <span className="text-[10px] sm:text-[11px] font-bold tracking-widest text-[#6366F1] uppercase bg-indigo-50 border border-indigo-100/50 px-3 py-1 rounded-full inline-block mb-6">
+            <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.05 }}
+                className="text-[10px] sm:text-[11px] font-bold tracking-widest text-[#6366F1] dark:text-indigo-400 uppercase bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100/50 dark:border-indigo-800/50 px-3 py-1 rounded-full inline-block mb-6"
+            >
                 Next-gen AI technical interview prep
-            </span>
+            </motion.span>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-950 tracking-tight leading-[1.08] max-w-3xl mx-auto mb-6">
+            <motion.h1
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.12 }}
+                className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-950 dark:text-slate-50 tracking-tight leading-[1.08] max-w-3xl mx-auto mb-6"
+            >
                 Know your weak spots{' '}
                 <span className="text-[#6366F1]">before they do.</span>
-            </h1>
+            </motion.h1>
 
-            <p className="text-sm sm:text-base text-slate-500 font-medium max-w-xl mx-auto leading-relaxed mb-10">
+            <motion.p
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.2 }}
+                className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium max-w-xl mx-auto leading-relaxed mb-10"
+            >
                 Stop parsing generic question banks. PrepIQ reverse-engineers job descriptions using Gemini AI to map your exact knowledge gaps, drill them with adaptive quizzes, and build a day-by-day study sprint.
-            </p>
+            </motion.p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.28 }}
+                className="flex flex-col sm:flex-row items-center justify-center gap-3"
+            >
                 <button
                     onClick={onCTA}
-                    className="w-full sm:w-auto bg-[#6366F1] hover:bg-indigo-600 text-white font-bold text-sm px-8 py-4 rounded-xl shadow-lg shadow-indigo-500/20 transition transform hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full sm:w-auto bg-[#6366F1] hover:bg-indigo-600 text-white font-bold text-sm px-8 py-4 rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/[0.28] hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200"
                 >
                     Start sharpening your skills — it's free
                 </button>
                 <a
                     href="#how-it-works"
-                    className="w-full sm:w-auto text-sm font-semibold text-slate-500 hover:text-slate-800 px-6 py-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition text-center"
+                    className="w-full sm:w-auto text-sm font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 px-6 py-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 transition text-center"
                 >
                     See how it works ↓
                 </a>
-            </div>
+            </motion.div>
 
-            {/* App Preview Mockup */}
-            <div className="mt-16 relative mx-auto max-w-5xl rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xl shadow-indigo-500/10 animate-section-fade overflow-hidden">
-                <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-100 bg-slate-50 rounded-t-xl overflow-hidden">
-                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
-                    <div className="mx-2 sm:mx-4 flex-1 bg-white border border-slate-100 py-0.5 rounded text-[9px] font-medium text-slate-400 text-center truncate select-none">
-                        prepiq.web.app/dashboard/analyze
-                    </div>
-                    <div className="w-10 shrink-0 hidden sm:block" />
-                </div>
-                <div className="bg-[#F8FAFC] p-3 sm:p-4 rounded-b-xl grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pointer-events-none select-none">
-                    <div className="bg-white p-3 rounded-xl border border-slate-100 space-y-2 shadow-sm">
-                        <div className="h-2.5 w-2/3 bg-slate-200 rounded" />
-                        <div className="h-10 w-full bg-slate-50 rounded border border-dashed border-slate-200" />
-                        <div className="h-6 w-full bg-indigo-500 rounded-lg" />
-                    </div>
-                    <div className="sm:col-span-2 bg-white p-3 rounded-xl border border-slate-100 space-y-3 shadow-sm">
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-50">
-                            <div className="h-3 w-1/3 bg-slate-200 rounded" />
-                            <div className="h-3 w-12 bg-amber-100 rounded" />
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                            <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold whitespace-nowrap">• React 19</span>
-                            <span className="text-[9px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold whitespace-nowrap">• TypeScript</span>
-                            <span className="text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 font-bold whitespace-nowrap">• System Architecture</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Stats Strip */}
-            <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 border border-gray-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+            {/* Stats Strip — staggered fade-in */}
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="mt-14 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-800 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/50 overflow-hidden shadow-sm"
+            >
                 {stats.map((stat) => (
                     <div key={stat.label} className="px-4 py-5 text-center">
-                        <p className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">{stat.value}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-400 font-medium mt-0.5 leading-snug">{stat.label}</p>
+                        <p className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{stat.value}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5 leading-snug">{stat.label}</p>
                     </div>
                 ))}
-            </div>
+            </motion.div>
         </section>
     );
 }

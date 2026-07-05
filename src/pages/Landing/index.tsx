@@ -21,7 +21,7 @@ export default function Landing() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] font-sans antialiased text-slate-900 selection:bg-indigo-100">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 font-sans antialiased text-slate-900 dark:text-slate-100 selection:bg-indigo-100 dark:selection:bg-indigo-900/30">
             <Navbar user={user} onCTA={handleCTA} />
             <Hero onCTA={handleCTA} />
             <HowItWorks />

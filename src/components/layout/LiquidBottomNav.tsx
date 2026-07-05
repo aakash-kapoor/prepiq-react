@@ -48,14 +48,14 @@ export default function LiquidBottomNav({
       z-40
       h-16
       rounded-full
-      border border-white/25
-      bg-white/12
+      border border-white/25 dark:border-white/10
+      bg-white/12 dark:bg-black/20
       backdrop-blur-[24px]
       backdrop-saturate-150
       overflow-hidden
       select-none
       px-2
-      shadow-[inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-1px_0_rgba(255,255,255,0.05),0_8px_32px_rgba(15,23,42,0.18)]
+      shadow-[inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-1px_0_rgba(255,255,255,0.05),0_8px_32px_rgba(15,23,42,0.18)] dark:shadow-none
       "
     >
       {/* Top-down light wash — the "glass has volume" cue */}
@@ -65,8 +65,8 @@ export default function LiquidBottomNav({
         inset-0
         rounded-full
         bg-gradient-to-b
-        from-white/35
-        via-white/8
+        from-white/35 dark:from-white/10
+        via-white/8 dark:via-transparent
         to-transparent
         pointer-events-none
         "
@@ -80,7 +80,7 @@ export default function LiquidBottomNav({
         h-px
         bg-gradient-to-r
         from-transparent
-        via-white/80
+        via-white/80 dark:via-white/20
         to-transparent
         pointer-events-none
         "
@@ -105,11 +105,11 @@ export default function LiquidBottomNav({
                     top-2
                     bottom-2
                     rounded-full
-                    border-t border-t-white/70
-                    border-b border-b-white/15
+                    border-t border-t-white/70 dark:border-t-white/20
+                    border-b border-b-white/15 dark:border-b-transparent
                     bg-gradient-to-b
-                    from-white/45
-                    to-white/15
+                    from-white/45 dark:from-white/10
+                    to-white/15 dark:to-transparent
                     backdrop-blur-md
                     shadow-[inset_0_1px_1px_rgba(255,255,255,0.85),inset_0_-2px_3px_rgba(255,255,255,0.12),0_4px_14px_rgba(99,102,241,0.18)]
                   "
@@ -165,11 +165,11 @@ export default function LiquidBottomNav({
                 top-2
                 bottom-2
                 rounded-full
-                border-t border-t-white/70
-                border-b border-b-white/15
+                border-t border-t-white/70 dark:border-t-white/20
+                border-b border-b-white/15 dark:border-b-transparent
                 bg-gradient-to-b
-                from-white/45
-                to-white/15
+                from-white/45 dark:from-white/10
+                to-white/15 dark:to-transparent
                 backdrop-blur-md
                 shadow-[inset_0_1px_1px_rgba(255,255,255,0.85),inset_0_-2px_3px_rgba(255,255,255,0.12),0_4px_14px_rgba(99,102,241,0.18)]
               "

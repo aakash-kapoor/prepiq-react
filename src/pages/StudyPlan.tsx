@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
-import LoadingState from '../components/LoadingState';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
+import { StudyPlanSkeleton, StudyPlanContentSkeleton } from '../components/Skeleton';
+import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
+import TrackSelector from '../components/TrackSelector';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -34,6 +36,8 @@ export default function StudyPlan() {
   const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSavingDate, setIsSavingDate] = useState(false);
+  const prevSelectedAppIdRef = useRef<string | null>(null);
+  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   // 1. Sync Job Applications from Firestore
   useEffect(() => {
@@ -42,6 +46,7 @@ export default function StudyPlan() {
     const unsubscribe = onSnapshot(appsRef, (snapshot) => {
       const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobApp));
       setApplications(apps);
+      markDone();
       if (apps.length > 0 && !selectedApp) {
         setSelectedApp(apps[0]);
       } else if (selectedApp) {
@@ -50,15 +55,21 @@ export default function StudyPlan() {
         if (refreshed) setSelectedApp(refreshed);
       }
     });
-    return () => unsubscribe();
+    return () => { unsubscribe(); cancelTimer(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // 2. Identify Gaps & Build Timeline dynamically based on data
   useEffect(() => {
     if (!user || !selectedApp) return;
-    setIsLoading(true);
 
+    const isTrackSwitch = prevSelectedAppIdRef.current !== null && prevSelectedAppIdRef.current !== selectedApp.id;
+    prevSelectedAppIdRef.current = selectedApp.id;
+
+    if (isTrackSwitch) {
+      setIsLoading(true);
+    }
+    const startTime = Date.now();
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
     
     getDocs(questionsRef).then((snapshot) => {
@@ -80,8 +91,6 @@ export default function StudyPlan() {
         const avg = topicScores[topic].sum / topicScores[topic].count;
         return avg < 3.5;
       });
-
-      setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
       
       // Calculate real schedule window if an interview date is set, otherwise default to a 5-day rush sprint
       let windowSize = 5;
@@ -92,7 +101,6 @@ export default function StudyPlan() {
         const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         windowSize = Math.max(daysUntil, 3);
       }
-      setDaysRemaining(windowSize);
 
       // 3. Generate Custom Timeline Array Blueprint
       const generatedTimeline: TimelineDay[] = [];
@@ -128,8 +136,21 @@ export default function StudyPlan() {
         }
       }
 
-      setTimeline(generatedTimeline);
-      setIsLoading(false);
+      if (isTrackSwitch) {
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, 400 - elapsed);
+        setTimeout(() => {
+          setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
+          setDaysRemaining(windowSize);
+          setTimeline(generatedTimeline);
+          setIsLoading(false);
+        }, delay);
+      } else {
+        setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
+        setDaysRemaining(windowSize);
+        setTimeline(generatedTimeline);
+        setIsLoading(false);
+      }
     });
 
   }, [selectedApp, user]);
@@ -192,6 +213,10 @@ export default function StudyPlan() {
     }
   };
 
+  if (appsLoading) {
+    return <StudyPlanSkeleton />;
+  }
+
   if (!applications || applications.length === 0) {
     return (
         <div className="max-w-6xl mx-auto p-6">
@@ -207,33 +232,26 @@ export default function StudyPlan() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       
-      {/* Target Application Selector Bar */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-wrap gap-2 items-center shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-2">Track Timeline:</span>
-        {applications.map((app) => (
-          <button
-            key={app.id}
-            onClick={() => setSelectedApp(app)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition max-w-[180px] truncate ${
-              selectedApp?.id === app.id
-                ? 'bg-[#6366F1] text-white border-[#6366F1]'
-                : 'bg-white text-slate-600 hover:bg-gray-50 border-gray-200'
-            }`}
-            title={`${app.company} — ${app.role}`}
-          >
-            {app.company} — {app.role}
-          </button>
-        ))}
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 flex flex-wrap gap-2 items-center shadow-sm">
+        <TrackSelector
+          label="Track Timeline:"
+          applications={applications}
+          selectedApp={selectedApp}
+          onSelect={setSelectedApp}
+        />
       </div>
 
       {selectedApp && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        isLoading ? (
+          <StudyPlanContentSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           
           {/* Left Column: Schedule Overview Insights Panel */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">Timeline Engine</h2>
-              <p className="text-xs text-slate-400 mt-0.5">{selectedApp.company} — {selectedApp.role}</p>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">Timeline Engine</h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{selectedApp.company} — {selectedApp.role}</p>
             </div>
             
             {/* Interview Date Picker */}
@@ -241,7 +259,7 @@ export default function StudyPlan() {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="interview-date"
-                  className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
                 >
                   Interview Date
                 </label>
@@ -249,7 +267,7 @@ export default function StudyPlan() {
                   <button
                     onClick={handleClearInterviewDate}
                     disabled={isSavingDate}
-                    className="text-[10px] font-bold text-red-400 hover:text-red-600 transition disabled:opacity-50"
+                    className="text-[10px] font-bold text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 transition disabled:opacity-50"
                   >
                     Clear
                   </button>
@@ -270,7 +288,7 @@ export default function StudyPlan() {
                       showErrorToast("Interview date cannot be in the past.");
                     }
                   }}
-                  className="w-full text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition disabled:opacity-60 cursor-pointer"
+                  className="w-full text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition disabled:opacity-60 cursor-pointer"
                 />
                 {isSavingDate && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -279,7 +297,7 @@ export default function StudyPlan() {
                 )}
               </div>
               {!selectedApp.interviewDate && (
-                <p className="text-[10px] text-slate-400 font-medium leading-snug">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug">
                   No date set — showing default 5-day sprint. Set your interview date for a real countdown.
                 </p>
               )}
@@ -288,16 +306,16 @@ export default function StudyPlan() {
             {/* Days Remaining Card */}
             <div className={`p-4 rounded-xl space-y-1 border transition-all ${
               selectedApp.interviewDate
-                ? 'bg-indigo-50/50 border-indigo-100'
-                : 'bg-slate-50 border-slate-100'
+                ? 'bg-indigo-50/50 dark:bg-indigo-900/30 border-indigo-100 dark:border-indigo-800'
+                : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700'
             }`}>
               <p className={`text-[10px] font-bold uppercase tracking-wider ${
-                selectedApp.interviewDate ? 'text-indigo-600' : 'text-slate-400'
+                selectedApp.interviewDate ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'
               }`}>
                 {selectedApp.interviewDate ? 'Real Countdown' : 'Default Sprint'}
               </p>
-              <h3 className="text-2xl font-black text-slate-800">{daysRemaining} Days Left</h3>
-              <p className="text-xs text-slate-500 font-medium leading-tight pt-1">
+              <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100">{daysRemaining} Days Left</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-tight pt-1">
                 {selectedApp.interviewDate
                   ? 'Timeline is calibrated to your actual interview date.'
                   : 'AI has dynamically distributed your target gap modules based on your manual confidence logs.'}
@@ -305,10 +323,10 @@ export default function StudyPlan() {
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Identified Gaps to Close</h4>
+              <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Identified Gaps to Close</h4>
               <div className="flex flex-wrap gap-1">
                 {weakTopics.map((topic, idx) => (
-                  <span key={idx} className="text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded">
+                  <span key={idx} className="text-[11px] font-semibold bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800 px-2 py-0.5 rounded">
                     ⚠️ {topic}
                   </span>
                 ))}
@@ -318,55 +336,50 @@ export default function StudyPlan() {
 
           {/* Right Column: Custom Tailored SVG-Style Timeline Rail */}
           <div className="md:col-span-2 space-y-6">
-            {isLoading ? (
-              <LoadingState message="Computing schedule intervals..." size="md" />
-            ) : (
-              <div className="relative border-l-2 border-slate-200 ml-4 md:ml-6 space-y-6">
-                {timeline.map((day) => {
-                  
-                  let markerColors = 'bg-[#6366F1] border-indigo-200 ring-indigo-100';
-                  if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 ring-amber-100';
-                  if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 ring-red-100';
+            <div className="relative border-l-2 border-slate-200 dark:border-slate-700 ml-4 md:ml-6 space-y-6">
+              {timeline.map((day) => {
+                
+                let markerColors = 'bg-[#6366F1] border-indigo-200 dark:border-indigo-800 ring-indigo-100 dark:ring-indigo-900/50';
+                if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 dark:border-amber-800 ring-amber-100 dark:ring-amber-900/50';
+                if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 dark:border-red-800 ring-red-100 dark:ring-red-900/50';
 
-                  return (
-                    <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
-                      
-                      {/* Timeline Dot Marker */}
-                      <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
+                return (
+                  <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
+                    
+                    {/* Timeline Dot Marker */}
+                    <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
 
-                      {/* Timeline content details box card */}
-                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 transition">
-                        <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 pb-2">
-                          <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">
-                            Day {day.dayNumber} of {daysRemaining}
-                          </span>
-                          <h4 className="text-sm font-black text-slate-900">{day.title}</h4>
-                        </div>
-                        
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                          {day.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1 pt-1 items-center">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mr-1">Target Module:</span>
-                          {day.focusTopics.map((topic, tIdx) => (
-                            <span key={tIdx} className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-                              {topic}
-                            </span>
-                          ))}
-                        </div>
+                    {/* Timeline content details box card */}
+                    <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 dark:hover:border-slate-600 transition">
+                      <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 dark:border-slate-700 pb-2">
+                        <span className="text-[10px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                          Day {day.dayNumber} of {daysRemaining}
+                        </span>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">{day.title}</h4>
                       </div>
+                      
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                        {day.description}
+                      </p>
 
+                      <div className="flex flex-wrap gap-1 pt-1 items-center">
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1">Target Module:</span>
+                        {day.focusTopics.map((topic, tIdx) => (
+                          <span key={tIdx} className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                  </div>
+                );
+              })}
+            </div>
           </div>
-
-        </div>
+          </div>
+        )
       )}
-
     </div>
   );
 }
