@@ -22,7 +22,7 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
-    version: 'v0.6.0',
+    version: 'v0.11.0',
     date: 'Jul 5, 2026',
     title: 'Global Dark Mode Support',
     description: 'Implemented comprehensive dark mode across the entire application in a single deployment. Upgraded the AppLayout, liquid glass navigation, and core components with targeted Tailwind dark utility classes for a seamless, high-contrast low-light experience.',
