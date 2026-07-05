@@ -116,10 +116,10 @@ export default function DashboardHome() {
       {/* Dynamic Header Badge Text Context */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             Good morning, {user?.displayName?.split(' ')[0]} 👋
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             You have <span className="text-[#6366F1] font-semibold">{applications.length} active roles</span> tracking. Keep sharpening your weak spots.
           </p>
         </div>
@@ -136,12 +136,12 @@ export default function DashboardHome() {
         {[
           {
             label: 'Active JDs',
-            value: <AnimatedNumber value={applications.length} className="text-2xl font-extrabold text-slate-900" />,
+            value: <AnimatedNumber value={applications.length} className="text-2xl font-extrabold text-slate-900 dark:text-slate-100" />,
             sub: 'In compilation sync pipeline',
           },
           {
             label: 'Questions Sourced',
-            value: <AnimatedNumber value={totalQuestions} className="text-2xl font-extrabold text-slate-900" />,
+            value: <AnimatedNumber value={totalQuestions} className="text-2xl font-extrabold text-slate-900 dark:text-slate-100" />,
             sub: 'Across all targets',
           },
           {
@@ -164,25 +164,25 @@ export default function DashboardHome() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
+            className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm"
           >
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stat.label}</p>
             <div className="mt-1">{stat.value}</div>
-            <p className="text-[11px] text-slate-400 mt-1 truncate">{stat.sub}</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">{stat.sub}</p>
           </div>
         ))}
       </div>
 
       {/* 3. FLUID ACTIVE JOB TRACKS CONTAINER */}
       <div className="space-y-4">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Job Preparations</h3>
+        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Active Job Preparations</h3>
 
         <AnimatePresence mode="popLayout">
           {applications.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="bg-dashed border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center text-slate-400 text-sm font-medium"
+              className="bg-dashed border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl p-12 text-center text-slate-400 dark:text-slate-500 text-sm font-medium"
             >
               No tracked applications active. Click "Analyze New JD" above to seed your platform metrics!
             </motion.div>
@@ -196,24 +196,24 @@ export default function DashboardHome() {
 
                 // Fallback style (Mid-Level / Medium)[cite: 1]
                 let accentStyles = {
-                  borderTop: 'border-t-4 border-t-[#F97316]', // Vibrant Orange[cite: 1]
-                  badge: 'bg-orange-50 text-orange-700 border-orange-200'
+                  borderTop: 'border-t-4 border-t-[#F97316] dark:border-t-[#F97316]', // Vibrant Orange[cite: 1]
+                  badge: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800'
                 };
 
                 if (difficulty.includes('senior') || difficulty.includes('hard')) {
                   accentStyles = {
-                    borderTop: 'border-t-4 border-t-[#EF4444]', // Crimson Red[cite: 1]
-                    badge: 'bg-red-50 text-red-700 border-red-200'
+                    borderTop: 'border-t-4 border-t-[#EF4444] dark:border-t-[#EF4444]', // Crimson Red[cite: 1]
+                    badge: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
                   };
                 } else if (difficulty.includes('easy') || difficulty.includes('junior') || difficulty.includes('green')) {
                   accentStyles = {
-                    borderTop: 'border-t-4 border-t-[#10B981]', // Emerald Green[cite: 1]
-                    badge: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    borderTop: 'border-t-4 border-t-[#10B981] dark:border-t-[#10B981]', // Emerald Green[cite: 1]
+                    badge: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                   };
                 } else if (difficulty.includes('mid') || difficulty.includes('medium')) {
                   accentStyles = {
-                    borderTop: 'border-t-4 border-t-[#F97316]', // Orange[cite: 1]
-                    badge: 'bg-orange-50 text-orange-700 border-orange-200'
+                    borderTop: 'border-t-4 border-t-[#F97316] dark:border-t-[#F97316]', // Orange[cite: 1]
+                    badge: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800'
                   };
                 }
 
@@ -225,12 +225,12 @@ export default function DashboardHome() {
                     initial="hidden"
                     animate="visible"
                     // Injected dynamic top border accent class here
-                    className={`bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/[0.10] transition-all duration-200 ${accentStyles.borderTop}`}
+                    className={`bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/[0.10] transition-all duration-200 ${accentStyles.borderTop}`}
                   >
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <h4 className="font-bold text-slate-800 text-base tracking-tight leading-tight">{app.role}</h4>
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">{app.company}</p>
+                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base tracking-tight leading-tight">{app.role}</h4>
+                        <p className="text-xs text-slate-400 dark:text-slate-400 font-medium mt-0.5">{app.company}</p>
                       </div>
                       {/* Injected dynamic custom badge color class here */}
                       <span className={`text-[9px] font-extrabold border px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 ${accentStyles.badge}`}>
@@ -240,11 +240,11 @@ export default function DashboardHome() {
 
                     {/* Progress metrics bars section */}
                     <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs font-bold text-slate-600">
-                        <span className="text-slate-400 font-medium text-[11px]">Skill Extraction Weight</span>
+                      <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                        <span className="text-slate-400 dark:text-slate-500 font-medium text-[11px]">Skill Extraction Weight</span>
                         <span>{app.extractedSkills?.length || 0} Badges Logged</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                         <motion.div
                           className="bg-[#6366F1] h-1.5 rounded-full"
                           initial={{ width: 0 }}
@@ -255,8 +255,8 @@ export default function DashboardHome() {
                     </div>
 
                     {/* Navigation Actions Footer Strip matching wireframe layouts */}
-                    <div className="pt-3 border-t border-gray-50 flex items-center justify-between mt-1">
-                      <span className="text-[11px] text-slate-400 font-medium">
+                    <div className="pt-3 border-t border-gray-50 dark:border-slate-700 flex items-center justify-between mt-1">
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                         🎯 {app.focusAreas?.length || 0} Core Evaluation Hubs
                       </span>
                       <button

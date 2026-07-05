@@ -112,7 +112,7 @@ export default function Weaknesses() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
-            <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-wrap gap-2 items-center shadow-sm">
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 flex flex-wrap gap-2 items-center shadow-sm">
                 <TrackSelector
                     label="Analytics Target:"
                     applications={applications}

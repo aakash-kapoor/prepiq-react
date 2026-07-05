@@ -23,7 +23,7 @@ export default function DesktopSidebar({
 
     return (
         <aside
-            className={`hidden md:flex flex-col bg-white text-slate-900 border-r border-slate-200 shadow-sm shrink-0 transition-all duration-300 ease-in-out ${
+            className={`hidden md:flex flex-col bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-sm shrink-0 transition-all duration-300 ease-in-out ${
                 isCollapsed ? "w-20" : "w-64"
             }`}
         >
@@ -32,7 +32,7 @@ export default function DesktopSidebar({
                 <div>
                     {/* Header: adapts to vertical layout when collapsed */}
                     <div
-                        className={`pt-6 pb-4 px-4 border-slate-100 flex ${
+                        className={`pt-6 pb-4 px-4 border-slate-100 dark:border-slate-700 flex ${
                             isCollapsed
                                 ? "flex-col items-center gap-4"
                                 : "items-center justify-between"
@@ -43,7 +43,7 @@ export default function DesktopSidebar({
                                 IQ
                             </div>
                             {!isCollapsed && (
-                                <span className="font-bold text-lg tracking-tight text-slate-900 whitespace-nowrap">
+                                <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap">
                                     PrepIQ
                                 </span>
                             )}
@@ -52,7 +52,7 @@ export default function DesktopSidebar({
                         {/* Toggle Button */}
                         <button
                             onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 rounded-lg hover:bg-slate-100"
+                            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
                             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                         >
                             <svg
@@ -97,7 +97,7 @@ export default function DesktopSidebar({
                                     } ${
                                         isActive
                                             ? "text-white"
-                                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                            : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200"
                                     }`}
                                 >
                                     {isActive && (
@@ -127,7 +127,7 @@ export default function DesktopSidebar({
 
                 {/* Footer */}
                 <div
-                    className={`p-4 border-t border-slate-100 bg-slate-50/60 flex mt-auto ${
+                    className={`p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60 flex mt-auto ${
                         isCollapsed
                             ? "flex-col items-center justify-center gap-4"
                             : "items-center justify-between"
@@ -135,19 +135,19 @@ export default function DesktopSidebar({
                 >
                     <Link
                         to="/dashboard/profile"
-                        className={`flex items-center overflow-hidden rounded-xl hover:bg-slate-100 transition-colors p-1 -m-1 ${
+                        className={`flex items-center overflow-hidden rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors p-1 -m-1 ${
                             isCollapsed ? "justify-center" : "gap-3"
                         }`}
                         title={isCollapsed ? "Profile" : undefined}
                     >
                         <img
                             src={user.photoURL || "https://via.placeholder.com/150"}
-                            className="w-9 h-9 shrink-0 rounded-full border border-slate-200 object-cover"
+                            className="w-9 h-9 shrink-0 rounded-full border border-slate-200 dark:border-slate-600 object-cover"
                             alt="profile"
                         />
                         {!isCollapsed && (
                             <div className="flex flex-col overflow-hidden whitespace-nowrap">
-                                <span className="text-sm font-semibold truncate text-slate-800">
+                                <span className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200">
                                     {user.displayName}
                                 </span>
                                 <span className="text-[10px] text-slate-400 truncate">
@@ -161,7 +161,7 @@ export default function DesktopSidebar({
                         whileHover={{ x: isCollapsed ? 0 : 2, scale: isCollapsed ? 1.05 : 1 }}
                         whileTap={{ scale: 0.92 }}
                         onClick={onLogout}
-                        className="text-slate-400 shrink-0 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors duration-150 group"
+                        className="text-slate-400 shrink-0 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors duration-150 group"
                         title="Log Out"
                     >
                         <svg

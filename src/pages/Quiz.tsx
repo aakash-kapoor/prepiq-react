@@ -87,11 +87,11 @@ export default function Quiz() {
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className="max-w-md mx-auto py-24 text-center space-y-4 px-4"
       >
-        <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm border border-emerald-100">
+        <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm border border-emerald-100 dark:border-emerald-800">
           ✓
         </div>
-        <h2 className="text-xl font-black text-slate-900 tracking-tight">Practice Cycle Synchronized!</h2>
-        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Practice Cycle Synchronized!</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
           Your technical confidence metrics have been securely saved to your ledger. Compiling updated knowledge gaps on your Weak Spots tab now...
         </p>
       </motion.div>
@@ -102,25 +102,25 @@ export default function Quiz() {
 
   return (
     <div className="max-w-2xl mx-auto py-4 relative">
-      <div className="flex justify-between items-center gap-3 text-xs text-slate-500 mb-4 font-medium min-w-0">
+      <div className="flex justify-between items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium min-w-0">
         <span className="truncate min-w-0">
-          Session Track: <strong className="text-slate-700">{appName}</strong>
+          Session Track: <strong className="text-slate-700 dark:text-slate-200">{appName}</strong>
         </span>
         <button
           onClick={() => setIsExitModalOpen(true)}
-          className="text-red-500 hover:text-red-700 font-bold uppercase tracking-wider text-[10px] transition bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-md border border-red-200/40 shrink-0"
+          className="text-red-500 hover:text-red-700 font-bold uppercase tracking-wider text-[10px] transition bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-800/40 px-2.5 py-1 rounded-md border border-red-200/40 dark:border-red-800/40 shrink-0"
         >
           🛑 End Session
         </button>
       </div>
 
-      <div className="flex justify-between text-[11px] font-bold text-slate-400 mb-1">
+      <div className="flex justify-between text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">
         <span>Drill Progress</span>
         <span>Question {currentIndex + 1} of {questions.length}</span>
       </div>
 
       {/* Animated progress bar */}
-      <div className="w-full bg-gray-200 h-1.5 rounded-full mb-8 overflow-hidden shadow-inner">
+      <div className="w-full bg-gray-200 dark:bg-slate-700 h-1.5 rounded-full mb-8 overflow-hidden shadow-inner">
         <motion.div
           className="bg-[#6366F1] h-1.5 rounded-full"
           animate={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
@@ -136,18 +136,18 @@ export default function Quiz() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -24 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 min-h-[340px] flex flex-col justify-between"
+          className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-8 min-h-[340px] flex flex-col justify-between"
         >
           <div>
             <div className="flex gap-2 mb-4">
-              <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-indigo-100/40">
+              <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-indigo-100/40 dark:border-indigo-800">
                 {currentQuestion.topic}
               </span>
-              <span className="text-[10px] bg-amber-50 text-amber-700 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-amber-100/40">
+              <span className="text-[10px] bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold tracking-wider uppercase px-2 py-0.5 rounded border border-amber-100/40 dark:border-amber-800">
                 {currentQuestion.difficulty}
               </span>
             </div>
-            <h2 className="text-lg font-bold text-slate-900 leading-snug mb-6">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug mb-6">
               {currentQuestion.question}
             </h2>
             {/* Answer reveal with subtle upward fade */}
@@ -158,16 +158,16 @@ export default function Quiz() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 4 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-700 font-medium leading-relaxed"
+                  className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed"
                 >
-                  <strong className="text-xs text-slate-400 block mb-1.5 uppercase tracking-wider font-bold">Ideal Structured Target Response:</strong>
+                  <strong className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase tracking-wider font-bold">Ideal Structured Target Response:</strong>
                   {currentQuestion.idealAnswer}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          <div className="mt-8 pt-4 border-t border-gray-100">
+          <div className="mt-8 pt-4 border-t border-gray-100 dark:border-slate-700">
             {!showAnswer ? (
               <motion.button
                 whileTap={{ scale: 0.97 }}
@@ -183,7 +183,7 @@ export default function Quiz() {
                 transition={{ duration: 0.2 }}
                 className="space-y-4 text-center"
               >
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rate Your Technical Confidence:</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rate Your Technical Confidence:</p>
                 <div className="grid grid-cols-5 gap-2">
                   {[1, 2, 3, 4, 5].map((num) => (
                     <motion.button
@@ -191,16 +191,16 @@ export default function Quiz() {
                       whileTap={{ scale: 0.92 }}
                       whileHover={{ y: -2 }}
                       onClick={() => handleRateConfidence(num)}
-                      className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' :
-                          num === 3 ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
-                            'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                      className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-800/40' :
+                          num === 3 ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-800/40' :
+                            'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-800/40'
                         }`}
                     >
                       {num}
                     </motion.button>
                   ))}
                 </div>
-                <div className="flex justify-between text-[10px] text-slate-400 px-1 font-bold uppercase tracking-wider">
+                <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-1 font-bold uppercase tracking-wider">
                   <span>Struggled (1)</span>
                   <span>Nailed It (5)</span>
                 </div>
@@ -226,18 +226,18 @@ export default function Quiz() {
               className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
               <motion.div
-                className="bg-white max-w-sm w-full rounded-2xl border border-gray-100 shadow-2xl p-6 space-y-4 pointer-events-auto"
+                className="bg-white dark:bg-slate-800 max-w-sm w-full rounded-2xl border border-gray-100 dark:border-slate-700 shadow-2xl p-6 space-y-4 pointer-events-auto"
                 initial={{ opacity: 0, scale: 0.92, y: 12 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.92, y: 12 }}
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="w-12 h-12 bg-red-50 border border-red-100 text-red-500 rounded-full flex items-center justify-center text-xl mx-auto shadow-sm">
+                <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 text-red-500 rounded-full flex items-center justify-center text-xl mx-auto shadow-sm">
                   ⚠️
                 </div>
                 <div className="text-center space-y-1">
-                  <h3 className="text-base font-black text-slate-900 tracking-tight">Exit Practice Drill?</h3>
+                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Exit Practice Drill?</h3>
                   <p className="text-xs text-slate-400 font-medium leading-normal px-2">
                     Are you sure you want to pause this active session? All score answers logged up to this card have been securely saved.
                   </p>
@@ -246,7 +246,7 @@ export default function Quiz() {
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setIsExitModalOpen(false)}
-                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200"
+                    className="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200 dark:border-slate-600"
                   >
                     Continue Drill
                   </motion.button>
