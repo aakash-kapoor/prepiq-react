@@ -87,3 +87,12 @@ export async function deleteJobApplication(uid: string, appId: string): Promise<
   // Questions subcollection cleared — delete the application doc itself.
   await deleteDoc(doc(db, 'users', uid, 'jobApplications', appId));
 }
+
+/**
+ * Deletes a single question from a job application's questions subcollection.
+ *
+ * Single deleteDoc — no batching needed for one document.
+ */
+export async function deleteQuestion(uid: string, appId: string, questionId: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'jobApplications', appId, 'questions', questionId));
+}

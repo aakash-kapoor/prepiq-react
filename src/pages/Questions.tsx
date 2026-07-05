@@ -13,18 +13,36 @@ import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { QuestionsSkeleton, QuestionsContentSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
+import { deleteQuestion } from '../lib/deleteUserData';
 
 // Sub-component to manage individual accordion state safely
-const QuestionCard = ({ q, index }: { q: any, index: number }) => {
+const QuestionCard = ({ q, index, onDelete }: { q: any, index: number, onDelete: (id: string) => void }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    onDelete(q.id);
+  };
 
   return (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:border-indigo-100 dark:hover:border-indigo-500/50 transition animate-fadeIn">
       <div className="flex justify-between items-start gap-4 mb-2">
         <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold px-2 py-0.5 rounded-md">Q{index + 1}</span>
-        <div className="flex gap-1.5">
+        <div className="flex items-center gap-1.5">
           <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded">{q.topic}</span>
           <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 rounded">{q.difficulty}</span>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="w-5 h-5 flex items-center justify-center rounded text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-150 disabled:opacity-40 ml-1"
+            title="Remove this question"
+            aria-label="Remove question"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug mb-3">{q.question}</p>
@@ -162,6 +180,23 @@ export default function Questions() {
     }
   };
 
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!user || !selectedApp) return;
+    // Optimistic remove — update UI immediately, then delete from Firestore
+    setQuestions(prev => prev.filter(q => q.id !== questionId));
+    try {
+      await deleteQuestion(user.uid, selectedApp.id, questionId);
+      showSuccessToast('Question removed.');
+    } catch (err) {
+      // Rollback isn't straightforward without caching the removed item,
+      // so re-fetch from Firestore to restore truth
+      const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
+      const snapshot = await getDocs(questionsRef);
+      setQuestions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      showErrorToast('Failed to remove question. Please try again.');
+    }
+  };
+
   if (appsLoading) {
     return <QuestionsSkeleton />;
   }
@@ -267,33 +302,39 @@ export default function Questions() {
               )}
             </div>
 
-            {questions.length === 0 && (
-              <div className="space-y-3 pt-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Number of Questions</label>
-                  <select
-                    value={questionCount}
-                    disabled={isAiLoading}
-                    onChange={(e) => setQuestionCount(Number(e.target.value))}
-                    className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer disabled:opacity-60"
-                  >
-                    <option value={5}>Short Sprint (5 Questions)</option>
-                    <option value={10}>Standard Practice (10 Questions)</option>
-                    <option value={15}>Comprehensive Drill (15 Questions)</option>
-                    <option value={20}>Deep Evaluation Master (20 Questions)</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={handleBuildDeck}
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
+                  {questions.length === 0 ? 'Number of Questions' : 'Questions to Add'}
+                </label>
+                <select
+                  value={questionCount}
                   disabled={isAiLoading}
-                  className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center"
+                  onChange={(e) => setQuestionCount(Number(e.target.value))}
+                  className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer disabled:opacity-60"
                 >
-                  {isAiLoading && <Spinner size="sm" colorClass="text-white" />}
-                  <span>{isAiLoading ? 'Building with Gemini...' : 'Build Question Bank'}</span>
-                </button>
+                  <option value={5}>5 Questions</option>
+                  <option value={10}>10 Questions</option>
+                  <option value={15}>15 Questions</option>
+                  <option value={20}>20 Questions</option>
+                </select>
               </div>
-            )}
+
+              <button
+                onClick={handleBuildDeck}
+                disabled={isAiLoading}
+                className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center"
+              >
+                {isAiLoading && <Spinner size="sm" colorClass="text-white" />}
+                <span>
+                  {isAiLoading
+                    ? 'Building with Gemini...'
+                    : questions.length === 0
+                      ? 'Build Question Bank'
+                      : `Add ${questionCount} More Questions`}
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="md:col-span-2 space-y-3">
@@ -304,9 +345,17 @@ export default function Questions() {
                 No questions yet — click Build to get started.
               </div>
             ) : (
-              questions.map((q, index) => (
-                <QuestionCard key={q.id} q={q} index={index} />
-              ))
+              <AnimatePresence mode="popLayout">
+                {questions.map((q, index) => (
+                  <motion.div
+                    key={q.id}
+                    layout
+                    exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15 } }}
+                  >
+                    <QuestionCard q={q} index={index} onDelete={handleDeleteQuestion} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             )}
           </div>
           </div>
