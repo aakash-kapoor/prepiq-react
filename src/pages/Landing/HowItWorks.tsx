@@ -58,7 +58,7 @@ function JDInputMockup() {
             </div>
 
             <div className="h-9 rounded-lg bg-[#6366F1] flex items-center justify-center">
-                <p className="text-[10px] font-bold text-white tracking-wide">🔒 SECURE ENCRYPT &amp; ANALYZE</p>
+                <p className="text-[10px] font-bold text-white tracking-wide">Analyze Job Description</p>
             </div>
         </div>
     );
@@ -147,7 +147,7 @@ function QuizMockup() {
 
             <div className="space-y-1">
                 <div className="flex items-center justify-between text-[9px] font-semibold text-slate-400 dark:text-slate-500">
-                    <span>Drill Progress</span>
+                    <span>Progress</span>
                     <span>Question 1 of 20</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
@@ -178,7 +178,7 @@ function QuizMockup() {
                 </div>
                 <div className="pt-2 border-t border-slate-50 dark:border-slate-800 space-y-2">
                     <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 text-center">
-                        Rate Your Technical Confidence
+                        Rate Your Confidence
                     </p>
                     <div className="flex gap-1.5">
                         {scores.map((s) => (

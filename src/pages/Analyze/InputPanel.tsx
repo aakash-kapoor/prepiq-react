@@ -32,7 +32,7 @@ export default function InputPanel({
         <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm flex flex-col justify-between gap-4">
             <div className="space-y-4 flex-1 flex flex-col">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">Analyze New Role</h2>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">Analyze a New Role</h2>
                     <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Paste the company details and job description to extract core priorities.</p>
                 </div>
 
@@ -97,7 +97,7 @@ export default function InputPanel({
                 className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white font-bold py-3.5 px-4 rounded-xl transition disabled:opacity-50 text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10 mt-2 flex items-center justify-center gap-2.5 text-center"
             >
                 {isLoading && <Spinner size="sm" colorClass="text-white" />}
-                <span>{isLoading ? 'Running secure tokenization extraction...' : '🔒 SECURE ENCRYPT & ANALYZE'}</span>
+                <span>{isLoading ? 'Analyzing with Gemini...' : 'Analyze Job Description'}</span>
             </button>
         </div>
     );

@@ -29,8 +29,8 @@ export default function ResultsPanel({ analysisResult, isLoading, isSaving, pane
             ) : !analysisResult ? (
                 <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500 p-8 my-auto">
                     <span className="text-4xl mb-2">🤖</span>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Awaiting Source Upload Payload</p>
-                    <p className="text-xs max-w-xs mt-1 text-slate-400 dark:text-slate-500">Your live system tags and structural data blueprint metrics generate right here.</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Run an analysis to see results</p>
+                    <p className="text-xs max-w-xs mt-1 text-slate-400 dark:text-slate-500">Paste a job description and click Analyze to get started.</p>
                 </div>
             ) : (
                 <div className="space-y-6 h-full flex flex-col justify-between">
@@ -64,7 +64,7 @@ export default function ResultsPanel({ analysisResult, isLoading, isSaving, pane
 
                             {analysisResult.extractedSkills?.some((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have') && (
                                 <div className="space-y-1.5">
-                                    <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nice To Have</h4>
+                                    <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nice to Have</h4>
                                     <div className="flex flex-wrap gap-1.5">
                                         {analysisResult.extractedSkills.filter((item: any) => item.category === 'NiceToHave' || item.category === 'Nice to Have').map((item: any, i: number) => (
                                             <span key={i} className="text-xs px-2.5 py-1 rounded-lg font-medium border bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-800">
@@ -109,7 +109,7 @@ export default function ResultsPanel({ analysisResult, isLoading, isSaving, pane
                         className="w-full bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold py-3.5 px-4 rounded-xl transition text-xs uppercase tracking-wide shadow-md mt-4 flex items-center justify-center gap-2.5 text-center"
                     >
                         {isSaving && <Spinner size="sm" colorClass="text-white" />}
-                        <span>{isSaving ? 'Syncing to profile...' : 'Save & Track Position →'}</span>
+                        <span>{isSaving ? 'Saving...' : 'Save to Dashboard →'}</span>
                     </button>
                 </div>
             )}

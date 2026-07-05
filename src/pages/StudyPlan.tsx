@@ -222,7 +222,7 @@ export default function StudyPlan() {
         <div className="max-w-6xl mx-auto p-6">
             <EmptyState 
                 icon="📅"
-                title="No Study Plan Generated"
+                title="No Study Plan Yet"
                 description="A custom day-by-day interview preparation timeline will compile automatically once a target job description is parsed."
             />
         </div>
@@ -234,7 +234,7 @@ export default function StudyPlan() {
       
       <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 flex flex-wrap gap-2 items-center shadow-sm">
         <TrackSelector
-          label="Track Timeline:"
+          label="Job Track:"
           applications={applications}
           selectedApp={selectedApp}
           onSelect={setSelectedApp}
@@ -318,7 +318,7 @@ export default function StudyPlan() {
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-tight pt-1">
                 {selectedApp.interviewDate
                   ? 'Timeline is calibrated to your actual interview date.'
-                  : 'AI has dynamically distributed your target gap modules based on your manual confidence logs.'}
+                  : 'Set an interview date above for a real countdown.'}
               </p>
             </div>
 

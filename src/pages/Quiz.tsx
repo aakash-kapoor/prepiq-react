@@ -12,7 +12,7 @@ export default function Quiz() {
   const { user } = useAuth();
 
   const appId = location.state?.appId;
-  const appName = location.state?.appName || 'Target Position';
+  const appName = location.state?.appName || 'Role';
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -76,8 +76,8 @@ export default function Quiz() {
     navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
   };
 
-  if (loading) return <LoadingState message="Assembling interactive session modules..." />;
-  if (questions.length === 0) return <div className="text-center p-12">No evaluation content synchronized.</div>;
+  if (loading) return <LoadingState message="Loading questions..." />;
+  if (questions.length === 0) return <div className="text-center p-12">No questions found for this role.</div>;
 
   if (sessionCompleted) {
     return (
@@ -90,9 +90,9 @@ export default function Quiz() {
         <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm border border-emerald-100 dark:border-emerald-800">
           ✓
         </div>
-        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Practice Cycle Synchronized!</h2>
+        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Quiz Complete!</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-          Your technical confidence metrics have been securely saved to your ledger. Compiling updated knowledge gaps on your Weak Spots tab now...
+          Your confidence scores have been saved. Head to Weak Spots to see your updated gap analysis.
         </p>
       </motion.div>
     );
@@ -115,7 +115,7 @@ export default function Quiz() {
       </div>
 
       <div className="flex justify-between text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">
-        <span>Drill Progress</span>
+        <span>Progress</span>
         <span>Question {currentIndex + 1} of {questions.length}</span>
       </div>
 
@@ -160,7 +160,7 @@ export default function Quiz() {
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                   className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed"
                 >
-                  <strong className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase tracking-wider font-bold">Ideal Structured Target Response:</strong>
+                  <strong className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase tracking-wider font-bold">Ideal Answer:</strong>
                   {currentQuestion.idealAnswer}
                 </motion.div>
               )}
@@ -183,7 +183,7 @@ export default function Quiz() {
                 transition={{ duration: 0.2 }}
                 className="space-y-4 text-center"
               >
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rate Your Technical Confidence:</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rate your confidence:</p>
                 <div className="grid grid-cols-5 gap-2">
                   {[1, 2, 3, 4, 5].map((num) => (
                     <motion.button
@@ -201,8 +201,8 @@ export default function Quiz() {
                   ))}
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-1 font-bold uppercase tracking-wider">
-                  <span>Struggled (1)</span>
-                  <span>Nailed It (5)</span>
+                  <span>Struggled</span>
+                  <span>Nailed it</span>
                 </div>
               </motion.div>
             )}
@@ -237,9 +237,9 @@ export default function Quiz() {
                   ⚠️
                 </div>
                 <div className="text-center space-y-1">
-                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Exit Practice Drill?</h3>
+                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Exit Quiz?</h3>
                   <p className="text-xs text-slate-400 font-medium leading-normal px-2">
-                    Are you sure you want to pause this active session? All score answers logged up to this card have been securely saved.
+                    Your progress up to this question has been saved.
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5 pt-2">
@@ -248,14 +248,14 @@ export default function Quiz() {
                     onClick={() => setIsExitModalOpen(false)}
                     className="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200 dark:border-slate-600"
                   >
-                    Continue Drill
+                    Keep Going
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={confirmExitSession}
                     className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition shadow-md shadow-red-600/10"
                   >
-                    Yes, Exit Session
+                    Exit Quiz
                   </motion.button>
                 </div>
               </motion.div>

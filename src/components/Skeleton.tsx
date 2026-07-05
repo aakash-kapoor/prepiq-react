@@ -161,20 +161,20 @@ export function QuizLauncherContentSkeleton() {
   );
 }
 
-/** Skeleton for Weaknesses — tab strip + 3 stat cards + topic rails */
-export function WeaknessesSkeleton() {
+/** Skeleton for WeakSpots — tab strip + 3 stat cards + topic rails */
+export function WeakSpotsSkeleton() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 items-center">
         <Bone className="h-3 w-28" />
         <Bone className="h-9.5 w-64 rounded-xl" />
       </div>
-      <WeaknessesContentSkeleton />
+      <WeakSpotsContentSkeleton />
     </div>
   );
 }
 
-export function WeaknessesContentSkeleton() {
+export function WeakSpotsContentSkeleton() {
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

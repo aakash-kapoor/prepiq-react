@@ -15,11 +15,12 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 
 ## ✨ Features
 
-- **AI-Powered JD Analysis** — Paste any engineering job description and Gemini AI extracts the exact skills, priorities, and red flags you need to know.
+- **AI-Powered Job Description Analysis** — Paste any engineering job description and Gemini AI extracts the exact skills, priorities, and red flags you need to know.
 - **Precision Knowledge Gap Detection** — Pinpoints what you don't know, not just what the role requires.
-- **Adaptive Flashcard Drills** — Interactive study cards that target your weakest areas for smarter repetition.
-- **Weakness Radar** — Visual confidence charts surface your blind spots across every topic you've practised.
+- **Adaptive Quiz** — Interactive study cards that target your weakest areas for smarter repetition.
+- **Weak Spots Radar** — Visual confidence charts surface your blind spots across every topic you've practised.
 - **Automated Study Timelines** — Generates a day-by-day sprint schedule tailored to your lowest-confidence areas and interview date.
+- **Delete Job Applications** — Remove individual roles from the dashboard at any time; all nested questions and confidence data are fully wiped from Firestore.
 - **User Profile & Account Management** — Edit your display name, sign out, or permanently delete your account with a secure email-confirmation gate that wipes all associated Firestore data.
 - **Zero Setup** — Sign in with Google and go. No backend, no API key wrangling — fully serverless on Firebase.
 
@@ -34,6 +35,7 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 | Build Tool | Vite 8 |
 | Routing | React Router DOM 7 |
 | Styling | Tailwind CSS 3 |
+| Animations | Motion (motion/react) v12 |
 | Notifications | react-hot-toast |
 | Auth / Database | Firebase 12 (Auth + Firestore) |
 | AI | Google Gemini AI |
@@ -115,6 +117,7 @@ prepiq/
 |   |-- components/
 |   |   |-- AppLayout.tsx
 |   |   |-- DeleteAccountModal.tsx
+|   |   |-- DeleteJobModal.tsx
 |   |   |-- EmptyState.tsx
 |   |   |-- ErrorBoundary.tsx
 |   |   |-- LegalModal.tsx
@@ -158,7 +161,7 @@ prepiq/
 |   |   |   |-- CTA.tsx
 |   |   |   |-- AboutDeveloper.tsx
 |   |   |   `-- Footer.tsx
-|   |   |-- Weaknesses/
+|   |   |-- WeakSpots/
 |   |   |   |-- index.tsx
 |   |   |   |-- types.ts
 |   |   |   |-- SummaryCards.tsx
@@ -191,9 +194,11 @@ prepiq/
 
 **Gemini as a schema engine.** The `useGemini` hook prompts the model to return strict JSON rather than conversational output, making parsed results predictable and safe to render directly.
 
-**Component-first page structure.** Large pages (`Landing`, `Analyze`, `Weaknesses`) are split into focused sub-components, each owning its own data and UI. Orchestrator `index.tsx` files handle state and wire props down — keeping business logic separate from presentation.
+**Component-first page structure.** Large pages (`Landing`, `Analyze`, `WeakSpots`) are split into focused sub-components, each owning its own data and UI. Orchestrator `index.tsx` files handle state and wire props down — keeping business logic separate from presentation.
 
 **Layered error boundaries.** `ErrorBoundary` wraps the app at three levels — the whole app, the dashboard shell, and each individual dashboard route — so a crash on one page doesn't take down the whole workspace.
+
+**Cascading deletes.** All delete operations (single job application or full account) batch-delete nested Firestore subcollections before removing the parent document, ensuring no orphaned data is left behind.
 
 ---
 
@@ -201,12 +206,14 @@ prepiq/
 
 | Version | Date | Summary |
 |---|---|---|
-| v0.11.0 | Jul 5, 2026 | Global Dark Mode Support |
-| v0.10.0 | Jul 4, 2026 | Collapsible sidebar, layout responsiveness, route scroll restoration, and Profile Danger Zone fixes. |
-| v0.9.0 | Jul 3, 2026 | Animated track selector, smoother loading skeletons, Profile & JD Analyzer loading states, motion/react v12 migration, and accessibility improvements. |
+| v0.13.0 | Jul 5, 2026 | Consistent terminology — renamed Weaknesses → Weak Spots, removed jargon, standardised all labels |
+| v0.12.0 | Jul 5, 2026 | Delete individual job applications from the dashboard |
+| v0.11.0 | Jul 5, 2026 | Global dark mode support |
+| v0.10.0 | Jul 4, 2026 | Collapsible sidebar, scroll restoration, Profile fixes |
+| v0.9.0 | Jul 3, 2026 | Animated track selector, smoother loading skeletons, motion improvements |
 | v0.8.0 | Jul 2, 2026 | User profile page, display name editing, account deletion |
 | v0.7.0 | Jul 1, 2026 | UI hardening, modular routing, liquid glass mobile nav |
-| v0.6.0 | Jun 30, 2026 | Error boundaries, loading states, toast notifications, difficulty badge fix |
+| v0.6.0 | Jun 30, 2026 | Error boundaries, loading states, toast notifications |
 | v0.5.0 | Jun 29, 2026 | Legal modals, component refactor, landing refinements |
 | v0.4.0 | Jun 28, 2026 | Landing and login page redesign |
 | v0.3.2 | Jun 27, 2026 | Firebase Hosting target configured |

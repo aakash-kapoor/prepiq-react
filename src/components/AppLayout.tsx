@@ -39,11 +39,11 @@ export default function AppLayout() {
 
   const routeLabels: { [key: string]: string } = {
     dashboard: 'Workspace',
-    analyze: 'JD Analyzer',
+    analyze: 'Analyze',
     questions: 'Question Bank',
     quiz: 'Quiz Mode',
     'quiz-session': 'Quiz Mode',
-    weaknesses: 'Weak Spots',
+    'weak-spots': 'Weak Spots',
     'study-plan': 'Study Plan',
     profile: 'Profile'
   };

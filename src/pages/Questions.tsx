@@ -182,7 +182,7 @@ export default function Questions() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 flex flex-wrap gap-2 items-center shadow-sm">
         <TrackSelector
-          label="Select Target Track:"
+          label="Job Track:"
           applications={applications}
           selectedApp={selectedApp}
           onSelect={setSelectedApp}
@@ -197,7 +197,7 @@ export default function Questions() {
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm space-y-4 pb-6 border-b-2 md:border-b-0">
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">{selectedApp.role}</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Core Target: {selectedApp.company}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{selectedApp.company}</p>
             </div>
 
             {isAiLoading && (
@@ -208,7 +208,7 @@ export default function Questions() {
             )}
 
             <div className="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-              <p>📍 <strong>Pool Size:</strong> {questions.length} Questions Loaded</p>
+              <p>📍 <strong>Questions:</strong> {questions.length} Questions Loaded</p>
               <p>⚡ <strong>Estimated Tier:</strong> {selectedApp.estimatedDifficulty}</p>
             </div>
 
@@ -290,7 +290,7 @@ export default function Questions() {
                   className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center"
                 >
                   {isAiLoading && <Spinner size="sm" colorClass="text-white" />}
-                  <span>{isAiLoading ? 'Building Deck via Gemini...' : 'Generate AI Question Bank'}</span>
+                  <span>{isAiLoading ? 'Building with Gemini...' : 'Build Question Bank'}</span>
                 </button>
               </div>
             )}
@@ -301,7 +301,7 @@ export default function Questions() {
               <LoadingState message="Syncing local questions storage ledger..." size="md" />
             ) : questions.length === 0 ? (
               <div className="bg-dashed border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl p-12 text-center text-slate-400 dark:text-slate-500 text-xs font-medium">
-                No active mock tracking deck created yet for this role position. Click "Generate" to populate tailored content.
+                No questions yet — click Build to get started.
               </div>
             ) : (
               questions.map((q, index) => (

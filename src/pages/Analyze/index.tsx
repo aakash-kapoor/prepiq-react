@@ -69,7 +69,7 @@ export default function Analyze() {
         const data = await analyzeJobDescription(jdText);
         if (data) {
             setAnalysisResult(data);
-            showSuccessToast('Analysis complete — review your results below.');
+            showSuccessToast('Analysis complete.');
             if (window.innerWidth < 1024) {
                 setTimeout(() => {
                     resultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -102,14 +102,14 @@ export default function Analyze() {
                 // Only persist if the user actually filled it in
                 ...(interviewDate ? { interviewDate } : {}),
             });
-            showSuccessToast(`${analysisResult.roleTitle || 'Position'} saved to your workspace.`);
+            showSuccessToast(`${analysisResult.roleTitle || 'Role'} saved — ready to build questions.`);
             setJdText('');
             setCompany('');
             setInterviewDate('');
             setAnalysisResult(null);
         } catch (err) {
             console.error('Firestore save failed:', err);
-            showErrorToast('Database synchronization failed. Please check your connection.');
+            showErrorToast('Failed to save. Please check your connection.');
         } finally {
             setIsSaving(false);
         }
