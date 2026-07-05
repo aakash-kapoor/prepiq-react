@@ -123,6 +123,7 @@ prepiq/
 |   |   |-- ScrollToTop.tsx
 |   |   |-- Skeleton.tsx
 |   |   |-- Spinner.tsx
+|   |   |-- ThemeToggle.tsx
 |   |   |-- TrackSelector.tsx
 |   |   `-- layout/
 |   |       |-- DesktopSidebar.tsx
@@ -135,7 +136,8 @@ prepiq/
 |   |   |-- navigation.tsx
 |   |   `-- smokeTest.ts
 |   |-- context/
-|   |   `-- AuthContext.tsx
+|   |   |-- AuthContext.tsx
+|   |   `-- ThemeContext.tsx
 |   |-- hooks/
 |   |   |-- useGemini.ts
 |   |   `-- useMinLoadingDelay.ts
