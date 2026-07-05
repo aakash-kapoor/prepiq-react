@@ -6,6 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useSpring, useTransform, AnimatePresence } from 'motion/react';
 import { DashboardSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
+import DeleteJobModal from '../components/DeleteJobModal';
+import { deleteJobApplication } from '../lib/deleteUserData';
+import { showSuccessToast, showErrorToast } from '../lib/toast';
 
 interface JobApp {
   id: string;
@@ -39,6 +42,10 @@ export default function DashboardHome() {
   const { loading, markDone, cancelTimer } = useMinLoadingDelay(600);
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [globalAvgConfidence, setGlobalAvgConfidence] = useState<number>(0);
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<JobApp | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // 1. Fetch real-time job applications tracker ledger (lightweight — no subcollection reads here)
   useEffect(() => {
@@ -96,6 +103,21 @@ export default function DashboardHome() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, applications.length]);
+
+  const handleDeleteConfirm = async () => {
+    if (!user || !deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await deleteJobApplication(user.uid, deleteTarget.id);
+      showSuccessToast(`${deleteTarget.role} at ${deleteTarget.company} removed.`);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error('Failed to delete job application:', err);
+      showErrorToast('Could not remove this application. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -191,28 +213,27 @@ export default function DashboardHome() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {applications.map((app, index) => {
 
-                // === ADD CODE FOR ACCENTS HERE ===
                 const difficulty = app.estimatedDifficulty?.toLowerCase() || 'mid-level';
 
-                // Fallback style (Mid-Level / Medium)[cite: 1]
+                // Fallback style (Mid-Level / Medium)
                 let accentStyles = {
-                  borderTop: 'border-t-4 border-t-[#F97316] dark:border-t-[#F97316]', // Vibrant Orange[cite: 1]
+                  borderTop: 'border-t-4 border-t-[#F97316] dark:border-t-[#F97316]',
                   badge: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800'
                 };
 
                 if (difficulty.includes('senior') || difficulty.includes('hard')) {
                   accentStyles = {
-                    borderTop: 'border-t-4 border-t-[#EF4444] dark:border-t-[#EF4444]', // Crimson Red[cite: 1]
+                    borderTop: 'border-t-4 border-t-[#EF4444] dark:border-t-[#EF4444]',
                     badge: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
                   };
                 } else if (difficulty.includes('easy') || difficulty.includes('junior') || difficulty.includes('green')) {
                   accentStyles = {
-                    borderTop: 'border-t-4 border-t-[#10B981] dark:border-t-[#10B981]', // Emerald Green[cite: 1]
+                    borderTop: 'border-t-4 border-t-[#10B981] dark:border-t-[#10B981]',
                     badge: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                   };
                 } else if (difficulty.includes('mid') || difficulty.includes('medium')) {
                   accentStyles = {
-                    borderTop: 'border-t-4 border-t-[#F97316] dark:border-t-[#F97316]', // Orange[cite: 1]
+                    borderTop: 'border-t-4 border-t-[#F97316] dark:border-t-[#F97316]',
                     badge: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800'
                   };
                 }
@@ -224,18 +245,30 @@ export default function DashboardHome() {
                     variants={cardVariants}
                     initial="hidden"
                     animate="visible"
-                    // Injected dynamic top border accent class here
+                    exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
                     className={`bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/[0.10] transition-all duration-200 ${accentStyles.borderTop}`}
                   >
                     <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base tracking-tight leading-tight">{app.role}</h4>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base tracking-tight leading-tight truncate">{app.role}</h4>
                         <p className="text-xs text-slate-400 dark:text-slate-400 font-medium mt-0.5">{app.company}</p>
                       </div>
-                      {/* Injected dynamic custom badge color class here */}
-                      <span className={`text-[9px] font-extrabold border px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 ${accentStyles.badge}`}>
-                        {app.estimatedDifficulty || 'Mid-Level'}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={`text-[9px] font-extrabold border px-2 py-0.5 rounded-md uppercase tracking-wider ${accentStyles.badge}`}>
+                          {app.estimatedDifficulty || 'Mid-Level'}
+                        </span>
+                        {/* Delete trigger — small, unobtrusive, never accidental */}
+                        <button
+                          onClick={() => setDeleteTarget(app)}
+                          className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-150"
+                          title="Remove application"
+                          aria-label={`Remove ${app.role} at ${app.company}`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Progress metrics bars section */}
@@ -275,6 +308,16 @@ export default function DashboardHome() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Delete confirmation modal — rendered via portal, outside card stacking context */}
+      <DeleteJobModal
+        open={deleteTarget !== null}
+        deleting={isDeleting}
+        company={deleteTarget?.company ?? ''}
+        role={deleteTarget?.role ?? ''}
+        onCancel={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+      />
 
     </div>
   );
