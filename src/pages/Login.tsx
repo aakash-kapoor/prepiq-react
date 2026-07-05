@@ -79,10 +79,10 @@ export default function Login() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans antialiased text-slate-900">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col md:flex-row font-sans antialiased text-slate-900 dark:text-slate-100">
 
       {/* LEFT COLUMN */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 md:p-12 md:max-w-xl xl:max-w-2xl bg-white z-10">
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 md:p-12 md:max-w-xl xl:max-w-2xl bg-white dark:bg-slate-950 z-10">
 
         {/* Brand */}
         <div
@@ -92,7 +92,7 @@ export default function Login() {
           <div className="w-8 h-8 bg-[#6366F1] rounded-xl flex items-center justify-center font-black text-sm text-white shadow-md shadow-indigo-500/20">
             IQ
           </div>
-          <span className="font-bold text-base tracking-tight text-slate-900">PrepIQ</span>
+          <span className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100">PrepIQ</span>
         </div>
 
         {/* Auth Card */}
@@ -100,10 +100,10 @@ export default function Login() {
 
           {/* Heading */}
           <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               Welcome back
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium leading-relaxed">
               Sign in to access your prep workspace — your gaps, quizzes, and study plan are waiting.
             </p>
           </div>
@@ -112,7 +112,7 @@ export default function Login() {
           <div className="space-y-4">
             <button
               onClick={handleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 active:bg-slate-100 border border-gray-200 hover:border-gray-300 text-slate-700 font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-sm hover:shadow-md text-xs tracking-wide"
+              className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 dark:active:bg-slate-700 border border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-sm hover:shadow-md text-xs tracking-wide"
             >
               <img
                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -123,11 +123,11 @@ export default function Login() {
             </button>
 
             <div className="relative flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-100" />
-              <span className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest">
+              <div className="flex-1 h-px bg-gray-100 dark:bg-slate-800" />
+              <span className="text-[10px] font-semibold text-slate-300 dark:text-slate-600 uppercase tracking-widest">
                 secure sign in
               </span>
-              <div className="flex-1 h-px bg-gray-100" />
+              <div className="flex-1 h-px bg-gray-100 dark:bg-slate-800" />
             </div>
 
             {/* Trust signals */}
@@ -138,17 +138,17 @@ export default function Login() {
                 { icon: 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z', label: 'No credit card needed' },
                 { icon: 'M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z', label: 'Free to use, always' },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 bg-slate-50 border border-gray-100 rounded-xl px-3 py-2.5">
+                <div key={item.label} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-xl px-3 py-2.5">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-3.5 h-3.5 text-indigo-400 shrink-0">
                     <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                   </svg>
-                  <span className="text-[10px] font-semibold text-slate-500 leading-tight">{item.label}</span>
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">{item.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <p className="text-[10px] text-slate-300 text-center font-medium leading-relaxed">
+          <p className="text-[10px] text-slate-300 dark:text-slate-500 text-center font-medium leading-relaxed">
             By signing in, you agree to our{' '}
             <button
               type="button"
@@ -156,7 +156,7 @@ export default function Login() {
                 title: "Terms of Service",
                 text: "Welcome to PrepIQ. By authenticating with Google Sign-In and utilizing this platform, you agree that your data is processed entirely serverless via isolated Cloud Firestore instances. PrepIQ is a developmental technical interview preparation framework built for educational and benchmarking use. All generative insights are produced via the Gemini API as structural schema models."
               })}
-              className="text-slate-500 hover:text-slate-700 underline font-bold transition"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 underline font-bold transition"
             >
               Terms of Service
             </button>{' '}
@@ -167,7 +167,7 @@ export default function Login() {
                 title: "Privacy Policy",
                 text: "Your privacy is fully protected under our serverless data pipeline architecture. PrepIQ does not manage local user credential databases; authentication relies exclusively on secure Google OAuth tokens. Application data—including analyzed job descriptions, confidence logs, and flashcard metrics—is securely mapped to your isolated user identity record via Firebase Security Rules."
               })}
-              className="text-slate-500 hover:text-slate-700 underline font-bold transition"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 underline font-bold transition"
             >
               Privacy Policy
             </button>
@@ -176,8 +176,8 @@ export default function Login() {
         </div>
 
         {/* Footer note */}
-        <div className="flex items-center gap-2 text-[10px] text-slate-300 font-semibold tracking-wide uppercase">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 text-slate-300">
+        <div className="flex items-center gap-2 text-[10px] text-slate-300 dark:text-slate-600 font-semibold tracking-wide uppercase">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 text-slate-300 dark:text-slate-600">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
           </svg>
           Secure serverless endpoint

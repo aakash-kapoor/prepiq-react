@@ -10,9 +10,9 @@ export default function EmptyState({ title, description, icon }: EmptyStateProps
     const navigate = useNavigate();
 
     return (
-        <div className="flex flex-col items-center justify-center text-center p-12 max-w-sm mx-auto my-16 bg-white border border-slate-100 rounded-2xl shadow-sm animate-fadeIn">
+        <div className="flex flex-col items-center justify-center text-center p-12 max-w-sm mx-auto my-16 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm animate-fadeIn">
             <span className="text-5xl mb-4 select-none">{icon}</span>
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">{title}</h3>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h3>
             <p className="text-xs text-slate-400 font-medium mt-1.5 leading-relaxed">
                 {description}
             </p>

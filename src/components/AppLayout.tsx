@@ -7,6 +7,7 @@ import MoreMenu from "./layout/MoreMenu";
 import { primaryNavigation, secondaryNavigation } from "../config/navigation";
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function AppLayout() {
   const { logout, user } = useAuth();
@@ -63,18 +64,18 @@ export default function AppLayout() {
       const to = `/${pathnames.slice(0, index + 1).join('/')}`;
       const label = routeLabels[value.toLowerCase()] || value;
       return last ? (
-        <span key={to} className="text-slate-800 font-semibold tracking-tight">
+        <span key={to} className="text-slate-800 dark:text-slate-200 font-semibold tracking-tight">
           {label}
         </span>
       ) : (
         <span key={to} className="flex items-center">
           <Link
             to={to}
-            className="text-indigo-600 hover:text-indigo-700 transition duration-150"
+            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition duration-150"
           >
             {label}
           </Link>
-          <span className="mx-2 text-slate-300 select-none font-light">/</span>
+          <span className="mx-2 text-slate-300 dark:text-slate-600 select-none font-light">/</span>
         </span>
       );
     });
@@ -82,7 +83,7 @@ export default function AppLayout() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen md:h-screen md:overflow-hidden bg-[#F8FAFC] flex flex-col md:flex-row font-sans antialiased text-slate-900">
+      <div className="min-h-screen md:h-screen md:overflow-hidden bg-brand-bg dark:bg-slate-900 flex flex-col md:flex-row font-sans antialiased text-slate-900 dark:text-slate-100 transition-colors">
 
         {/* 1. DESKTOP SIDEBAR: Visible on medium screens and up */}
         <DesktopSidebar
@@ -102,9 +103,12 @@ export default function AppLayout() {
         {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
         <div className="flex-1 flex flex-col min-w-0 md:h-full md:overflow-y-auto pb-20 md:pb-0 relative">
           {/* Desktop Header panel elements */}
-          <header className="hidden md:flex h-16 border-b border-gray-200 bg-white items-center justify-between px-8 sticky top-0 z-10">
-            <div className="flex items-center text-xs font-medium text-slate-500">
+          <header className="hidden md:flex h-16 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-between px-8 sticky top-0 z-10 transition-colors">
+            <div className="flex items-center text-xs font-medium text-slate-500 dark:text-slate-400">
               {generateBreadcrumbs()}
+            </div>
+            <div className="flex items-center">
+              <ThemeToggle />
             </div>
           </header>
 
