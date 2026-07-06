@@ -8,12 +8,14 @@ import { StudyPlanSkeleton, StudyPlanContentSkeleton } from '../components/Skele
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
 import { useGemini } from '../hooks/useGemini';
+import StudyPlanPDFExport from '../components/StudyPlanPDFExport';
+import { pdf } from '@react-pdf/renderer';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
 const minDate = today.toISOString().split("T")[0];
 
-interface JobApp {
+export interface JobApp {
   id: string;
   company: string;
   role: string;
@@ -23,7 +25,7 @@ interface JobApp {
   studyPlanDays?: number;
 }
 
-interface TimelineDay {
+export interface TimelineDay {
   dayNumber: number;
   title: string;
   focusTopics: string[];
@@ -43,6 +45,7 @@ export default function StudyPlan() {
   
   const { generateStudyPlan } = useGemini();
   const [isSavingDate, setIsSavingDate] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
   const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
@@ -209,6 +212,35 @@ export default function StudyPlan() {
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!selectedApp) return;
+    setIsExportingPDF(true);
+
+    try {
+      const blob = await pdf(
+        <StudyPlanPDFExport
+          timeline={timeline}
+          selectedApp={selectedApp}
+          daysRemaining={daysRemaining}
+        />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `StudyPlan-${selectedApp.company.replace(/\s+/g, '-')}-${selectedApp.role.replace(/\s+/g, '-')}.pdf`;
+      link.click();
+      
+      URL.revokeObjectURL(url);
+      showSuccessToast('PDF exported successfully!');
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+      showErrorToast('Failed to export PDF. Please try again.');
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
   // Format the stored ISO date string to the yyyy-MM-dd value the date input expects
   const toInputValue = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -357,8 +389,10 @@ export default function StudyPlan() {
                   'Generate AI Plan ⚡'
                 )}
               </button>
+              
+
               {timeline.length > 0 && (
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug mt-2 text-center">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug mt-3 text-center">
                   Update your plan if your weak topics or interview date have changed.
                 </p>
               )}
@@ -367,6 +401,44 @@ export default function StudyPlan() {
 
           {/* Right Column: Custom Tailored SVG-Style Timeline Rail */}
           <div className="md:col-span-2 space-y-6">
+            {timeline.length > 0 && (
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h3 className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 pl-1 sm:pl-2">Your AI Study Plan</h3>
+                <button
+                  onClick={handleExportPDF}
+                  disabled={isExportingPDF || isGenerating}
+                  className="w-full sm:w-auto bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-bold py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                >
+                  {isExportingPDF ? (
+                    <>
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-3.5 h-3.5"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" x2="12" y1="15" y2="3" />
+                      </svg>
+                      <span>Export to PDF</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+            
             <div className="relative border-l-2 border-slate-200 dark:border-slate-700 ml-4 md:ml-6 space-y-6">
               {timeline.length === 0 ? (
                 <div className="bg-dashed border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl p-12 text-center text-slate-400 dark:text-slate-500 text-sm font-medium ml-4">
@@ -417,6 +489,7 @@ export default function StudyPlan() {
           </div>
         )
       )}
+      
     </div>
   );
 }
