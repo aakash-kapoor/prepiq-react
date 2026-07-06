@@ -126,6 +126,7 @@ prepiq/
 |   |   |-- ScrollToTop.tsx
 |   |   |-- Skeleton.tsx
 |   |   |-- Spinner.tsx
+|   |   |-- StudyPlanPDFExport.tsx
 |   |   |-- ThemeToggle.tsx
 |   |   |-- TrackSelector.tsx
 |   |   `-- layout/
@@ -207,6 +208,7 @@ prepiq/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.15.0 | Jul 6, 2026 | Native PDF Study Plan Export |
 | v0.14.0 | Jul 6, 2026 | Quiz Session Tracking & Dashboard Trends |
 | v0.13.0 | Jul 5, 2026 | Consistent terminology — renamed Weaknesses → Weak Spots, removed jargon, standardised all labels |
 | v0.12.0 | Jul 5, 2026 | Delete individual job applications from the dashboard |
