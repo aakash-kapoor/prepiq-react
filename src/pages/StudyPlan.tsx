@@ -4,7 +4,7 @@ import { db } from '../config/firebase';
 import { collection, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
-import { StudyPlanSkeleton, StudyPlanContentSkeleton } from '../components/Skeleton';
+import { StudyPlanSkeleton, StudyPlanContentSkeleton, StudyPlanTimelineSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
 import { useGemini } from '../hooks/useGemini';
@@ -406,7 +406,7 @@ export default function StudyPlan() {
                 <h3 className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 pl-1 sm:pl-2">Your AI Study Plan</h3>
                 <button
                   onClick={handleExportPDF}
-                  disabled={isExportingPDF || isGenerating}
+                  disabled={isExportingPDF || isGenerating || isSavingDate}
                   className="w-full sm:w-auto bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-bold py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                 >
                   {isExportingPDF ? (
@@ -440,7 +440,9 @@ export default function StudyPlan() {
             )}
             
             <div className="relative border-l-2 border-slate-200 dark:border-slate-700 ml-4 md:ml-6 space-y-6">
-              {timeline.length === 0 ? (
+              {isGenerating ? (
+                <StudyPlanTimelineSkeleton />
+              ) : timeline.length === 0 ? (
                 <div className="bg-dashed border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl p-12 text-center text-slate-400 dark:text-slate-500 text-sm font-medium ml-4">
                   No AI study plan generated yet. Click the generate button to create your custom timeline.
                 </div>

@@ -103,7 +103,7 @@ export default function AppLayout() {
         {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
         <div className="flex-1 flex flex-col min-w-0 md:h-full md:overflow-y-auto pb-20 md:pb-0 relative">
           {/* Desktop Header panel elements */}
-          <header className="hidden md:flex h-16 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-between px-8 sticky top-0 z-10 transition-colors">
+          <header className="hidden md:flex h-16 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-between px-8 sticky top-0 z-30 transition-colors">
             <div className="flex items-center text-xs font-medium text-slate-500 dark:text-slate-400">
               {generateBreadcrumbs()}
             </div>

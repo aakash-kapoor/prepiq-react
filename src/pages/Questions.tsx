@@ -74,7 +74,7 @@ const QuestionCard = ({ q, index, onDelete }: { q: any, index: number, onDelete:
 
 export default function Questions() {
   const { user } = useAuth();
-  const { generateQuestions, isLoading: isAiLoading, error: aiError } = useGemini();
+  const { generateQuestions, error: aiError } = useGemini();
   const location = useLocation();
 
   const [applications, setApplications] = useState<any[]>([]);
@@ -83,6 +83,7 @@ export default function Questions() {
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const [contentLoading, setContentLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState<number>(15);
+  const [isBuildingDeck, setIsBuildingDeck] = useState(false);
   const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const [filterTopic, setFilterTopic] = useState('All');
@@ -152,35 +153,43 @@ export default function Questions() {
   }, [selectedApp, user]);
 
   const handleBuildDeck = async () => {
-    if (!user || !selectedApp) return;
+    if (!user || !selectedApp || isBuildingDeck) return;
 
-    const generated = await generateQuestions(
-      selectedApp.role,
-      selectedApp.extractedSkills,
-      selectedApp.focusAreas,
-      questionCount
-    );
+    setIsBuildingDeck(true);
+    try {
+      const generated = await generateQuestions(
+        selectedApp.role,
+        selectedApp.extractedSkills,
+        selectedApp.focusAreas,
+        questionCount
+      );
 
-    if (generated && Array.isArray(generated)) {
-      const batch = writeBatch(db);
-      const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
+      if (generated && Array.isArray(generated)) {
+        const batch = writeBatch(db);
+        const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
 
-      generated.forEach((q) => {
-        const newDocRef = doc(questionsRef);
-        batch.set(newDocRef, {
-          ...q,
-          timesAnswered: 0,
-          lastConfidence: 0,
-          averageConfidence: 0
+        generated.forEach((q) => {
+          const newDocRef = doc(questionsRef);
+          batch.set(newDocRef, {
+            ...q,
+            timesAnswered: 0,
+            lastConfidence: 0,
+            averageConfidence: 0
+          });
         });
-      });
-      await batch.commit();
+        await batch.commit();
 
-      const updatedSnapshot = await getDocs(questionsRef);
-      setQuestions(updatedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      showSuccessToast(`${generated.length} questions added to your deck.`);
-    } else {
-      showErrorToast(aiError || 'Failed to generate questions. Please try again.');
+        const updatedSnapshot = await getDocs(questionsRef);
+        setQuestions(updatedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        showSuccessToast(`${generated.length} questions added to your deck.`);
+      } else {
+        showErrorToast(aiError || 'Failed to generate questions. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Error building question deck:', err);
+      showErrorToast('An error occurred while building the deck.');
+    } finally {
+      setIsBuildingDeck(false);
     }
   };
 
@@ -239,10 +248,10 @@ export default function Questions() {
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{selectedApp.company}</p>
             </div>
 
-            {isAiLoading && (
+            {isBuildingDeck && (
               <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 p-3 rounded-xl space-y-2">
                 <p className="text-xs font-medium">🚀 Gemini is engineering exactly {questionCount} tailored target questions...</p>
-                <ProgressBar isActive={isAiLoading} message="Generating questions" />
+                <ProgressBar isActive={isBuildingDeck} message="Generating questions" />
               </div>
             )}
 
@@ -313,7 +322,7 @@ export default function Questions() {
                 </label>
                 <select
                   value={questionCount}
-                  disabled={isAiLoading}
+                  disabled={isBuildingDeck}
                   onChange={(e) => setQuestionCount(Number(e.target.value))}
                   className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer disabled:opacity-60"
                 >
@@ -326,12 +335,12 @@ export default function Questions() {
 
               <button
                 onClick={handleBuildDeck}
-                disabled={isAiLoading}
-                className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center"
+                disabled={isBuildingDeck}
+                className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isAiLoading && <Spinner size="sm" colorClass="text-white" />}
+                {isBuildingDeck && <Spinner size="sm" colorClass="text-white" />}
                 <span>
-                  {isAiLoading
+                  {isBuildingDeck
                     ? 'Building with Gemini...'
                     : questions.length === 0
                       ? 'Build Question Bank'
