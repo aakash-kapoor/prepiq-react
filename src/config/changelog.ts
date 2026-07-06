@@ -41,7 +41,7 @@ export const changelog: readonly ChangelogEntry[] = [
     date: 'Jul 3, 2026',
     title: 'Track Selector, Smoother Loading & Motion Improvements',
     description:
-      'Introduced a new animated track selector dropdown for a cleaner experience. Redesigned loading skeletons across the app with smoother transitions to reduce flickering when switching tracks. Added loading states to the Profile page and JD Analyzer results for better visual feedback. Also improved animations throughout the app with more consistent motion and automatic support for users who prefer reduced motion.',
+      'Introduced a new animated track selector dropdown for a cleaner experience. Redesigned loading skeletons across the app with smoother transitions to reduce flickering when switching tracks. Added loading states to the Profile page and Analyze page results for better visual feedback. Also improved animations throughout the app with more consistent motion and automatic support for users who prefer reduced motion.',
     tags: ['feat', 'ui', 'fix', 'refactor'],
   },
   {
@@ -65,7 +65,7 @@ export const changelog: readonly ChangelogEntry[] = [
     date: 'Jun 30, 2026',
     title: 'Error boundaries, loading states, and toast notifications',
     description:
-      'Added error boundaries so a crash on one page no longer breaks the whole app, replaced loading text with spinners and progress bars, introduced toast notifications for a smoother feedback experience, and fixed the difficulty badge on the JD Analyzer to correctly show Junior, Mid-Level, or Senior.',
+      'Added error boundaries so a crash on one page no longer breaks the whole app, replaced loading text with spinners and progress bars, introduced toast notifications for a smoother feedback experience, and fixed the difficulty badge on the Analyze page to correctly show Junior, Mid-Level, or Senior.',
     tags: ['feat', 'fix', 'ui', 'responsive'],
   },
   {

@@ -17,7 +17,7 @@ export async function runPrepIQFullSmokeTest(userId: string) {
   let testAppId = '';
 
   try {
-    // --- MODULE 2: TEST JD ANALYZER SIMULATION & FIRESTORE INGESTION ---
+    // --- MODULE 2: TEST ANALYZER SIMULATION & FIRESTORE INGESTION ---
     console.log('⏳ [MODULE 2: ANALYZER] Simulating real-time Gemini structured data return payload...');
     
     // Hardcoded schema mock matching the exact Gemini JSON spec requirements

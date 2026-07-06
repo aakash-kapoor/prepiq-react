@@ -4,7 +4,7 @@ interface Props {
     children: ReactNode;
     /** Which visual variant to show when an error is caught */
     variant?: 'page' | 'section';
-    /** Optional label shown in the fallback, e.g. "JD Analyzer" */
+    /** Optional label shown in the fallback, e.g. "Analyze" */
     label?: string;
 }
 

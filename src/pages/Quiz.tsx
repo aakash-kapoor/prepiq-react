@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, increment, addDoc } from 'firebase/firestore';
 import LoadingState from '../components/LoadingState';
+import { updateOverallProgress } from '../lib/updateProgress';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Quiz() {
@@ -19,6 +20,7 @@ export default function Quiz() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionScores, setSessionScores] = useState<number[]>([]);
 
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
@@ -29,14 +31,16 @@ export default function Quiz() {
     }
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', appId, 'questions');
     getDocs(questionsRef).then((snapshot) => {
-      const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Fisher-Yates shuffle — produces a uniform random permutation.
-      // The old sort(() => 0.5 - Math.random()) approach is statistically biased.
-      for (let i = qList.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [qList[i], qList[j]] = [qList[j], qList[i]];
-      }
-      setQuestions(qList);
+      const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      // SM-2: Sort by nextReviewDate ascending (treating undefined as 0 so unreviewed are prioritized)
+      qList.sort((a, b) => {
+        const dateA = a.nextReviewDate || 0;
+        const dateB = b.nextReviewDate || 0;
+        return dateA - dateB;
+      });
+      
+      // Limit session to top 15 most due questions to prevent burnout
+      setQuestions(qList.slice(0, 15));
       setLoading(false);
     });
   }, [appId, user, navigate]);
@@ -44,6 +48,9 @@ export default function Quiz() {
   const handleRateConfidence = async (score: number) => {
     if (!user || !appId) return;
     const currentQ = questions[currentIndex];
+
+    const newSessionScores = [...sessionScores, score];
+    setSessionScores(newSessionScores);
 
     // Read the previous stored values to compute a true running average.
     // timesAnswered is already stored on the doc; we increment it atomically,
@@ -53,17 +60,63 @@ export default function Quiz() {
     const newCount = prevCount + 1;
     const newAvg = parseFloat(((prevAvg * prevCount + score) / newCount).toFixed(2));
 
+    // SM-2 Algorithm Implementation
+    const q = score; // 1-5 scale (maps well to SM-2's 0-5 quality scale where >=3 is a success)
+    let easinessFactor = currentQ.easinessFactor || 2.5;
+    let repetitions = currentQ.repetitions || 0;
+    let interval = currentQ.interval || 0;
+
+    if (q >= 3) {
+      if (repetitions === 0) {
+        interval = 1;
+      } else if (repetitions === 1) {
+        interval = 6;
+      } else {
+        interval = Math.round(interval * easinessFactor);
+      }
+      repetitions += 1;
+    } else {
+      repetitions = 0;
+      interval = 1;
+    }
+
+    easinessFactor = easinessFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    if (easinessFactor < 1.3) easinessFactor = 1.3;
+
+    const nextReviewDate = Date.now() + (interval * 24 * 60 * 60 * 1000);
+
     const docRef = doc(db, 'users', user.uid, 'jobApplications', appId, 'questions', currentQ.id);
     await updateDoc(docRef, {
       timesAnswered: increment(1),
       lastConfidence: score,
       averageConfidence: newAvg,
+      easinessFactor,
+      repetitions,
+      interval,
+      nextReviewDate
     });
 
     if (currentIndex < questions.length - 1) {
       setShowAnswer(false);
       setCurrentIndex(prev => prev + 1);
     } else {
+      // Recompute progress before marking session complete so the dashboard
+      // reflects the updated state as soon as the user navigates back.
+      if (user && appId) {
+        if (newSessionScores.length > 0) {
+          const avgScore = newSessionScores.reduce((a, b) => a + b, 0) / newSessionScores.length;
+          addDoc(collection(db, 'users', user.uid, 'jobApplications', appId, 'quizSessions'), {
+            date: Date.now(),
+            averageScore: parseFloat(avgScore.toFixed(2)),
+            questionsAnswered: newSessionScores.length,
+            appName: appName
+          }).catch((err: any) => console.warn('Failed to save session history:', err));
+        }
+
+        updateOverallProgress(user.uid, appId).catch((err: any) =>
+          console.warn('Progress update failed silently:', err)
+        );
+      }
       setSessionCompleted(true);
       setTimeout(() => {
         navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
@@ -73,6 +126,21 @@ export default function Quiz() {
 
   const confirmExitSession = () => {
     setIsExitModalOpen(false);
+    if (user && appId) {
+      if (sessionScores.length > 0) {
+        const avgScore = sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length;
+        addDoc(collection(db, 'users', user.uid, 'jobApplications', appId, 'quizSessions'), {
+          date: Date.now(),
+          averageScore: parseFloat(avgScore.toFixed(2)),
+          questionsAnswered: sessionScores.length,
+          appName: appName
+        }).catch((err: any) => console.warn('Failed to save session history:', err));
+      }
+
+      updateOverallProgress(user.uid, appId).catch((err: any) =>
+        console.warn('Progress update failed silently:', err)
+      );
+    }
     navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
   };
 
