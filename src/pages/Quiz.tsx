@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, increment, addDoc } from 'firebase/firestore';
 import LoadingState from '../components/LoadingState';
+import { updateOverallProgress } from '../lib/updateProgress';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Quiz() {
@@ -12,13 +13,14 @@ export default function Quiz() {
   const { user } = useAuth();
 
   const appId = location.state?.appId;
-  const appName = location.state?.appName || 'Target Position';
+  const appName = location.state?.appName || 'Role';
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionScores, setSessionScores] = useState<number[]>([]);
 
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
@@ -29,14 +31,16 @@ export default function Quiz() {
     }
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', appId, 'questions');
     getDocs(questionsRef).then((snapshot) => {
-      const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Fisher-Yates shuffle — produces a uniform random permutation.
-      // The old sort(() => 0.5 - Math.random()) approach is statistically biased.
-      for (let i = qList.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [qList[i], qList[j]] = [qList[j], qList[i]];
-      }
-      setQuestions(qList);
+      const qList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      // SM-2: Sort by nextReviewDate ascending (treating undefined as 0 so unreviewed are prioritized)
+      qList.sort((a, b) => {
+        const dateA = a.nextReviewDate || 0;
+        const dateB = b.nextReviewDate || 0;
+        return dateA - dateB;
+      });
+      
+      // Limit session to top 15 most due questions to prevent burnout
+      setQuestions(qList.slice(0, 15));
       setLoading(false);
     });
   }, [appId, user, navigate]);
@@ -44,6 +48,9 @@ export default function Quiz() {
   const handleRateConfidence = async (score: number) => {
     if (!user || !appId) return;
     const currentQ = questions[currentIndex];
+
+    const newSessionScores = [...sessionScores, score];
+    setSessionScores(newSessionScores);
 
     // Read the previous stored values to compute a true running average.
     // timesAnswered is already stored on the doc; we increment it atomically,
@@ -53,17 +60,63 @@ export default function Quiz() {
     const newCount = prevCount + 1;
     const newAvg = parseFloat(((prevAvg * prevCount + score) / newCount).toFixed(2));
 
+    // SM-2 Algorithm Implementation
+    const q = score; // 1-5 scale (maps well to SM-2's 0-5 quality scale where >=3 is a success)
+    let easinessFactor = currentQ.easinessFactor || 2.5;
+    let repetitions = currentQ.repetitions || 0;
+    let interval = currentQ.interval || 0;
+
+    if (q >= 3) {
+      if (repetitions === 0) {
+        interval = 1;
+      } else if (repetitions === 1) {
+        interval = 6;
+      } else {
+        interval = Math.round(interval * easinessFactor);
+      }
+      repetitions += 1;
+    } else {
+      repetitions = 0;
+      interval = 1;
+    }
+
+    easinessFactor = easinessFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    if (easinessFactor < 1.3) easinessFactor = 1.3;
+
+    const nextReviewDate = Date.now() + (interval * 24 * 60 * 60 * 1000);
+
     const docRef = doc(db, 'users', user.uid, 'jobApplications', appId, 'questions', currentQ.id);
     await updateDoc(docRef, {
       timesAnswered: increment(1),
       lastConfidence: score,
       averageConfidence: newAvg,
+      easinessFactor,
+      repetitions,
+      interval,
+      nextReviewDate
     });
 
     if (currentIndex < questions.length - 1) {
       setShowAnswer(false);
       setCurrentIndex(prev => prev + 1);
     } else {
+      // Recompute progress before marking session complete so the dashboard
+      // reflects the updated state as soon as the user navigates back.
+      if (user && appId) {
+        if (newSessionScores.length > 0) {
+          const avgScore = newSessionScores.reduce((a, b) => a + b, 0) / newSessionScores.length;
+          addDoc(collection(db, 'users', user.uid, 'jobApplications', appId, 'quizSessions'), {
+            date: Date.now(),
+            averageScore: parseFloat(avgScore.toFixed(2)),
+            questionsAnswered: newSessionScores.length,
+            appName: appName
+          }).catch((err: any) => console.warn('Failed to save session history:', err));
+        }
+
+        updateOverallProgress(user.uid, appId).catch((err: any) =>
+          console.warn('Progress update failed silently:', err)
+        );
+      }
       setSessionCompleted(true);
       setTimeout(() => {
         navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
@@ -73,11 +126,26 @@ export default function Quiz() {
 
   const confirmExitSession = () => {
     setIsExitModalOpen(false);
+    if (user && appId) {
+      if (sessionScores.length > 0) {
+        const avgScore = sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length;
+        addDoc(collection(db, 'users', user.uid, 'jobApplications', appId, 'quizSessions'), {
+          date: Date.now(),
+          averageScore: parseFloat(avgScore.toFixed(2)),
+          questionsAnswered: sessionScores.length,
+          appName: appName
+        }).catch((err: any) => console.warn('Failed to save session history:', err));
+      }
+
+      updateOverallProgress(user.uid, appId).catch((err: any) =>
+        console.warn('Progress update failed silently:', err)
+      );
+    }
     navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
   };
 
-  if (loading) return <LoadingState message="Assembling interactive session modules..." />;
-  if (questions.length === 0) return <div className="text-center p-12">No evaluation content synchronized.</div>;
+  if (loading) return <LoadingState message="Loading questions..." />;
+  if (questions.length === 0) return <div className="text-center p-12">No questions found for this role.</div>;
 
   if (sessionCompleted) {
     return (
@@ -90,9 +158,9 @@ export default function Quiz() {
         <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto shadow-sm border border-emerald-100 dark:border-emerald-800">
           ✓
         </div>
-        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Practice Cycle Synchronized!</h2>
+        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Quiz Complete!</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-          Your technical confidence metrics have been securely saved to your ledger. Compiling updated knowledge gaps on your Weak Spots tab now...
+          Your confidence scores have been saved. Head to Weak Spots to see your updated gap analysis.
         </p>
       </motion.div>
     );
@@ -115,7 +183,7 @@ export default function Quiz() {
       </div>
 
       <div className="flex justify-between text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1">
-        <span>Drill Progress</span>
+        <span>Progress</span>
         <span>Question {currentIndex + 1} of {questions.length}</span>
       </div>
 
@@ -160,7 +228,7 @@ export default function Quiz() {
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                   className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed"
                 >
-                  <strong className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase tracking-wider font-bold">Ideal Structured Target Response:</strong>
+                  <strong className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase tracking-wider font-bold">Ideal Answer:</strong>
                   {currentQuestion.idealAnswer}
                 </motion.div>
               )}
@@ -183,7 +251,7 @@ export default function Quiz() {
                 transition={{ duration: 0.2 }}
                 className="space-y-4 text-center"
               >
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rate Your Technical Confidence:</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rate your confidence:</p>
                 <div className="grid grid-cols-5 gap-2">
                   {[1, 2, 3, 4, 5].map((num) => (
                     <motion.button
@@ -201,8 +269,8 @@ export default function Quiz() {
                   ))}
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-1 font-bold uppercase tracking-wider">
-                  <span>Struggled (1)</span>
-                  <span>Nailed It (5)</span>
+                  <span>Struggled</span>
+                  <span>Nailed it</span>
                 </div>
               </motion.div>
             )}
@@ -237,9 +305,9 @@ export default function Quiz() {
                   ⚠️
                 </div>
                 <div className="text-center space-y-1">
-                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Exit Practice Drill?</h3>
+                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Exit Quiz?</h3>
                   <p className="text-xs text-slate-400 font-medium leading-normal px-2">
-                    Are you sure you want to pause this active session? All score answers logged up to this card have been securely saved.
+                    Your progress up to this question has been saved.
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2.5 pt-2">
@@ -248,14 +316,14 @@ export default function Quiz() {
                     onClick={() => setIsExitModalOpen(false)}
                     className="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200 dark:border-slate-600"
                   >
-                    Continue Drill
+                    Keep Going
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={confirmExitSession}
                     className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition shadow-md shadow-red-600/10"
                   >
-                    Yes, Exit Session
+                    Exit Quiz
                   </motion.button>
                 </div>
               </motion.div>

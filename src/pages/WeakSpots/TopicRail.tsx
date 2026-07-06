@@ -10,7 +10,7 @@ export default function TopicRail({ topicMetrics, isLoading }: TopicRailProps) {
     return (
         <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-sm p-6">
             <div className="mb-6">
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Topic-Wise Technical Confidence Index</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Confidence by Topic</h3>
                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Calculated in real time based on your manual confidence evaluations.</p>
             </div>
 

@@ -7,10 +7,10 @@ import { type TopicStats } from './types';
 import TrackSelector from '../../components/TrackSelector';
 import SummaryCards from './SummaryCards';
 import TopicRail from './TopicRail';
-import { WeaknessesSkeleton, WeaknessesContentSkeleton } from '../../components/Skeleton';
+import { WeakSpotsSkeleton, WeakSpotsContentSkeleton } from '../../components/Skeleton';
 import { useMinLoadingDelay } from '../../hooks/useMinLoadingDelay';
 
-export default function Weaknesses() {
+export default function WeakSpots() {
     const { user } = useAuth();
     const [applications, setApplications] = useState<any[]>([]);
     const [selectedApp, setSelectedApp] = useState<any>(null);
@@ -95,7 +95,7 @@ export default function Weaknesses() {
         : '0.0';
 
     if (appsLoading) {
-        return <WeaknessesSkeleton />;
+        return <WeakSpotsSkeleton />;
     }
 
     if (!applications || applications.length === 0) {
@@ -103,7 +103,7 @@ export default function Weaknesses() {
             <div className="max-w-6xl mx-auto p-6">
                 <EmptyState
                     icon="🎯"
-                    title="No Weakness Metrics Found"
+                    title="No Weak Spot Data Yet"
                     description="Your visual confidence charts and skill tracking data will display here once you seed your first workplace target application."
                 />
             </div>
@@ -114,7 +114,7 @@ export default function Weaknesses() {
         <div className="max-w-6xl mx-auto space-y-6">
             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 flex flex-wrap gap-2 items-center shadow-sm">
                 <TrackSelector
-                    label="Analytics Target:"
+                    label="Job Track:"
                     applications={applications}
                     selectedApp={selectedApp}
                     onSelect={setSelectedApp}
@@ -123,7 +123,7 @@ export default function Weaknesses() {
 
             {selectedApp && (
                 isLoading ? (
-                    <WeaknessesContentSkeleton />
+                    <WeakSpotsContentSkeleton />
                 ) : (
                     <>
                         <SummaryCards topicMetrics={topicMetrics} globalAvg={globalAvg} />

@@ -109,5 +109,55 @@ export const useGemini = () => {
       setIsLoading(false);
     }
   };
-  return { analyzeJobDescription, generateQuestions, isLoading, error };
+  // Method 3: Study Plan Generator
+  const generateStudyPlan = async (roleTitle: string, weakTopics: string[], daysRemaining: number) => {
+    if (!apiKey) {
+      setError('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY.');
+      return null;
+    }
+    setIsLoading(true);
+    setError(null);
+    
+    const systemPrompt = `You are an expert technical career coach. Create a ${daysRemaining}-day study plan for a ${roleTitle} role.
+
+    The candidate is weakest in these topics: ${weakTopics.join(', ')}.
+
+    Rules:
+    - Return ONLY a valid JSON array. No markdown, no backticks, no commentary.
+    - Return exactly ${daysRemaining} objects — one per day, no grouping.
+    - Distribute day types roughly: 70% "review", 20% "mock", 10% "final". Use "final" only in the last 10% of days.
+    - Prioritise weak topics early. Revisit them before mock days.
+    - For each day's description: write 2-3 sentences covering what to study, a specific resource type, and one concrete practice task.
+
+    Return this exact schema for every object:
+    {
+      "dayNumber": 1,
+      "title": "Short catchy title (max 5 words)",
+      "focusTopics": ["Topic 1", "Topic 2"],
+      "type": "review",
+      "description": "2-3 sentences: what to study, resource, practice task."
+    }`;
+
+    try {
+      const response = await fetch(`${baseUrl}?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: systemPrompt }] }]
+        })
+      });
+      if (!response.ok) throw new Error(`Failed to generate study plan.`);
+      const data = await response.json();
+      const textResponse = data.candidates[0].content.parts[0].text;
+      return cleanJsonResponse(textResponse);
+    } catch (err: any) {
+      console.error('Error creating study plan:', err);
+      setError(err.message || 'Failed to generate study plan.');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { analyzeJobDescription, generateQuestions, generateStudyPlan, isLoading, error };
 };

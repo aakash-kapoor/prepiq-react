@@ -10,7 +10,7 @@ export type NavigationItem = {
 export function isNavItemActive(item: NavigationItem, pathname: string): boolean {
   return (
     pathname === item.path ||
-    (item.name === "Quiz Mode" && pathname === "/dashboard/quiz-session")
+    (item.name === "Quiz" && pathname === "/dashboard/quiz-session")
   );
 }
 
@@ -27,7 +27,7 @@ export const primaryNavigation: NavigationItem[] = [
       )
     },
     { 
-      name: 'JD Analyzer', 
+      name: 'Analyze', 
       path: '/dashboard/analyze', 
       label: 'ANALYZE',
       icon: (
@@ -50,7 +50,7 @@ export const primaryNavigation: NavigationItem[] = [
 
 export const secondaryNavigation: NavigationItem[] = [
   { 
-      name: 'Quiz Mode', 
+      name: 'Quiz', 
       path: '/dashboard/quiz', 
       label: 'QUIZ',
       icon: (
@@ -61,7 +61,7 @@ export const secondaryNavigation: NavigationItem[] = [
     },
     { 
       name: 'Weak Spots', 
-      path: '/dashboard/weaknesses', 
+      path: '/dashboard/weak-spots', 
       label: 'WEAK',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">

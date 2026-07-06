@@ -11,7 +11,7 @@ import Analyze from './pages/Analyze';
 import Questions from './pages/Questions';
 import QuizLauncher from './pages/QuizLauncher';
 import Quiz from './pages/Quiz';
-import Weaknesses from './pages/Weaknesses';
+import WeakSpots from './pages/WeakSpots';
 import StudyPlan from './pages/StudyPlan';
 import Profile from './pages/Profile';
 import ChangelogPage from './pages/Changelog';
@@ -98,7 +98,7 @@ function App() {
                 <Route
                   path="analyze"
                   element={
-                    <ErrorBoundary variant="section" label="JD Analyzer">
+                    <ErrorBoundary variant="section" label="Analyze">
                       <Analyze />
                     </ErrorBoundary>
                   }
@@ -128,10 +128,10 @@ function App() {
                   }
                 />
                 <Route
-                  path="weaknesses"
+                  path="weak-spots"
                   element={
                     <ErrorBoundary variant="section" label="Weak Spots">
-                      <Weaknesses />
+                      <WeakSpots />
                     </ErrorBoundary>
                   }
                 />
