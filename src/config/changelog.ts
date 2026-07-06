@@ -22,6 +22,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.15.0',
+    date: 'Jul 6, 2026',
+    title: 'Native PDF Study Plan Export',
+    description:
+      'Study Plans can now be exported as high-quality PDFs with a clean layout, page numbers, and proper page breaks.',
+    tags: ['feat', 'ui', 'refactor', 'responsive'],
+  },
+  {
     version: 'v0.14.0',
     date: 'Jul 6, 2026',
     title: 'Quiz Session Tracking & Dashboard Trends',
