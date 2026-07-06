@@ -146,7 +146,8 @@ prepiq/
 |   |   `-- useMinLoadingDelay.ts
 |   |-- lib/
 |   |   |-- deleteUserData.ts
-|   |   `-- toast.ts
+|   |   |-- toast.ts
+|   |   `-- updateProgress.ts
 |   |-- pages/
 |   |   |-- Analyze/
 |   |   |   |-- index.tsx
@@ -206,6 +207,7 @@ prepiq/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.14.0 | Jul 6, 2026 | Quiz Session Tracking & Dashboard Trends |
 | v0.13.0 | Jul 5, 2026 | Consistent terminology — renamed Weaknesses → Weak Spots, removed jargon, standardised all labels |
 | v0.12.0 | Jul 5, 2026 | Delete individual job applications from the dashboard |
 | v0.11.0 | Jul 5, 2026 | Global dark mode support |

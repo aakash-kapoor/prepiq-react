@@ -22,6 +22,28 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.14.0',
+    date: 'Jul 6, 2026',
+    title: 'Quiz Session Tracking & Dashboard Trends',
+    description:
+      'Quiz sessions are now saved to history, the Dashboard includes a new Confidence Trend chart, and a Questions page parsing issue was fixed.',
+    tags: ['feat', 'fix', 'ui'],
+  },
+  {
+    version: 'v0.13.0',
+    date: 'Jul 5, 2026',
+    title: 'Consistent Terminology',
+    description: 'Renamed Weaknesses to Weak Spots, removed confusing jargon, and standardized all labels across the application.',
+    tags: ['chore', 'ui'],
+  },
+  {
+    version: 'v0.12.0',
+    date: 'Jul 5, 2026',
+    title: 'Delete Job Applications',
+    description: 'Added the ability to delete individual job applications from the dashboard. This action safely wipes all nested questions and performance data from Firestore.',
+    tags: ['feat', 'ui'],
+  },
+  {
     version: 'v0.11.0',
     date: 'Jul 5, 2026',
     title: 'Global Dark Mode Support',
