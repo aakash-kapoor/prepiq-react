@@ -41,8 +41,8 @@ export default function AppLayout() {
     dashboard: 'Workspace',
     analyze: 'Analyze',
     questions: 'Question Bank',
-    quiz: 'Quiz Mode',
-    'quiz-session': 'Quiz Mode',
+    quiz: 'Quiz',
+    'quiz-session': 'Quiz',
     'weak-spots': 'Weak Spots',
     'study-plan': 'Study Plan',
     profile: 'Profile'

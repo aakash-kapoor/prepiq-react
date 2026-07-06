@@ -85,6 +85,10 @@ export default function Questions() {
   const [questionCount, setQuestionCount] = useState<number>(15);
   const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
+  const [filterTopic, setFilterTopic] = useState('All');
+  const [filterDifficulty, setFilterDifficulty] = useState('All');
+  const [sortOption, setSortOption] = useState('default');
+
   const hasAutoSelected = useRef(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
 
@@ -345,8 +349,56 @@ export default function Questions() {
                 No questions yet — click Build to get started.
               </div>
             ) : (
-              <AnimatePresence mode="popLayout">
-                {questions.map((q, index) => (
+              <>
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-3 mb-2">
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Topic</label>
+                    <select
+                      value={filterTopic}
+                      onChange={(e) => setFilterTopic(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
+                    >
+                      {['All', ...Array.from(new Set(questions.map(q => q.topic).filter(Boolean)))].map(t => (
+                        <option key={t as string} value={t as string}>{t as string}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Difficulty</label>
+                    <select
+                      value={filterDifficulty}
+                      onChange={(e) => setFilterDifficulty(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
+                    >
+                      {['All', ...Array.from(new Set(questions.map(q => q.difficulty).filter(Boolean)))].map(d => (
+                        <option key={d as string} value={d as string}>{d as string}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Sort By</label>
+                    <select
+                      value={sortOption}
+                      onChange={(e) => setSortOption(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
+                    >
+                      <option value="default">Default</option>
+                      <option value="confidenceAsc">Confidence (Lowest)</option>
+                      <option value="confidenceDesc">Confidence (Highest)</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <AnimatePresence mode="popLayout">
+                  {questions
+                    .filter(q => filterTopic === 'All' || q.topic === filterTopic)
+                    .filter(q => filterDifficulty === 'All' || q.difficulty === filterDifficulty)
+                    .sort((a, b) => {
+                      if (sortOption === 'confidenceAsc') return (a.averageConfidence || 0) - (b.averageConfidence || 0);
+                      if (sortOption === 'confidenceDesc') return (b.averageConfidence || 0) - (a.averageConfidence || 0);
+                      return 0;
+                    })
+                    .map((q, index) => (
                   <motion.div
                     key={q.id}
                     layout
@@ -356,6 +408,7 @@ export default function Questions() {
                   </motion.div>
                 ))}
               </AnimatePresence>
+              </>
             )}
           </div>
           </div>

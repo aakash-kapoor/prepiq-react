@@ -42,6 +42,7 @@ export default function DashboardHome() {
   const { loading, markDone, cancelTimer } = useMinLoadingDelay(600);
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [globalAvgConfidence, setGlobalAvgConfidence] = useState<number>(0);
+  const [sessions, setSessions] = useState<any[]>([]);
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState<JobApp | null>(null);
@@ -99,7 +100,25 @@ export default function DashboardHome() {
       );
     };
 
+    const fetchSessions = async () => {
+      let allSessions: any[] = [];
+      for (const app of applications) {
+        const sRef = collection(db, 'users', user.uid, 'jobApplications', app.id, 'quizSessions');
+        const sSnapshot = await getDocs(sRef);
+        sSnapshot.docs.forEach(doc => {
+          allSessions.push({ id: doc.id, ...doc.data() });
+        });
+      }
+      
+      if (cancelled) return;
+
+      // Sort by date ascending
+      allSessions.sort((a, b) => a.date - b.date);
+      setSessions(allSessions);
+    };
+
     fetchStats();
+    fetchSessions();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, applications.length]);
@@ -195,6 +214,59 @@ export default function DashboardHome() {
         ))}
       </div>
 
+      {/* TREND CHART BLOCK */}
+      {sessions.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-6 shadow-sm space-y-4"
+        >
+          <div className="flex justify-between items-end">
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Confidence Trend</h3>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">Average Session Scores</p>
+            </div>
+            <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded font-bold uppercase tracking-wide">
+              Last {Math.min(sessions.length, 10)} Sessions
+            </span>
+          </div>
+
+          <div className="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-2">
+            <div className="flex items-end gap-3 h-24">
+              {sessions.slice(-10).map((session, idx) => {
+                const pct = (session.averageScore / 5) * 100;
+                return (
+                  <div key={session.id || idx} className="w-10 flex flex-col justify-end group relative h-full">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                      {session.averageScore.toFixed(1)}/5.0 ({session.appName || 'Session'})
+                    </div>
+                    <div style={{ height: `${pct}%` }} className="w-full overflow-hidden rounded-t-md">
+                      <motion.div
+                        initial={{ scaleY: 0 }}
+                        animate={{ scaleY: 1 }}
+                        transition={{ duration: 0.5, delay: idx * 0.05, type: 'spring', damping: 20 }}
+                        style={{ transformOrigin: 'bottom' }}
+                        className="w-full h-full bg-[#6366F1] hover:bg-indigo-400 transition-colors"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex gap-3">
+              {sessions.slice(-10).map((session, idx) => {
+                const date = new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                return (
+                  <span key={idx} className="w-10 text-[9px] text-slate-400 font-bold uppercase text-center whitespace-nowrap block">
+                    {date}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* 3. FLUID ACTIVE JOB TRACKS CONTAINER */}
       <div className="space-y-4">
         <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Active Preparations</h3>
@@ -212,7 +284,6 @@ export default function DashboardHome() {
             /* Grid auto-adjusts cleanly: 1 column on mobile screens, 2 columns on desktops */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {applications.map((app, index) => {
-
                 // === ADD CODE FOR ACCENTS HERE ===
                 const difficulty = app.estimatedDifficulty?.toLowerCase() || 'mid-level';
 
@@ -254,11 +325,11 @@ export default function DashboardHome() {
                         <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base tracking-tight leading-tight truncate">{app.role}</h4>
                         <p className="text-xs text-slate-400 dark:text-slate-400 font-medium mt-0.5">{app.company}</p>
                       </div>
+                      {/* Difficulty badge + delete button */}
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span className={`text-[9px] font-extrabold border px-2 py-0.5 rounded-md uppercase tracking-wider ${accentStyles.badge}`}>
                           {app.estimatedDifficulty || 'Mid-Level'}
                         </span>
-                        {/* Delete trigger — small, unobtrusive, never accidental */}
                         <button
                           onClick={() => setDeleteTarget(app)}
                           className="w-6 h-6 flex items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-150"
@@ -275,14 +346,16 @@ export default function DashboardHome() {
                     {/* Progress metrics bars section */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
-                        <span className="text-slate-400 dark:text-slate-500 font-medium text-[11px]">Skill Extraction Weight</span>
-                        <span>{app.extractedSkills?.length || 0} Badges Logged</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-medium text-[11px]">Overall Progress</span>
+                        <span className="text-[11px]">
+                          {app.overallProgress > 0 ? `${app.overallProgress}% learned` : 'Not started'}
+                        </span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                         <motion.div
                           className="bg-[#6366F1] h-1.5 rounded-full"
                           initial={{ width: 0 }}
-                          animate={{ width: `${Math.min((app.extractedSkills?.length || 0) * 4, 100)}%` }}
+                          animate={{ width: `${app.overallProgress || 0}%` }}
                           transition={{ duration: 0.6, ease: 'easeOut', delay: index * 0.07 + 0.2 }}
                         />
                       </div>

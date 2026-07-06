@@ -7,6 +7,7 @@ import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { StudyPlanSkeleton, StudyPlanContentSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
+import { useGemini } from '../hooks/useGemini';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -17,6 +18,9 @@ interface JobApp {
   company: string;
   role: string;
   interviewDate?: string;
+  studyPlan?: TimelineDay[];
+  studyPlanGaps?: string[];
+  studyPlanDays?: number;
 }
 
 interface TimelineDay {
@@ -35,6 +39,9 @@ export default function StudyPlan() {
   const [timeline, setTimeline] = useState<TimelineDay[]>([]);
   const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const { generateStudyPlan } = useGemini();
   const [isSavingDate, setIsSavingDate] = useState(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
   const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
@@ -102,38 +109,11 @@ export default function StudyPlan() {
         windowSize = Math.max(daysUntil, 3);
       }
 
-      // 3. Generate Custom Timeline Array Blueprint
-      const generatedTimeline: TimelineDay[] = [];
-      
-      for (let i = 1; i <= windowSize; i++) {
-        if (i === windowSize) {
-          generatedTimeline.push({
-            dayNumber: i,
-            title: 'The Final 10 Flash Drill ⚡',
-            focusTopics: gaps.slice(0, 3),
-            type: 'final',
-            description: 'The night before. Put away the massive text blocks. Run strict flash card memory loops against your 10 weakest questions only.'
-          });
-        } else if (i === windowSize - 1) {
-          generatedTimeline.push({
-            dayNumber: i,
-            title: 'Full System Mock Simulation',
-            focusTopics: ['All Topics / Random Deck Mix'],
-            type: 'mock',
-            description: 'Simulate absolute pressure. Pull a mixed deck of 30 random conceptual and practical items without turning on answer sheets.'
-          });
-        } else {
-          const topicIndex = (i - 1) % (gaps.length || 1);
-          const currentFocus = gaps.length > 0 ? [gaps[topicIndex]] : ['Core Architecture Re-evaluation'];
-          
-          generatedTimeline.push({
-            dayNumber: i,
-            title: `Deep Dive Revision: Phase ${i}`,
-            focusTopics: currentFocus,
-            type: 'review',
-            description: `Isolate and target your logged proficiency gap in ${currentFocus[0]}. Build manual components locally to cement the logic.`
-          });
-        }
+      // 3. Set the current timeline to the saved one, if any.
+      // If none, it will remain empty until the user generates it.
+      let currentTimeline: TimelineDay[] = [];
+      if (selectedApp.studyPlan) {
+        currentTimeline = selectedApp.studyPlan;
       }
 
       if (isTrackSwitch) {
@@ -142,13 +122,13 @@ export default function StudyPlan() {
         setTimeout(() => {
           setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
           setDaysRemaining(windowSize);
-          setTimeline(generatedTimeline);
+          setTimeline(currentTimeline);
           setIsLoading(false);
         }, delay);
       } else {
         setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
         setDaysRemaining(windowSize);
-        setTimeline(generatedTimeline);
+        setTimeline(currentTimeline);
         setIsLoading(false);
       }
     });
@@ -200,6 +180,32 @@ export default function StudyPlan() {
       showErrorToast('Could not clear the date. Please try again.');
     } finally {
       setIsSavingDate(false);
+    }
+  };
+
+  const handleGeneratePlan = async () => {
+    if (!user || !selectedApp) return;
+    setIsGenerating(true);
+    
+    try {
+      const newPlan = await generateStudyPlan(selectedApp.role, weakTopics, daysRemaining);
+      
+      if (newPlan && Array.isArray(newPlan)) {
+        const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
+        await updateDoc(appDocRef, { 
+          studyPlan: newPlan,
+          studyPlanGaps: weakTopics,
+          studyPlanDays: daysRemaining
+        });
+        showSuccessToast('AI Study Plan generated successfully!');
+      } else {
+        showErrorToast('Failed to generate a valid plan structure.');
+      }
+    } catch (err) {
+      console.error('Plan generation failed:', err);
+      showErrorToast('Could not generate the plan. Please try again.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -332,49 +338,80 @@ export default function StudyPlan() {
                 ))}
               </div>
             </div>
+
+            {/* AI Generation Control */}
+            <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+              <button
+                onClick={handleGeneratePlan}
+                disabled={isGenerating}
+                className="w-full bg-[#6366F1] hover:bg-indigo-600 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    Generating...
+                  </>
+                ) : timeline.length > 0 ? (
+                  'Recalibrate AI Plan ⚡'
+                ) : (
+                  'Generate AI Plan ⚡'
+                )}
+              </button>
+              {timeline.length > 0 && (
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug mt-2 text-center">
+                  Update your plan if your weak topics or interview date have changed.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Right Column: Custom Tailored SVG-Style Timeline Rail */}
           <div className="md:col-span-2 space-y-6">
             <div className="relative border-l-2 border-slate-200 dark:border-slate-700 ml-4 md:ml-6 space-y-6">
-              {timeline.map((day) => {
-                
-                let markerColors = 'bg-[#6366F1] border-indigo-200 dark:border-indigo-800 ring-indigo-100 dark:ring-indigo-900/50';
-                if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 dark:border-amber-800 ring-amber-100 dark:ring-amber-900/50';
-                if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 dark:border-red-800 ring-red-100 dark:ring-red-900/50';
+              {timeline.length === 0 ? (
+                <div className="bg-dashed border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl p-12 text-center text-slate-400 dark:text-slate-500 text-sm font-medium ml-4">
+                  No AI study plan generated yet. Click the generate button to create your custom timeline.
+                </div>
+              ) : (
+                timeline.map((day) => {
+                  
+                  let markerColors = 'bg-[#6366F1] border-indigo-200 dark:border-indigo-800 ring-indigo-100 dark:ring-indigo-900/50';
+                  if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 dark:border-amber-800 ring-amber-100 dark:ring-amber-900/50';
+                  if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 dark:border-red-800 ring-red-100 dark:ring-red-900/50';
 
-                return (
-                  <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
-                    
-                    {/* Timeline Dot Marker */}
-                    <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
-
-                    {/* Timeline content details box card */}
-                    <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 dark:hover:border-slate-600 transition">
-                      <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 dark:border-slate-700 pb-2">
-                        <span className="text-[10px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
-                          Day {day.dayNumber} of {daysRemaining}
-                        </span>
-                        <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">{day.title}</h4>
-                      </div>
+                  return (
+                    <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
                       
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                        {day.description}
-                      </p>
+                      {/* Timeline Dot Marker */}
+                      <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
 
-                      <div className="flex flex-wrap gap-1 pt-1 items-center">
-                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1">Target Module:</span>
-                        {day.focusTopics.map((topic, tIdx) => (
-                          <span key={tIdx} className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
-                            {topic}
+                      {/* Timeline content details box card */}
+                      <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 dark:hover:border-slate-600 transition">
+                        <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 dark:border-slate-700 pb-2">
+                          <span className="text-[10px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                            Day {day.dayNumber} of {selectedApp.studyPlanDays || daysRemaining}
                           </span>
-                        ))}
-                      </div>
-                    </div>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">{day.title}</h4>
+                        </div>
+                        
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                          {day.description}
+                        </p>
 
-                  </div>
-                );
-              })}
+                        <div className="flex flex-wrap gap-1 pt-1 items-center">
+                          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1">Target Module:</span>
+                          {day.focusTopics.map((topic, tIdx) => (
+                            <span key={tIdx} className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
+                              {topic}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
           </div>
