@@ -16,6 +16,13 @@ export default function AppLayout() {
 
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
+  const getCurrentPageTitle = () => {
+    const pathnames = location.pathname.split('/').filter((x) => x);
+    if (pathnames.length <= 1) return routeLabels.dashboard;
+    const last = pathnames[pathnames.length - 1];
+    return routeLabels[last.toLowerCase()] || last;
+  };
+
   // 1. Auto-close menu on route change
   useEffect(() => {
     setIsMoreMenuOpen(false);
@@ -29,6 +36,16 @@ export default function AppLayout() {
     return () => window.removeEventListener('keydown', handler);
   }, [isMoreMenuOpen]);
 
+  // 3. Automatically synchronize Browser Tab Titles on route shifts
+  useEffect(() => {
+    const pageTitle = getCurrentPageTitle();
+    document.title = `${pageTitle} | PrepIQ`;
+    // CLEANUP FUNCTION: Resets title back to index.html default on logout/unmount
+    return () => {
+      document.title = 'PrepIQ | AI Interview Prep';
+    };
+  }, [location.pathname]);
+
   // 3. Reset scroll position on route change — decoupled from popLayout's exit/enter
   // animation timing so it fires immediately instead of ~150ms late.
   // useEffect(() => {
@@ -38,7 +55,7 @@ export default function AppLayout() {
   if (!user) return null;
 
   const routeLabels: { [key: string]: string } = {
-    dashboard: 'Workspace',
+    dashboard: 'Dashboard',
     analyze: 'Analyze',
     questions: 'Question Bank',
     quiz: 'Quiz',
@@ -46,13 +63,6 @@ export default function AppLayout() {
     'weak-spots': 'Weak Spots',
     'study-plan': 'Study Plan',
     profile: 'Profile'
-  };
-
-  const getCurrentPageTitle = () => {
-    const pathnames = location.pathname.split('/').filter((x) => x);
-    if (pathnames.length <= 1) return routeLabels.dashboard;
-    const last = pathnames[pathnames.length - 1];
-    return routeLabels[last.toLowerCase()] || last;
   };
 
   // --- DYNAMIC BREADCRUMB BUILDER ENGINE ---
