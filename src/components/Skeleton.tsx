@@ -208,7 +208,7 @@ export function WeakSpotsContentSkeleton() {
 /** Skeleton for StudyPlan — tab strip + date panel + timeline cards */
 export function StudyPlanSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 items-center">
         <Bone className="h-3 w-24" />
         <Bone className="h-9.5 w-64 rounded-xl" />

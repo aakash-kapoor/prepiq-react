@@ -113,7 +113,7 @@ export default function AppLayout() {
         {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
         <div className="flex-1 flex flex-col min-w-0 md:h-full md:overflow-y-auto pb-20 md:pb-0 relative">
           {/* Desktop Header panel elements */}
-          <header className="hidden md:flex h-16 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-between px-8 sticky top-0 z-30 transition-colors">
+          <header className="hidden md:flex h-16 shrink-0 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-between px-8 sticky top-0 z-30 transition-colors">
             <div className="flex items-center text-xs font-medium text-slate-500 dark:text-slate-400">
               {generateBreadcrumbs()}
             </div>
@@ -125,18 +125,20 @@ export default function AppLayout() {
           {/* Content Render Outlet — AnimatePresence for route transitions.
               Scroll reset is handled by the useEffect above, not onExitComplete,
               since popLayout runs enter/exit concurrently. */}
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.main
-              key={location.pathname}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18, ease: 'easeOut' as const }}
-              className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto min-h-[60vh]"
-            >
-              <Outlet />
-            </motion.main>
-          </AnimatePresence>
+          <div className="flex-1 relative">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.main
+                key={location.pathname}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' as const }}
+                className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto min-h-[60vh]"
+              >
+                <Outlet />
+              </motion.main>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR: Visible strictly on small screens */}
