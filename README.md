@@ -151,6 +151,7 @@ src/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.16.0 | Jul 7, 2026 | Custom Dropdowns, Collapsible Job Blueprints & Layout Enhancements |
 | v0.15.0 | Jul 6, 2026 | Native PDF Study Plan Export |
 | v0.14.0 | Jul 6, 2026 | Quiz Session Tracking & Dashboard Trends |
 | v0.13.0 | Jul 5, 2026 | Consistent terminology — renamed Weaknesses → Weak Spots, removed jargon, standardised all labels |
@@ -169,7 +170,7 @@ src/
 | v0.2.0 | Jun 25, 2026 | README and project documentation |
 | v0.1.0 | Jun 24, 2026 | Initial release |
 
-Full release notes are available in [`src/config/changelog.ts`](src/config/changelog.ts) and in the in-app changelog modal.
+Full release notes are available in [Changelogs](https://prep-iq.web.app/changelog) and [`src/config/changelog.ts`](src/config/changelog.ts)
 
 ---
 

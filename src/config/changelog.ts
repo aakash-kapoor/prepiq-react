@@ -22,6 +22,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.16.0',
+    date: 'Jul 7, 2026',
+    title: 'Custom Dropdowns, Collapsible Job Blueprints & Layout Enhancements',
+    description:
+      'Added custom dropdowns, a collapsible Job Blueprint section, a new Study Plan loading skeleton, and various layout improvements.',
+    tags: ['feat', 'ui', 'refactor', 'docs'],
+  },
+  {
     version: 'v0.15.0',
     date: 'Jul 6, 2026',
     title: 'Native PDF Study Plan Export',
