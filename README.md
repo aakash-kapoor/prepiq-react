@@ -17,12 +17,22 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 
 - **AI-Powered Job Description Analysis** — Paste any engineering job description and Gemini AI extracts the exact skills, priorities, and red flags you need to know.
 - **Precision Knowledge Gap Detection** — Pinpoints what you don't know, not just what the role requires.
-- **Adaptive Quiz** — Interactive study cards that target your weakest areas for smarter repetition.
+- **Adaptive AI Quiz Sessions** — Dynamic interview questions generated from the analyzed job description with confidence tracking.
 - **Weak Spots Radar** — Visual confidence charts surface your blind spots across every topic you've practised.
 - **Automated Study Timelines** — Generates a day-by-day sprint schedule tailored to your lowest-confidence areas and interview date.
 - **Delete Job Applications** — Remove individual roles from the dashboard at any time; all nested questions and confidence data are fully wiped from Firestore.
 - **User Profile & Account Management** — Edit your display name, sign out, or permanently delete your account with a secure email-confirmation gate that wipes all associated Firestore data.
 - **Zero Setup** — Sign in with Google and go. No backend, no API key wrangling — fully serverless on Firebase.
+
+---
+
+## 🔄 How It Works
+
+1. Paste a job description.
+2. Gemini AI extracts required skills and generates targeted questions.
+3. Complete adaptive quizzes to build confidence.
+4. Review Weak Spots analytics.
+5. View/export a personalized PDF study plan.
 
 ---
 
@@ -105,87 +115,14 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ## 📁 Project Structure
 
 ```text
-prepiq/
-|-- public/
-|   |-- favicon.svg
-|   `-- icons.svg
-|-- src/
-|   |-- assets/
-|   |   |-- hero.png
-|   |   |-- react.svg
-|   |   `-- vite.svg
-|   |-- components/
-|   |   |-- AppLayout.tsx
-|   |   |-- DeleteAccountModal.tsx
-|   |   |-- DeleteJobModal.tsx
-|   |   |-- EmptyState.tsx
-|   |   |-- ErrorBoundary.tsx
-|   |   |-- LegalModal.tsx
-|   |   |-- LoadingState.tsx
-|   |   |-- ProgressBar.tsx
-|   |   |-- ScrollToTop.tsx
-|   |   |-- Skeleton.tsx
-|   |   |-- Spinner.tsx
-|   |   |-- StudyPlanPDFExport.tsx
-|   |   |-- ThemeToggle.tsx
-|   |   |-- TrackSelector.tsx
-|   |   `-- layout/
-|   |       |-- DesktopSidebar.tsx
-|   |       |-- LiquidBottomNav.tsx
-|   |       |-- MobileHeader.tsx
-|   |       `-- MoreMenu.tsx
-|   |-- config/
-|   |   |-- changelog.ts
-|   |   |-- firebase.ts
-|   |   |-- navigation.tsx
-|   |   `-- smokeTest.ts
-|   |-- context/
-|   |   |-- AuthContext.tsx
-|   |   `-- ThemeContext.tsx
-|   |-- hooks/
-|   |   |-- useGemini.ts
-|   |   `-- useMinLoadingDelay.ts
-|   |-- lib/
-|   |   |-- deleteUserData.ts
-|   |   |-- toast.ts
-|   |   `-- updateProgress.ts
-|   |-- pages/
-|   |   |-- Analyze/
-|   |   |   |-- index.tsx
-|   |   |   |-- InputPanel.tsx
-|   |   |   `-- ResultsPanel.tsx
-|   |   |-- Landing/
-|   |   |   |-- index.tsx
-|   |   |   |-- Navbar.tsx
-|   |   |   |-- Hero.tsx
-|   |   |   |-- HowItWorks.tsx
-|   |   |   |-- Features.tsx
-|   |   |   |-- CTA.tsx
-|   |   |   |-- AboutDeveloper.tsx
-|   |   |   `-- Footer.tsx
-|   |   |-- WeakSpots/
-|   |   |   |-- index.tsx
-|   |   |   |-- types.ts
-|   |   |   |-- SummaryCards.tsx
-|   |   |   `-- TopicRail.tsx
-|   |   |-- Changelog.tsx
-|   |   |-- DashboardHome.tsx
-|   |   |-- Login.tsx
-|   |   |-- Profile.tsx
-|   |   |-- Questions.tsx
-|   |   |-- Quiz.tsx
-|   |   |-- QuizLauncher.tsx
-|   |   `-- StudyPlan.tsx
-|   |-- App.tsx
-|   |-- App.css
-|   |-- index.css
-|   `-- main.tsx
-|-- firebase.json
-|-- index.html
-|-- package.json
-|-- tailwind.config.js
-|-- tsconfig.json
-`-- vite.config.ts
+src/
+├── components/     # Shared UI components
+├── pages/          # Route-level pages and feature modules
+├── hooks/          # Custom React hooks
+├── context/        # Global state providers
+├── config/         # App configuration
+├── lib/            # Utilities and helpers
+└── assets/         # Static assets
 ```
 
 ---
@@ -202,12 +139,19 @@ prepiq/
 
 **Cascading deletes.** All delete operations (single job application or full account) batch-delete nested Firestore subcollections before removing the parent document, ensuring no orphaned data is left behind.
 
+**Native PDF rendering.** Study plans are rendered using `@react-pdf/renderer` instead of DOM screenshot libraries, producing searchable, selectable, print-ready PDFs with consistent A4 layouts, automatic pagination, and page numbering across all devices.
+
+**Responsive-first interface.** Layouts are designed mobile-first with dedicated desktop and mobile navigation components, responsive scaling, and shared layout primitives to ensure a consistent experience across screen sizes.
+
+**Perceived performance.** Skeleton loaders, minimum loading durations, and route-level loading states create smooth transitions while avoiding layout shifts and flickering during asynchronous operations.
+
 ---
 
 ## 📋 Changelog
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.16.0 | Jul 7, 2026 | Custom Dropdowns, Collapsible Job Blueprints & Layout Enhancements |
 | v0.15.0 | Jul 6, 2026 | Native PDF Study Plan Export |
 | v0.14.0 | Jul 6, 2026 | Quiz Session Tracking & Dashboard Trends |
 | v0.13.0 | Jul 5, 2026 | Consistent terminology — renamed Weaknesses → Weak Spots, removed jargon, standardised all labels |
@@ -226,7 +170,7 @@ prepiq/
 | v0.2.0 | Jun 25, 2026 | README and project documentation |
 | v0.1.0 | Jun 24, 2026 | Initial release |
 
-Full release notes are available in [`src/config/changelog.ts`](src/config/changelog.ts) and in the in-app changelog modal.
+Full release notes are available in [Changelogs](https://prep-iq.web.app/changelog) and [`src/config/changelog.ts`](src/config/changelog.ts)
 
 ---
 

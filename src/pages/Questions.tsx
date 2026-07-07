@@ -13,6 +13,7 @@ import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { QuestionsSkeleton, QuestionsContentSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
+import CustomSelect from '../components/CustomSelect';
 import { deleteQuestion } from '../lib/deleteUserData';
 
 // Sub-component to manage individual accordion state safely
@@ -74,7 +75,7 @@ const QuestionCard = ({ q, index, onDelete }: { q: any, index: number, onDelete:
 
 export default function Questions() {
   const { user } = useAuth();
-  const { generateQuestions, isLoading: isAiLoading, error: aiError } = useGemini();
+  const { generateQuestions, error: aiError } = useGemini();
   const location = useLocation();
 
   const [applications, setApplications] = useState<any[]>([]);
@@ -83,11 +84,13 @@ export default function Questions() {
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const [contentLoading, setContentLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState<number>(15);
+  const [isBuildingDeck, setIsBuildingDeck] = useState(false);
   const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const [filterTopic, setFilterTopic] = useState('All');
   const [filterDifficulty, setFilterDifficulty] = useState('All');
   const [sortOption, setSortOption] = useState('default');
+  const [isBlueprintExpanded, setIsBlueprintExpanded] = useState(false);
 
   const hasAutoSelected = useRef(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
@@ -152,35 +155,43 @@ export default function Questions() {
   }, [selectedApp, user]);
 
   const handleBuildDeck = async () => {
-    if (!user || !selectedApp) return;
+    if (!user || !selectedApp || isBuildingDeck) return;
 
-    const generated = await generateQuestions(
-      selectedApp.role,
-      selectedApp.extractedSkills,
-      selectedApp.focusAreas,
-      questionCount
-    );
+    setIsBuildingDeck(true);
+    try {
+      const generated = await generateQuestions(
+        selectedApp.role,
+        selectedApp.extractedSkills,
+        selectedApp.focusAreas,
+        questionCount
+      );
 
-    if (generated && Array.isArray(generated)) {
-      const batch = writeBatch(db);
-      const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
+      if (generated && Array.isArray(generated)) {
+        const batch = writeBatch(db);
+        const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
 
-      generated.forEach((q) => {
-        const newDocRef = doc(questionsRef);
-        batch.set(newDocRef, {
-          ...q,
-          timesAnswered: 0,
-          lastConfidence: 0,
-          averageConfidence: 0
+        generated.forEach((q) => {
+          const newDocRef = doc(questionsRef);
+          batch.set(newDocRef, {
+            ...q,
+            timesAnswered: 0,
+            lastConfidence: 0,
+            averageConfidence: 0
+          });
         });
-      });
-      await batch.commit();
+        await batch.commit();
 
-      const updatedSnapshot = await getDocs(questionsRef);
-      setQuestions(updatedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      showSuccessToast(`${generated.length} questions added to your deck.`);
-    } else {
-      showErrorToast(aiError || 'Failed to generate questions. Please try again.');
+        const updatedSnapshot = await getDocs(questionsRef);
+        setQuestions(updatedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        showSuccessToast(`${generated.length} questions added to your deck.`);
+      } else {
+        showErrorToast(aiError || 'Failed to generate questions. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Error building question deck:', err);
+      showErrorToast('An error occurred while building the deck.');
+    } finally {
+      setIsBuildingDeck(false);
     }
   };
 
@@ -239,10 +250,10 @@ export default function Questions() {
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{selectedApp.company}</p>
             </div>
 
-            {isAiLoading && (
+            {isBuildingDeck && (
               <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 p-3 rounded-xl space-y-2">
                 <p className="text-xs font-medium">🚀 Gemini is engineering exactly {questionCount} tailored target questions...</p>
-                <ProgressBar isActive={isAiLoading} message="Generating questions" />
+                <ProgressBar isActive={isBuildingDeck} message="Generating questions" />
               </div>
             )}
 
@@ -251,87 +262,118 @@ export default function Questions() {
               <p>⚡ <strong>Estimated Tier:</strong> {selectedApp.estimatedDifficulty}</p>
             </div>
 
-            {/* Core Skills, Nice to Have, and Red Flags */}
-            <div className="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-4">
-              {selectedApp.extractedSkills?.some((s: any) => s.category === 'Core') && (
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Core Skills</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedApp.extractedSkills
-                      .filter((s: any) => s.category === 'Core')
-                      .map((s: any, idx: number) => (
-                        <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 font-bold">
-                          {s.skill}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              )}
+            {/* Collapsible Job Blueprint Section */}
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-3">
+              <button
+                type="button"
+                onClick={() => setIsBlueprintExpanded(!isBlueprintExpanded)}
+                className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                aria-expanded={isBlueprintExpanded}
+              >
+                <span className="flex items-center gap-1.5">
+                  📋 <span>Target Skills & Blueprint</span>
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                  stroke="currentColor"
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${isBlueprintExpanded ? 'rotate-180' : ''}`}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
 
-              {selectedApp.extractedSkills?.some((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have') && (
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nice to Have</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedApp.extractedSkills
-                      .filter((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have')
-                      .map((s: any, idx: number) => (
-                        <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-amber-800 font-bold">
-                          {s.skill}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {isBlueprintExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 space-y-4">
+                      {selectedApp.extractedSkills?.some((s: any) => s.category === 'Core') && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Core Skills</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedApp.extractedSkills
+                              .filter((s: any) => s.category === 'Core')
+                              .map((s: any, idx: number) => (
+                                <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 font-bold">
+                                  {s.skill}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
 
-              {((selectedApp.redFlags && selectedApp.redFlags.length > 0) || selectedApp.extractedSkills?.some((s: any) => s.category === 'RedFlag')) && (
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Red Flags Identified</h4>
-                  <div className="flex flex-col gap-1">
-                    {selectedApp.redFlags?.map((flag: string, idx: number) => (
-                      <span key={`flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
-                        <span>⚠️</span>
-                        <span>{flag}</span>
-                      </span>
-                    ))}
-                    {selectedApp.extractedSkills
-                      ?.filter((s: any) => s.category === 'RedFlag')
-                      .map((s: any, idx: number) => (
-                        <span key={`skill-flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
-                          <span>⚠️</span>
-                          <span>{s.skill}</span>
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              )}
+                      {selectedApp.extractedSkills?.some((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have') && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nice to Have</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedApp.extractedSkills
+                              .filter((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have')
+                              .map((s: any, idx: number) => (
+                                <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-amber-800 font-bold">
+                                  {s.skill}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {((selectedApp.redFlags && selectedApp.redFlags.length > 0) || selectedApp.extractedSkills?.some((s: any) => s.category === 'RedFlag')) && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Red Flags Identified</h4>
+                          <div className="flex flex-col gap-1">
+                            {selectedApp.redFlags?.map((flag: string, idx: number) => (
+                              <span key={`flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
+                                <span>⚠️</span>
+                                <span>{flag}</span>
+                              </span>
+                            ))}
+                            {selectedApp.extractedSkills
+                              ?.filter((s: any) => s.category === 'RedFlag')
+                              .map((s: any, idx: number) => (
+                                <span key={`skill-flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
+                                  <span>⚠️</span>
+                                  <span>{s.skill}</span>
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-                  {questions.length === 0 ? 'Number of Questions' : 'Questions to Add'}
-                </label>
-                <select
-                  value={questionCount}
-                  disabled={isAiLoading}
-                  onChange={(e) => setQuestionCount(Number(e.target.value))}
-                  className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer disabled:opacity-60"
-                >
-                  <option value={5}>5 Questions</option>
-                  <option value={10}>10 Questions</option>
-                  <option value={15}>15 Questions</option>
-                  <option value={20}>20 Questions</option>
-                </select>
-              </div>
+              <CustomSelect
+                label={questions.length === 0 ? 'Number of Questions' : 'Questions to Add'}
+                value={questionCount}
+                disabled={isBuildingDeck}
+                onChange={setQuestionCount}
+                options={[
+                  { value: 5, label: '5 Questions' },
+                  { value: 10, label: '10 Questions' },
+                  { value: 15, label: '15 Questions' },
+                  { value: 20, label: '20 Questions' }
+                ]}
+              />
 
               <button
                 onClick={handleBuildDeck}
-                disabled={isAiLoading}
-                className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center"
+                disabled={isBuildingDeck}
+                className="w-full bg-[#6366F1] hover:bg-opacity-95 text-white py-3 px-4 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-500/10 uppercase tracking-wider flex items-center justify-center gap-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isAiLoading && <Spinner size="sm" colorClass="text-white" />}
+                {isBuildingDeck && <Spinner size="sm" colorClass="text-white" />}
                 <span>
-                  {isAiLoading
+                  {isBuildingDeck
                     ? 'Building with Gemini...'
                     : questions.length === 0
                       ? 'Build Question Bank'
@@ -351,42 +393,37 @@ export default function Questions() {
             ) : (
               <>
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-3 mb-2">
-                  <div className="flex-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Topic</label>
-                    <select
-                      value={filterTopic}
-                      onChange={(e) => setFilterTopic(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
-                    >
-                      {['All', ...Array.from(new Set(questions.map(q => q.topic).filter(Boolean)))].map(t => (
-                        <option key={t as string} value={t as string}>{t as string}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Difficulty</label>
-                    <select
-                      value={filterDifficulty}
-                      onChange={(e) => setFilterDifficulty(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
-                    >
-                      {['All', ...Array.from(new Set(questions.map(q => q.difficulty).filter(Boolean)))].map(d => (
-                        <option key={d as string} value={d as string}>{d as string}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Sort By</label>
-                    <select
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
-                    >
-                      <option value="default">Default</option>
-                      <option value="confidenceAsc">Confidence (Lowest)</option>
-                      <option value="confidenceDesc">Confidence (Highest)</option>
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Topic"
+                    value={filterTopic}
+                    onChange={setFilterTopic}
+                    className="flex-1"
+                    options={['All', ...Array.from(new Set(questions.map(q => q.topic).filter(Boolean)))].map(t => ({
+                      value: t as string,
+                      label: t as string
+                    }))}
+                  />
+                  <CustomSelect
+                    label="Difficulty"
+                    value={filterDifficulty}
+                    onChange={setFilterDifficulty}
+                    className="flex-1"
+                    options={['All', ...Array.from(new Set(questions.map(q => q.difficulty).filter(Boolean)))].map(d => ({
+                      value: d as string,
+                      label: d as string
+                    }))}
+                  />
+                  <CustomSelect
+                    label="Sort By"
+                    value={sortOption}
+                    onChange={setSortOption}
+                    className="flex-1"
+                    options={[
+                      { value: 'default', label: 'Default' },
+                      { value: 'confidenceAsc', label: 'Confidence (Lowest)' },
+                      { value: 'confidenceDesc', label: 'Confidence (Highest)' }
+                    ]}
+                  />
                 </div>
                 
                 <AnimatePresence mode="popLayout">

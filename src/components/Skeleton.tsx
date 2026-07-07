@@ -208,7 +208,7 @@ export function WeakSpotsContentSkeleton() {
 /** Skeleton for StudyPlan — tab strip + date panel + timeline cards */
 export function StudyPlanSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 items-center">
         <Bone className="h-3 w-24" />
         <Bone className="h-9.5 w-64 rounded-xl" />
@@ -247,6 +247,34 @@ export function StudyPlanContentSkeleton() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+export function StudyPlanTimelineSkeleton() {
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="relative pl-6 md:pl-8">
+          {/* Timeline Dot Marker Placeholder */}
+          <span className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-200 dark:bg-slate-700 ring-4 ring-slate-100 dark:ring-slate-800/50" />
+          
+          {/* Details card placeholder */}
+          <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+            <div className="flex justify-between items-center border-b border-gray-50 dark:border-slate-800 pb-2">
+              <Bone className="h-3 w-16" />
+              <Bone className="h-4 w-40" />
+            </div>
+            <Bone className="h-3 w-full" />
+            <Bone className="h-3 w-4/5" />
+            <div className="flex items-center gap-2 pt-1">
+              <Bone className="h-3 w-20" />
+              <Bone className="h-5 w-24 rounded" />
+              <Bone className="h-5 w-20 rounded" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -16,6 +16,13 @@ export default function AppLayout() {
 
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
+  const getCurrentPageTitle = () => {
+    const pathnames = location.pathname.split('/').filter((x) => x);
+    if (pathnames.length <= 1) return routeLabels.dashboard;
+    const last = pathnames[pathnames.length - 1];
+    return routeLabels[last.toLowerCase()] || last;
+  };
+
   // 1. Auto-close menu on route change
   useEffect(() => {
     setIsMoreMenuOpen(false);
@@ -29,6 +36,16 @@ export default function AppLayout() {
     return () => window.removeEventListener('keydown', handler);
   }, [isMoreMenuOpen]);
 
+  // 3. Automatically synchronize Browser Tab Titles on route shifts
+  useEffect(() => {
+    const pageTitle = getCurrentPageTitle();
+    document.title = `${pageTitle} | PrepIQ`;
+    // CLEANUP FUNCTION: Resets title back to index.html default on logout/unmount
+    return () => {
+      document.title = 'PrepIQ | AI Interview Prep';
+    };
+  }, [location.pathname]);
+
   // 3. Reset scroll position on route change — decoupled from popLayout's exit/enter
   // animation timing so it fires immediately instead of ~150ms late.
   // useEffect(() => {
@@ -38,7 +55,7 @@ export default function AppLayout() {
   if (!user) return null;
 
   const routeLabels: { [key: string]: string } = {
-    dashboard: 'Workspace',
+    dashboard: 'Dashboard',
     analyze: 'Analyze',
     questions: 'Question Bank',
     quiz: 'Quiz',
@@ -46,13 +63,6 @@ export default function AppLayout() {
     'weak-spots': 'Weak Spots',
     'study-plan': 'Study Plan',
     profile: 'Profile'
-  };
-
-  const getCurrentPageTitle = () => {
-    const pathnames = location.pathname.split('/').filter((x) => x);
-    if (pathnames.length <= 1) return routeLabels.dashboard;
-    const last = pathnames[pathnames.length - 1];
-    return routeLabels[last.toLowerCase()] || last;
   };
 
   // --- DYNAMIC BREADCRUMB BUILDER ENGINE ---
@@ -103,7 +113,7 @@ export default function AppLayout() {
         {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
         <div className="flex-1 flex flex-col min-w-0 md:h-full md:overflow-y-auto pb-20 md:pb-0 relative">
           {/* Desktop Header panel elements */}
-          <header className="hidden md:flex h-16 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-between px-8 sticky top-0 z-10 transition-colors">
+          <header className="hidden md:flex h-16 shrink-0 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 items-center justify-between px-8 sticky top-0 z-30 transition-colors">
             <div className="flex items-center text-xs font-medium text-slate-500 dark:text-slate-400">
               {generateBreadcrumbs()}
             </div>
@@ -115,18 +125,20 @@ export default function AppLayout() {
           {/* Content Render Outlet — AnimatePresence for route transitions.
               Scroll reset is handled by the useEffect above, not onExitComplete,
               since popLayout runs enter/exit concurrently. */}
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.main
-              key={location.pathname}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18, ease: 'easeOut' as const }}
-              className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto min-h-[60vh]"
-            >
-              <Outlet />
-            </motion.main>
-          </AnimatePresence>
+          <div className="flex-1 relative">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.main
+                key={location.pathname}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' as const }}
+                className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto min-h-[60vh]"
+              >
+                <Outlet />
+              </motion.main>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* 4. MOBILE BOTTOM TAB NAVIGATION BAR: Visible strictly on small screens */}
