@@ -13,6 +13,7 @@ import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { QuestionsSkeleton, QuestionsContentSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
+import CustomSelect from '../components/CustomSelect';
 import { deleteQuestion } from '../lib/deleteUserData';
 
 // Sub-component to manage individual accordion state safely
@@ -352,22 +353,18 @@ export default function Questions() {
             </div>
 
             <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-                  {questions.length === 0 ? 'Number of Questions' : 'Questions to Add'}
-                </label>
-                <select
-                  value={questionCount}
-                  disabled={isBuildingDeck}
-                  onChange={(e) => setQuestionCount(Number(e.target.value))}
-                  className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer disabled:opacity-60"
-                >
-                  <option value={5}>5 Questions</option>
-                  <option value={10}>10 Questions</option>
-                  <option value={15}>15 Questions</option>
-                  <option value={20}>20 Questions</option>
-                </select>
-              </div>
+              <CustomSelect
+                label={questions.length === 0 ? 'Number of Questions' : 'Questions to Add'}
+                value={questionCount}
+                disabled={isBuildingDeck}
+                onChange={setQuestionCount}
+                options={[
+                  { value: 5, label: '5 Questions' },
+                  { value: 10, label: '10 Questions' },
+                  { value: 15, label: '15 Questions' },
+                  { value: 20, label: '20 Questions' }
+                ]}
+              />
 
               <button
                 onClick={handleBuildDeck}
@@ -396,42 +393,37 @@ export default function Questions() {
             ) : (
               <>
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-3 mb-2">
-                  <div className="flex-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Topic</label>
-                    <select
-                      value={filterTopic}
-                      onChange={(e) => setFilterTopic(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
-                    >
-                      {['All', ...Array.from(new Set(questions.map(q => q.topic).filter(Boolean)))].map(t => (
-                        <option key={t as string} value={t as string}>{t as string}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Difficulty</label>
-                    <select
-                      value={filterDifficulty}
-                      onChange={(e) => setFilterDifficulty(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
-                    >
-                      {['All', ...Array.from(new Set(questions.map(q => q.difficulty).filter(Boolean)))].map(d => (
-                        <option key={d as string} value={d as string}>{d as string}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1 block">Sort By</label>
-                    <select
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500 transition cursor-pointer"
-                    >
-                      <option value="default">Default</option>
-                      <option value="confidenceAsc">Confidence (Lowest)</option>
-                      <option value="confidenceDesc">Confidence (Highest)</option>
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Topic"
+                    value={filterTopic}
+                    onChange={setFilterTopic}
+                    className="flex-1"
+                    options={['All', ...Array.from(new Set(questions.map(q => q.topic).filter(Boolean)))].map(t => ({
+                      value: t as string,
+                      label: t as string
+                    }))}
+                  />
+                  <CustomSelect
+                    label="Difficulty"
+                    value={filterDifficulty}
+                    onChange={setFilterDifficulty}
+                    className="flex-1"
+                    options={['All', ...Array.from(new Set(questions.map(q => q.difficulty).filter(Boolean)))].map(d => ({
+                      value: d as string,
+                      label: d as string
+                    }))}
+                  />
+                  <CustomSelect
+                    label="Sort By"
+                    value={sortOption}
+                    onChange={setSortOption}
+                    className="flex-1"
+                    options={[
+                      { value: 'default', label: 'Default' },
+                      { value: 'confidenceAsc', label: 'Confidence (Lowest)' },
+                      { value: 'confidenceDesc', label: 'Confidence (Highest)' }
+                    ]}
+                  />
                 </div>
                 
                 <AnimatePresence mode="popLayout">
