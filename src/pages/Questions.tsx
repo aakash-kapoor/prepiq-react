@@ -89,6 +89,7 @@ export default function Questions() {
   const [filterTopic, setFilterTopic] = useState('All');
   const [filterDifficulty, setFilterDifficulty] = useState('All');
   const [sortOption, setSortOption] = useState('default');
+  const [isBlueprintExpanded, setIsBlueprintExpanded] = useState(false);
 
   const hasAutoSelected = useRef(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
@@ -260,59 +261,94 @@ export default function Questions() {
               <p>⚡ <strong>Estimated Tier:</strong> {selectedApp.estimatedDifficulty}</p>
             </div>
 
-            {/* Core Skills, Nice to Have, and Red Flags */}
-            <div className="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-4">
-              {selectedApp.extractedSkills?.some((s: any) => s.category === 'Core') && (
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Core Skills</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedApp.extractedSkills
-                      .filter((s: any) => s.category === 'Core')
-                      .map((s: any, idx: number) => (
-                        <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 font-bold">
-                          {s.skill}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              )}
+            {/* Collapsible Job Blueprint Section */}
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-3">
+              <button
+                type="button"
+                onClick={() => setIsBlueprintExpanded(!isBlueprintExpanded)}
+                className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                aria-expanded={isBlueprintExpanded}
+              >
+                <span className="flex items-center gap-1.5">
+                  📋 <span>Target Skills & Blueprint</span>
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                  stroke="currentColor"
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${isBlueprintExpanded ? 'rotate-180' : ''}`}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
 
-              {selectedApp.extractedSkills?.some((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have') && (
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nice to Have</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedApp.extractedSkills
-                      .filter((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have')
-                      .map((s: any, idx: number) => (
-                        <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-amber-800 font-bold">
-                          {s.skill}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {isBlueprintExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 space-y-4">
+                      {selectedApp.extractedSkills?.some((s: any) => s.category === 'Core') && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Core Skills</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedApp.extractedSkills
+                              .filter((s: any) => s.category === 'Core')
+                              .map((s: any, idx: number) => (
+                                <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 font-bold">
+                                  {s.skill}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
 
-              {((selectedApp.redFlags && selectedApp.redFlags.length > 0) || selectedApp.extractedSkills?.some((s: any) => s.category === 'RedFlag')) && (
-                <div className="space-y-1.5">
-                  <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Red Flags Identified</h4>
-                  <div className="flex flex-col gap-1">
-                    {selectedApp.redFlags?.map((flag: string, idx: number) => (
-                      <span key={`flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
-                        <span>⚠️</span>
-                        <span>{flag}</span>
-                      </span>
-                    ))}
-                    {selectedApp.extractedSkills
-                      ?.filter((s: any) => s.category === 'RedFlag')
-                      .map((s: any, idx: number) => (
-                        <span key={`skill-flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
-                          <span>⚠️</span>
-                          <span>{s.skill}</span>
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              )}
+                      {selectedApp.extractedSkills?.some((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have') && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nice to Have</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedApp.extractedSkills
+                              .filter((s: any) => s.category === 'NiceToHave' || s.category === 'Nice to Have')
+                              .map((s: any, idx: number) => (
+                                <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-amber-800 font-bold">
+                                  {s.skill}
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {((selectedApp.redFlags && selectedApp.redFlags.length > 0) || selectedApp.extractedSkills?.some((s: any) => s.category === 'RedFlag')) && (
+                        <div className="space-y-1.5">
+                          <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Red Flags Identified</h4>
+                          <div className="flex flex-col gap-1">
+                            {selectedApp.redFlags?.map((flag: string, idx: number) => (
+                              <span key={`flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
+                                <span>⚠️</span>
+                                <span>{flag}</span>
+                              </span>
+                            ))}
+                            {selectedApp.extractedSkills
+                              ?.filter((s: any) => s.category === 'RedFlag')
+                              .map((s: any, idx: number) => (
+                                <span key={`skill-flag-${idx}`} className="text-[10px] px-2 py-1.5 rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 border border-rose-100 dark:border-rose-800 font-bold leading-tight flex items-start gap-1">
+                                  <span>⚠️</span>
+                                  <span>{s.skill}</span>
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
