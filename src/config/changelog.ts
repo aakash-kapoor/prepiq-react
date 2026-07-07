@@ -26,7 +26,7 @@ export const changelog: readonly ChangelogEntry[] = [
     date: 'Jul 7, 2026',
     title: 'Custom Dropdowns, Collapsible Job Blueprints & Layout Enhancements',
     description:
-      'Added custom dropdowns, a collapsible Job Blueprint section, a new Study Plan loading skeleton, and various layout improvements.',
+      'Added custom dropdowns, a collapsible Job Blueprint section, a new Study Plan loading skeleton, a dedicated skeleton loader for the Questions container when generating questions, direct phrasing for generated ideal answers, and various layout improvements.',
     tags: ['feat', 'ui', 'refactor', 'docs'],
   },
   {

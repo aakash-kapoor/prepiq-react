@@ -80,7 +80,7 @@ export const useGemini = () => {
     Each object inside the array must exactly look like this:
     {
       "question": "The question string",
-      "idealAnswer": "A robust 3-5 sentence answer detailing what a great candidate would say.",
+      "idealAnswer": "A robust 3-5 sentence answer written in the first person or as a direct technical explanation, answering the question directly as a top candidate would (do NOT use meta-phrases like 'a strong answer would' or 'the candidate should explain').",
       "topic": "The general category name (e.g., RxJS, Database, UI Layout)",
       "difficulty": "Easy, Medium, or Hard",
       "type": "Conceptual, Practical, or Scenario"

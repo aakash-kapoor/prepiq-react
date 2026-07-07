@@ -73,6 +73,27 @@ export function DashboardSkeleton() {
   );
 }
 
+export function QuestionCardsSkeleton({ count = 5 }: { count?: number }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm space-y-2.5">
+          <div className="flex justify-between items-start gap-4">
+            <Bone className="h-5 w-8 rounded-md" />
+            <div className="flex gap-1.5">
+              <Bone className="h-5 w-16 rounded" />
+              <Bone className="h-5 w-14 rounded" />
+            </div>
+          </div>
+          <Bone className="h-4 w-full" />
+          <Bone className="h-4 w-4/5" />
+          <Bone className="h-3 w-24" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Full skeleton for Questions page — mirrors: tab strip + detail panel + question list */
 export function QuestionsSkeleton() {
   return (
@@ -107,21 +128,8 @@ export function QuestionsContentSkeleton() {
       </div>
 
       {/* Question cards list */}
-      <div className="md:col-span-2 space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-gray-200 dark:border-slate-800 shadow-sm space-y-2.5">
-            <div className="flex justify-between items-start gap-4">
-              <Bone className="h-5 w-8 rounded-md" />
-              <div className="flex gap-1.5">
-                <Bone className="h-5 w-16 rounded" />
-                <Bone className="h-5 w-14 rounded" />
-              </div>
-            </div>
-            <Bone className="h-4 w-full" />
-            <Bone className="h-4 w-4/5" />
-            <Bone className="h-3 w-24" />
-          </div>
-        ))}
+      <div className="md:col-span-2">
+        <QuestionCardsSkeleton />
       </div>
     </div>
   );
