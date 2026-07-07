@@ -10,7 +10,7 @@ import LoadingState from '../components/LoadingState';
 import ProgressBar from '../components/ProgressBar';
 import Spinner from '../components/Spinner';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
-import { QuestionsSkeleton, QuestionsContentSkeleton } from '../components/Skeleton';
+import { QuestionsSkeleton, QuestionsContentSkeleton, QuestionCardsSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
 import CustomSelect from '../components/CustomSelect';
@@ -386,6 +386,8 @@ export default function Questions() {
           <div className="md:col-span-2 space-y-3">
             {fetchingQuestions ? (
               <LoadingState message="Syncing local questions storage ledger..." size="md" />
+            ) : isBuildingDeck && questions.length === 0 ? (
+              <QuestionCardsSkeleton count={questionCount} />
             ) : questions.length === 0 ? (
               <div className="bg-dashed border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl p-12 text-center text-slate-400 dark:text-slate-500 text-xs font-medium">
                 No questions yet — click Build to get started.
@@ -445,6 +447,12 @@ export default function Questions() {
                   </motion.div>
                 ))}
               </AnimatePresence>
+
+              {isBuildingDeck && (
+                <div className="mt-3">
+                  <QuestionCardsSkeleton count={questionCount} />
+                </div>
+              )}
               </>
             )}
           </div>
