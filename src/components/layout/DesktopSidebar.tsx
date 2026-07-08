@@ -39,9 +39,7 @@ export default function DesktopSidebar({
                         }`}
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 shrink-0 bg-[#6366F1] rounded-xl flex items-center justify-center font-black text-sm text-white shadow-md shadow-indigo-500/20">
-                                IQ
-                            </div>
+                            <img src="/prepiq.svg" alt="PrepIQ Logo" className="w-8 h-8 shrink-0" />
                             {!isCollapsed && (
                                 <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap">
                                     PrepIQ

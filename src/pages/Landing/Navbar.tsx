@@ -10,9 +10,7 @@ export default function Navbar({ user, onCTA }: NavbarProps) {
         <header className="sticky top-0 z-50 bg-[#F8FAFC]/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-100/80 dark:border-slate-800/80">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 bg-[#6366F1] rounded-xl flex items-center justify-center font-black text-sm text-white shadow-md shadow-indigo-500/20">
-                        IQ
-                    </div>
+                    <img src="/prepiq.svg" alt="PrepIQ Logo" className="w-7 h-7 shrink-0" />
                     <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-slate-100">PrepIQ</span>
                 </div>
 
