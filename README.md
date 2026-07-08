@@ -192,6 +192,7 @@ src/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.17.0 | Jul 8, 2026 | Cloudflare Worker Proxy, PWA Support & Offline Improvements |
 | v0.16.0 | Jul 7, 2026 | Custom Dropdowns, Collapsible Job Blueprints & Layout Enhancements |
 | v0.15.0 | Jul 6, 2026 | Native PDF Study Plan Export |
 | v0.14.0 | Jul 6, 2026 | Quiz Session Tracking & Dashboard Trends |

@@ -22,6 +22,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.17.0',
+    date: 'Jul 8, 2026',
+    title: 'Cloudflare Proxy, PWA Support & Offline Improvements',
+    description:
+      'Secured AI requests with a Cloudflare proxy, added full PWA support, improved offline handling across the app, and introduced a new brand logo.',
+    tags: ['feat', 'ui', 'deploy', 'docs'],
+  },
+  {
     version: 'v0.16.0',
     date: 'Jul 7, 2026',
     title: 'Custom Dropdowns, Collapsible Job Blueprints & Layout Enhancements',
