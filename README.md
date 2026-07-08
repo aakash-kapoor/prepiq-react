@@ -86,10 +86,49 @@ VITE_FIREBASE_PROJECT_ID=your_project_id
 VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
-VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_GEMINI_PROXY_URL=https://your-worker-subdomain.workers.dev/
 ```
 
-Firebase configuration is read from [src/config/firebase.ts](src/config/firebase.ts). Gemini requests are made from [src/hooks/useGemini.ts](src/hooks/useGemini.ts).
+Firebase configuration is read from [src/config/firebase.ts](src/config/firebase.ts). Gemini requests are proxied via a Cloudflare Worker using [src/hooks/useGemini.ts](src/hooks/useGemini.ts).
+
+#### ☁️ Cloudflare Worker Proxy Setup
+
+To keep the `GEMINI_API_KEY` hidden from client-side network inspectors, configure a Cloudflare Worker as a serverless proxy:
+
+1. Create a new Worker in your **Cloudflare Dashboard** (under **Workers & Pages**).
+2. Paste the following proxy code:
+   ```javascript
+   export default {
+     async fetch(request, env) {
+       const corsHeaders = {
+         "Access-Control-Allow-Origin": "*", // Lock down to your domain in production
+         "Access-Control-Allow-Methods": "POST, OPTIONS",
+         "Access-Control-Allow-Headers": "Content-Type",
+       };
+       if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+       if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+
+       try {
+         const body = await request.json();
+         const apiKey = env.GEMINI_API_KEY;
+         if (!apiKey) return new Response("Missing GEMINI_API_KEY secret", { status: 500, headers: corsHeaders });
+
+         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+         const response = await fetch(geminiUrl, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify(body)
+         });
+         const data = await response.json();
+         return new Response(JSON.stringify(data), { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+       } catch (err) {
+         return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+       }
+     }
+   };
+   ```
+3. Set your secure `GEMINI_API_KEY` secret under the **Settings** → **Variables** tab of your Worker in the Cloudflare Dashboard.
+4. Update `VITE_GEMINI_PROXY_URL` in your `.env` file to point to your deployed Worker URL.
 
 ### Run Locally
 
@@ -130,6 +169,8 @@ src/
 ## 🏗️ Architecture Notes
 
 **Serverless by design.** There is no backend. Auth runs through Firebase Authentication (Google OAuth), and all user data — job applications, question banks, confidence scores — lives in Firestore under isolated per-user document paths enforced by Security Rules.
+
+**Secure API proxying.** The frontend calls a serverless Cloudflare Worker proxy instead of fetching the Google Generative Language API directly. This protects the `GEMINI_API_KEY` from exposure in the client's network inspectors.
 
 **Gemini as a schema engine.** The `useGemini` hook prompts the model to return strict JSON rather than conversational output, making parsed results predictable and safe to render directly.
 
