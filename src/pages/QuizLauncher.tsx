@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import EmptyState from '../components/EmptyState';
 import { QuizLauncherSkeleton, QuizLauncherContentSkeleton } from '../components/Skeleton';
@@ -61,7 +61,7 @@ export default function QuizLauncher() {
     }
     const startTime = Date.now();
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
-    getDocs(questionsRef).then((snapshot) => {
+    const unsubscribe = onSnapshot(questionsRef, (snapshot) => {
       const questionsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (isTrackSwitch) {
         const elapsed = Date.now() - startTime;
@@ -74,7 +74,12 @@ export default function QuizLauncher() {
         setQuestions(questionsList);
         setContentLoading(false);
       }
+    }, (error) => {
+      console.error("Error listening to questions for quiz launcher:", error);
+      setContentLoading(false);
     });
+
+    return () => unsubscribe();
   }, [selectedApp, user]);
 
   if (appsLoading) {

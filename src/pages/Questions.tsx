@@ -136,7 +136,7 @@ export default function Questions() {
     setFetchingQuestions(true);
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
 
-    getDocs(questionsRef).then((snapshot) => {
+    const unsubscribe = onSnapshot(questionsRef, (snapshot) => {
       const questionsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       if (isTrackSwitch) {
         const elapsed = Date.now() - startTime;
@@ -151,10 +151,20 @@ export default function Questions() {
         setFetchingQuestions(false);
         setContentLoading(false);
       }
+    }, (error) => {
+      console.error("Error listening to questions:", error);
+      setFetchingQuestions(false);
+      setContentLoading(false);
     });
+
+    return () => unsubscribe();
   }, [selectedApp, user]);
 
   const handleBuildDeck = async () => {
+    if (!navigator.onLine) {
+      showErrorToast('You\'re offline. Connect to the internet to generate interview questions.');
+      return;
+    }
     if (!user || !selectedApp || isBuildingDeck) return;
 
     setIsBuildingDeck(true);
@@ -199,6 +209,15 @@ export default function Questions() {
     if (!user || !selectedApp) return;
     // Optimistic remove — update UI immediately, then delete from Firestore
     setQuestions(prev => prev.filter(q => q.id !== questionId));
+
+    if (!navigator.onLine) {
+      deleteQuestion(user.uid, selectedApp.id, questionId).catch(err => {
+        console.error('Offline delete failed:', err);
+      });
+      showSuccessToast('Question removed offline — the change will sync automatically when you\'re back online.');
+      return;
+    }
+
     try {
       await deleteQuestion(user.uid, selectedApp.id, questionId);
       showSuccessToast('Question removed.');

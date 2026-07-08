@@ -53,6 +53,10 @@ export default function Analyze() {
     };
 
     const handleRunAnalysis = async () => {
+        if (!navigator.onLine) {
+            showErrorToast('You\'re offline. Connect to the internet to analyze your job description.');
+            return;
+        }
         if (!company.trim()) {
             showErrorToast('Company Name cannot be left blank.');
             return;
@@ -85,23 +89,37 @@ export default function Analyze() {
 
     const handleSaveToDashboard = async () => {
         if (!user || !analysisResult) return;
-        setIsSaving(true);
 
-        try {
-            const jobApplicationsRef = collection(db, 'users', user.uid, 'jobApplications');
-            await addDoc(jobApplicationsRef, {
-                company,
-                role: analysisResult.roleTitle || 'Software Engineer',
-                rawJD: jdText,
-                extractedSkills: analysisResult.extractedSkills || [],
-                focusAreas: analysisResult.focusAreas || [],
-                redFlags: analysisResult.redFlags || [],
-                estimatedDifficulty: analysisResult.estimatedDifficulty || 'Mid-Level',
-                createdAt: serverTimestamp(),
-                overallProgress: 0,
-                // Only persist if the user actually filled it in
-                ...(interviewDate ? { interviewDate } : {}),
+        const appData = {
+            company,
+            role: analysisResult.roleTitle || 'Software Engineer',
+            rawJD: jdText,
+            extractedSkills: analysisResult.extractedSkills || [],
+            focusAreas: analysisResult.focusAreas || [],
+            redFlags: analysisResult.redFlags || [],
+            estimatedDifficulty: analysisResult.estimatedDifficulty || 'Mid-Level',
+            createdAt: serverTimestamp(),
+            overallProgress: 0,
+            ...(interviewDate ? { interviewDate } : {}),
+        };
+
+        const jobApplicationsRef = collection(db, 'users', user.uid, 'jobApplications');
+
+        if (!navigator.onLine) {
+            addDoc(jobApplicationsRef, appData).catch(err => {
+                console.error('Offline save failed:', err);
             });
+            showSuccessToast(`${analysisResult.roleTitle || 'Role'} saved offline — your changes will sync automatically when you're back online.`);
+            setJdText('');
+            setCompany('');
+            setInterviewDate('');
+            setAnalysisResult(null);
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await addDoc(jobApplicationsRef, appData);
             showSuccessToast(`${analysisResult.roleTitle || 'Role'} saved — ready to build questions.`);
             setJdText('');
             setCompany('');

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../config/firebase';
-import { collection, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import EmptyState from '../../components/EmptyState';
 import { type TopicStats } from './types';
 import TrackSelector from '../../components/TrackSelector';
@@ -47,7 +47,7 @@ export default function WeakSpots() {
         const startTime = Date.now();
         const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
 
-        getDocs(questionsRef).then((snapshot) => {
+        const unsubscribe = onSnapshot(questionsRef, (snapshot) => {
             const questionsData = snapshot.docs.map(doc => doc.data());
             const groups: { [key: string]: { total: number; sum: number; difficulties: { [key: string]: number } } } = {};
 
@@ -86,7 +86,12 @@ export default function WeakSpots() {
                 setTopicMetrics(formattedStats);
                 setIsLoading(false);
             }
+        }, (error) => {
+            console.error("Error listening to questions for weak spots:", error);
+            setIsLoading(false);
         });
+
+        return () => unsubscribe();
     }, [selectedApp, user]);
 
     const practicedTopics = topicMetrics.filter(t => t.avgConfidence > 0);
