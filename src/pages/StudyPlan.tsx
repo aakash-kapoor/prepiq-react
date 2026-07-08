@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { StudyPlanSkeleton, StudyPlanContentSkeleton, StudyPlanTimelineSkeleton } from '../components/Skeleton';
@@ -82,7 +82,7 @@ export default function StudyPlan() {
     const startTime = Date.now();
     const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
     
-    getDocs(questionsRef).then((snapshot) => {
+    const unsubscribe = onSnapshot(questionsRef, (snapshot) => {
       const questions = snapshot.docs.map(doc => doc.data());
       
       // Group confidence by topic to find problem areas
@@ -134,8 +134,12 @@ export default function StudyPlan() {
         setTimeline(currentTimeline);
         setIsLoading(false);
       }
+    }, (error) => {
+      console.error("Error listening to questions for study plan:", error);
+      setIsLoading(false);
     });
 
+    return () => unsubscribe();
   }, [selectedApp, user]);
 
   // Save interview date to Firestore — onSnapshot will refresh selectedApp
@@ -159,9 +163,18 @@ export default function StudyPlan() {
       return;
     }
 
+    const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
+
+    if (!navigator.onLine) {
+      updateDoc(appDocRef, { interviewDate: dateValue }).catch(err => {
+        console.error('Failed offline date update:', err);
+      });
+      showSuccessToast('Interview date updated offline — your changes will sync automatically when you\'re back online.');
+      return;
+    }
+
     setIsSavingDate(true);
     try {
-      const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
       await updateDoc(appDocRef, { interviewDate: dateValue });
       showSuccessToast('Interview date saved — timeline updated.');
     } catch (err) {
@@ -174,9 +187,18 @@ export default function StudyPlan() {
 
   const handleClearInterviewDate = async () => {
     if (!user || !selectedApp) return;
+    const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
+
+    if (!navigator.onLine) {
+      updateDoc(appDocRef, { interviewDate: '' }).catch(err => {
+        console.error('Failed offline date clear:', err);
+      });
+      showSuccessToast('Interview date cleared offline — your changes will sync automatically when you\'re back online.');
+      return;
+    }
+
     setIsSavingDate(true);
     try {
-      const appDocRef = doc(db, 'users', user.uid, 'jobApplications', selectedApp.id);
       await updateDoc(appDocRef, { interviewDate: '' });
       showSuccessToast('Interview date cleared — using default 5-day sprint.');
     } catch (err) {
@@ -187,6 +209,10 @@ export default function StudyPlan() {
   };
 
   const handleGeneratePlan = async () => {
+    if (!navigator.onLine) {
+      showErrorToast('You\'re offline. Connect to the internet to generate a study plan.');
+      return;
+    }
     if (!user || !selectedApp) return;
     setIsGenerating(true);
     

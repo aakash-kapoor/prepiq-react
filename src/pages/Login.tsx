@@ -89,9 +89,7 @@ export default function Login() {
           className="flex items-center gap-2.5 cursor-pointer w-fit"
           onClick={() => navigate('/')}
         >
-          <div className="w-8 h-8 bg-[#6366F1] rounded-xl flex items-center justify-center font-black text-sm text-white shadow-md shadow-indigo-500/20">
-            IQ
-          </div>
+          <img src="/prepiq.svg" alt="PrepIQ Logo" className="w-7 h-7 shrink-0" />
           <span className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100">PrepIQ</span>
         </div>
 

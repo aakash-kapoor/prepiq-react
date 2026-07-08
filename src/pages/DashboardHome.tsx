@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, getDocs, getDocsFromCache } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { motion, useSpring, useTransform, AnimatePresence } from 'motion/react';
 import { DashboardSkeleton } from '../components/Skeleton';
@@ -74,6 +74,17 @@ export default function DashboardHome() {
 
     let cancelled = false;
 
+    const getDocsData = async (ref: any) => {
+      if (!navigator.onLine) {
+        try {
+          return await getDocsFromCache(ref);
+        } catch (err) {
+          console.warn('Failed to load from cache:', err);
+        }
+      }
+      return await getDocs(ref);
+    };
+
     const fetchStats = async () => {
       let questionCounter = 0;
       let totalConfidenceSum = 0;
@@ -81,11 +92,11 @@ export default function DashboardHome() {
 
       for (const app of applications) {
         const qRef = collection(db, 'users', user.uid, 'jobApplications', app.id, 'questions');
-        const qSnapshot = await getDocs(qRef);
+        const qSnapshot = (await getDocsData(qRef)) as any;
         if (cancelled) return; // Component unmounted or deps changed — discard result
         questionCounter += qSnapshot.size;
 
-        qSnapshot.docs.forEach(doc => {
+        qSnapshot.docs.forEach((doc: any) => {
           const data = doc.data();
           if (data.lastConfidence && data.lastConfidence > 0) {
             totalConfidenceSum += data.lastConfidence;
@@ -104,8 +115,8 @@ export default function DashboardHome() {
       let allSessions: any[] = [];
       for (const app of applications) {
         const sRef = collection(db, 'users', user.uid, 'jobApplications', app.id, 'quizSessions');
-        const sSnapshot = await getDocs(sRef);
-        sSnapshot.docs.forEach(doc => {
+        const sSnapshot = (await getDocsData(sRef)) as any;
+        sSnapshot.docs.forEach((doc: any) => {
           allSessions.push({ id: doc.id, ...doc.data() });
         });
       }
@@ -120,7 +131,6 @@ export default function DashboardHome() {
     fetchStats();
     fetchSessions();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, applications.length]);
 
   const handleDeleteConfirm = async () => {

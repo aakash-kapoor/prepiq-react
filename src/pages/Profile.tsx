@@ -64,6 +64,10 @@ export default function Profile() {
             setIsEditingName(false);
             return;
         }
+        if (!navigator.onLine) {
+            showErrorToast('You must be online to update your profile name.');
+            return;
+        }
         setSavingName(true);
         try {
             await updateDisplayName(trimmed);
@@ -83,6 +87,11 @@ export default function Profile() {
     };
 
     const handleConfirmDelete = async () => {
+        if (!navigator.onLine) {
+            showErrorToast('You must be online to delete your account.');
+            setShowDeleteModal(false);
+            return;
+        }
         setDeleting(true);
         const toastId = showLoadingToast('Deleting your account...');
         try {

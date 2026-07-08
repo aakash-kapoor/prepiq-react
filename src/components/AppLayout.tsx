@@ -39,7 +39,8 @@ export default function AppLayout() {
   // 3. Automatically synchronize Browser Tab Titles on route shifts
   useEffect(() => {
     const pageTitle = getCurrentPageTitle();
-    document.title = `${pageTitle} | PrepIQ`;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    document.title = isStandalone ? pageTitle : `${pageTitle} | PrepIQ`;
     // CLEANUP FUNCTION: Resets title back to index.html default on logout/unmount
     return () => {
       document.title = 'PrepIQ | AI Interview Prep';
