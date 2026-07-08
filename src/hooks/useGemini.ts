@@ -4,11 +4,9 @@ export const useGemini = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-  // Read once at hook init — safe, this is just reading a constant env value.
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+  // Retrieve the Cloudflare Worker proxy URL
+  const proxyUrl = import.meta.env.VITE_GEMINI_PROXY_URL as string | undefined;
 
-  // Helper to strip markdown formatting backticks from AI string responses
   const cleanJsonResponse = (rawText: string) => {
     let cleanText = rawText.trim();
     if (cleanText.startsWith('```json')) {
@@ -24,8 +22,8 @@ export const useGemini = () => {
 
   // Method 1: Job Description Analyzer
   const analyzeJobDescription = async (jdText: string) => {
-    if (!apiKey) {
-      setError('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY.');
+    if (!proxyUrl) {
+      setError('Gemini proxy URL is not configured. Please set VITE_GEMINI_PROXY_URL.');
       return null;
     }
     setIsLoading(true);
@@ -42,7 +40,7 @@ export const useGemini = () => {
     }`;
 
     try {
-      const response = await fetch(`${baseUrl}?key=${apiKey}`, {
+      const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -50,7 +48,7 @@ export const useGemini = () => {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to reach Gemini API');
+      if (!response.ok) throw new Error('Failed to reach Gemini proxy server');
 
       const data = await response.json();
       const textResponse = data.candidates[0].content.parts[0].text;
@@ -66,14 +64,13 @@ export const useGemini = () => {
 
   // Method 2: Question Generator (With dynamic quantity capability)
   const generateQuestions = async (roleTitle: string, skills: any[], focusAreas: string[], count: number = 15) => {
-    if (!apiKey) {
-      setError('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY.');
+    if (!proxyUrl) {
+      setError('Gemini proxy URL is not configured. Please set VITE_GEMINI_PROXY_URL.');
       return null;
     }
     setIsLoading(true);
     setError(null);
     
-    // Injected the dynamic "count" directly into the core rules definition
     const systemPrompt = `You are a senior technical interviewer at a top tech company. 
     Generate exactly ${count} technical interview questions based on this role and skill list. 
     Return ONLY a valid JSON array. Do not wrap it in anything else.
@@ -90,7 +87,7 @@ export const useGemini = () => {
     const contextMessage = `Role: ${roleTitle}\nSkills to cover: ${skillsSummary}\nFocus areas: ${focusAreas.join(', ')}`;
 
     try {
-      const response = await fetch(`${baseUrl}?key=${apiKey}`, {
+      const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,8 +108,8 @@ export const useGemini = () => {
   };
   // Method 3: Study Plan Generator
   const generateStudyPlan = async (roleTitle: string, weakTopics: string[], daysRemaining: number) => {
-    if (!apiKey) {
-      setError('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY.');
+    if (!proxyUrl) {
+      setError('Gemini proxy URL is not configured. Please set VITE_GEMINI_PROXY_URL.');
       return null;
     }
     setIsLoading(true);
@@ -139,7 +136,7 @@ export const useGemini = () => {
     }`;
 
     try {
-      const response = await fetch(`${baseUrl}?key=${apiKey}`, {
+      const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
