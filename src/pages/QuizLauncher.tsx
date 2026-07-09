@@ -7,48 +7,48 @@ import EmptyState from '../components/EmptyState';
 import { QuizLauncherSkeleton, QuizLauncherContentSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
+import { useJobApplications } from '../context/JobApplicationContext';
 
 export default function QuizLauncher() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [applications, setApplications] = useState<any[]>([]);
+  const { applications, loading: appsLoading } = useJobApplications();
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [contentLoading, setContentLoading] = useState(false);
-  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
+  const { loading: componentLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const hasAutoSelected = useRef(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    const q = collection(db, 'users', user.uid, 'jobApplications');
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setApplications(apps);
-      markDone();
+    if (appsLoading) return;
+    markDone();
 
-      const stateTargetId = location.state?.preSelectedAppId;
-      if (stateTargetId) {
-        const foundApp = apps.find(a => a.id === stateTargetId);
-        if (foundApp) {
-          setSelectedApp(foundApp);
-          hasAutoSelected.current = true;
-          return;
-        }
-      }
-
-      // Only auto-select the first app once — never override the user's
-      // manual selection on subsequent snapshot updates (stale closure fix).
-      if (apps.length > 0 && !hasAutoSelected.current) {
-        setSelectedApp(apps[0]);
+    const stateTargetId = location.state?.preSelectedAppId;
+    if (stateTargetId && !hasAutoSelected.current) {
+      const foundApp = applications.find(a => a.id === stateTargetId);
+      if (foundApp) {
+        setSelectedApp(foundApp);
         hasAutoSelected.current = true;
+        return;
       }
-    });
-    return () => { unsubscribe(); cancelTimer(); };
-  }, [user, location.state]);
+    }
+
+    if (applications.length > 0 && !hasAutoSelected.current) {
+      setSelectedApp(applications[0]);
+      hasAutoSelected.current = true;
+    } else if (selectedApp) {
+      const refreshed = applications.find(a => a.id === selectedApp.id);
+      if (refreshed && JSON.stringify(refreshed) !== JSON.stringify(selectedApp)) {
+        setSelectedApp(refreshed);
+      }
+    }
+    
+    return () => cancelTimer();
+  }, [applications, appsLoading, location.state, markDone, cancelTimer]);
 
   useEffect(() => {
     if (!user || !selectedApp) return;
@@ -82,7 +82,7 @@ export default function QuizLauncher() {
     return () => unsubscribe();
   }, [selectedApp, user]);
 
-  if (appsLoading) {
+  if (componentLoading || appsLoading) {
     return <QuizLauncherSkeleton />;
   }
 

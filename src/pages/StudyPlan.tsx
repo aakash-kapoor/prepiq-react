@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { StudyPlanSkeleton, StudyPlanContentSkeleton, StudyPlanTimelineSkeleton } from '../components/Skeleton';
@@ -9,65 +9,48 @@ import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
 import { useGemini } from '../hooks/useGemini';
 import StudyPlanPDFExport from '../components/StudyPlanPDFExport';
+import { useJobApplications, type JobApp, type TimelineDay } from '../context/JobApplicationContext';
 import { pdf } from '@react-pdf/renderer';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
 const minDate = today.toISOString().split("T")[0];
 
-export interface JobApp {
-  id: string;
-  company: string;
-  role: string;
-  interviewDate?: string;
-  studyPlan?: TimelineDay[];
-  studyPlanGaps?: string[];
-  studyPlanDays?: number;
-}
 
-export interface TimelineDay {
-  dayNumber: number;
-  title: string;
-  focusTopics: string[];
-  type: 'review' | 'mock' | 'final';
-  description: string;
-}
 
 export default function StudyPlan() {
   const { user } = useAuth();
-  const [applications, setApplications] = useState<JobApp[]>([]);
+  const { applications, loading: appsLoading } = useJobApplications();
   const [selectedApp, setSelectedApp] = useState<JobApp | null>(null);
   const [weakTopics, setWeakTopics] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<TimelineDay[]>([]);
   const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasTopicScores, setHasTopicScores] = useState<boolean>(true);
   
   const { generateStudyPlan } = useGemini();
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
-  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
+  const { loading: componentLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
-  // 1. Sync Job Applications from Firestore
+  // 1. Sync Job Applications from Context
   useEffect(() => {
-    if (!user) return;
-    const appsRef = collection(db, 'users', user.uid, 'jobApplications');
-    const unsubscribe = onSnapshot(appsRef, (snapshot) => {
-      const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobApp));
-      setApplications(apps);
-      markDone();
-      if (apps.length > 0 && !selectedApp) {
-        setSelectedApp(apps[0]);
-      } else if (selectedApp) {
-        // Keep selectedApp fresh after Firestore doc updates (e.g. after date save)
-        const refreshed = apps.find(a => a.id === selectedApp.id);
-        if (refreshed) setSelectedApp(refreshed);
+    if (appsLoading) return;
+    markDone();
+    
+    if (applications.length > 0 && !selectedApp) {
+      setSelectedApp(applications[0]);
+    } else if (selectedApp) {
+      const refreshed = applications.find(a => a.id === selectedApp.id);
+      if (refreshed && JSON.stringify(refreshed) !== JSON.stringify(selectedApp)) {
+        setSelectedApp(refreshed);
       }
-    });
-    return () => { unsubscribe(); cancelTimer(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    }
+    
+    return () => cancelTimer();
+  }, [applications, appsLoading, markDone, cancelTimer, selectedApp]);
 
   // 2. Identify Gaps & Build Timeline dynamically based on data
   useEffect(() => {
@@ -79,67 +62,56 @@ export default function StudyPlan() {
     if (isTrackSwitch) {
       setIsLoading(true);
     }
-    const startTime = Date.now();
-    const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
     
-    const unsubscribe = onSnapshot(questionsRef, (snapshot) => {
-      const questions = snapshot.docs.map(doc => doc.data());
-      
-      // Group confidence by topic to find problem areas
-      const topicScores: { [key: string]: { sum: number; count: number } } = {};
-      questions.forEach((q: any) => {
-        const topic = q.topic || 'General Specs';
-        if (q.lastConfidence && q.lastConfidence > 0) {
-          if (!topicScores[topic]) topicScores[topic] = { sum: 0, count: 0 };
-          topicScores[topic].sum += q.lastConfidence;
-          topicScores[topic].count += 1;
-        }
-      });
-
-      // Filter down to topics with an average score under 3.5 (Critical Gaps or Needs Work)
-      const gaps = Object.keys(topicScores).filter(topic => {
-        const avg = topicScores[topic].sum / topicScores[topic].count;
-        return avg < 3.5;
-      });
-      
-      // Calculate real schedule window if an interview date is set, otherwise default to a 5-day rush sprint
-      let windowSize = 5;
-      if (selectedApp.interviewDate) {
-        // Do NOT use Math.abs — a past date should produce a negative diff
-        // and fall back to the minimum sprint, not a bogus positive window.
-        const diffTime = new Date(selectedApp.interviewDate).getTime() - new Date().getTime();
-        const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        windowSize = Math.max(daysUntil, 3);
-      }
-
-      // 3. Set the current timeline to the saved one, if any.
-      // If none, it will remain empty until the user generates it.
-      let currentTimeline: TimelineDay[] = [];
-      if (selectedApp.studyPlan) {
-        currentTimeline = selectedApp.studyPlan;
-      }
-
+    const topicScores = selectedApp.topicScores;
+    
+    if (!topicScores) {
+      setHasTopicScores(false);
+      setWeakTopics([]);
+      setDaysRemaining(5);
+      setTimeline([]);
       if (isTrackSwitch) {
-        const elapsed = Date.now() - startTime;
-        const delay = Math.max(0, 400 - elapsed);
-        setTimeout(() => {
-          setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
-          setDaysRemaining(windowSize);
-          setTimeline(currentTimeline);
-          setIsLoading(false);
-        }, delay);
+        setTimeout(() => setIsLoading(false), 400);
       } else {
+        setIsLoading(false);
+      }
+      return;
+    }
+    setHasTopicScores(true);
+
+    // Filter down to topics with an average score under 3.5 (Critical Gaps or Needs Work)
+    const gaps = Object.keys(topicScores).filter(topic => {
+      const avg = topicScores[topic].sum / topicScores[topic].count;
+      return avg < 3.5;
+    });
+    
+    // Calculate real schedule window if an interview date is set, otherwise default to a 5-day rush sprint
+    let windowSize = 5;
+    if (selectedApp.interviewDate) {
+      const diffTime = new Date(selectedApp.interviewDate).getTime() - new Date().getTime();
+      const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      windowSize = Math.max(daysUntil, 3);
+    }
+
+    // 3. Set the current timeline to the saved one, if any.
+    let currentTimeline: TimelineDay[] = [];
+    if (selectedApp.studyPlan) {
+      currentTimeline = selectedApp.studyPlan;
+    }
+
+    if (isTrackSwitch) {
+      setTimeout(() => {
         setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
         setDaysRemaining(windowSize);
         setTimeline(currentTimeline);
         setIsLoading(false);
-      }
-    }, (error) => {
-      console.error("Error listening to questions for study plan:", error);
+      }, 400);
+    } else {
+      setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
+      setDaysRemaining(windowSize);
+      setTimeline(currentTimeline);
       setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, [selectedApp, user]);
 
   // Save interview date to Firestore — onSnapshot will refresh selectedApp
@@ -277,7 +249,7 @@ export default function StudyPlan() {
     }
   };
 
-  if (appsLoading) {
+  if (componentLoading || appsLoading) {
     return <StudyPlanSkeleton />;
   }
 
@@ -308,6 +280,14 @@ export default function StudyPlan() {
       {selectedApp && (
         isLoading ? (
           <StudyPlanContentSkeleton />
+        ) : !hasTopicScores ? (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-12 mt-8">
+            <EmptyState
+              icon="🚀"
+              title="We've upgraded our tracking engine!"
+              description="Complete one new quiz in this track to instantly calibrate your weak spots and unlock your custom study plan."
+            />
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           
