@@ -15,6 +15,7 @@ import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
 import CustomSelect from '../components/CustomSelect';
 import { deleteQuestion } from '../lib/deleteUserData';
+import { useJobApplications } from '../context/JobApplicationContext';
 
 // Sub-component to manage individual accordion state safely
 const QuestionCard = ({ q, index, onDelete }: { q: any, index: number, onDelete: (id: string) => void }) => {
@@ -78,14 +79,14 @@ export default function Questions() {
   const { generateQuestions, error: aiError } = useGemini();
   const location = useLocation();
 
-  const [applications, setApplications] = useState<any[]>([]);
+  const { applications, loading: appsLoading } = useJobApplications();
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const [contentLoading, setContentLoading] = useState(false);
   const [questionCount, setQuestionCount] = useState<number>(15);
   const [isBuildingDeck, setIsBuildingDeck] = useState(false);
-  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
+  const { loading: componentLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
   const [filterTopic, setFilterTopic] = useState('All');
   const [filterDifficulty, setFilterDifficulty] = useState('All');
@@ -96,32 +97,31 @@ export default function Questions() {
   const prevSelectedAppIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    const q = collection(db, 'users', user.uid, 'jobApplications');
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setApplications(apps);
-      markDone();
+    if (appsLoading) return;
+    markDone();
 
-      const stateTargetId = location.state?.preSelectedAppId;
-      if (stateTargetId) {
-        const foundApp = apps.find(a => a.id === stateTargetId);
-        if (foundApp) {
-          setSelectedApp(foundApp);
-          hasAutoSelected.current = true;
-          return;
-        }
-      }
-
-      // Only auto-select the first app once — never override the user's
-      // manual selection on subsequent snapshot updates (stale closure fix).
-      if (apps.length > 0 && !hasAutoSelected.current) {
-        setSelectedApp(apps[0]);
+    const stateTargetId = location.state?.preSelectedAppId;
+    if (stateTargetId && !hasAutoSelected.current) {
+      const foundApp = applications.find(a => a.id === stateTargetId);
+      if (foundApp) {
+        setSelectedApp(foundApp);
         hasAutoSelected.current = true;
+        return;
       }
-    });
-    return () => { unsubscribe(); cancelTimer(); };
-  }, [user, location.state]);
+    }
+
+    if (applications.length > 0 && !hasAutoSelected.current) {
+      setSelectedApp(applications[0]);
+      hasAutoSelected.current = true;
+    } else if (selectedApp) {
+      const refreshed = applications.find(a => a.id === selectedApp.id);
+      if (refreshed && JSON.stringify(refreshed) !== JSON.stringify(selectedApp)) {
+        setSelectedApp(refreshed);
+      }
+    }
+    
+    return () => cancelTimer();
+  }, [applications, appsLoading, location.state, markDone, cancelTimer]);
 
   useEffect(() => {
     if (!user || !selectedApp) return;
@@ -231,7 +231,7 @@ export default function Questions() {
     }
   };
 
-  if (appsLoading) {
+  if (componentLoading || appsLoading) {
     return <QuestionsSkeleton />;
   }
 

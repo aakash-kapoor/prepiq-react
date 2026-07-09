@@ -16,6 +16,9 @@ const BATCH_LIMIT = 450;
  * uploads), so there's no orphaned Storage data to clean up alongside this.
  */
 export async function deleteAllUserData(uid: string): Promise<void> {
+  if (!navigator.onLine) {
+    throw new Error('Cannot delete while offline');
+  }
   const appsRef = collection(db, 'users', uid, 'jobApplications');
   const appsSnap = await getDocs(appsRef);
 
@@ -58,6 +61,9 @@ export async function deleteAllUserData(uid: string): Promise<void> {
  * then the parent doc — so Firestore never has orphaned subcollection data.
  */
 export async function deleteJobApplication(uid: string, appId: string): Promise<void> {
+  if (!navigator.onLine) {
+    throw new Error('Cannot delete while offline');
+  }
   const questionsRef = collection(
     db,
     'users',
@@ -94,5 +100,8 @@ export async function deleteJobApplication(uid: string, appId: string): Promise<
  * Single deleteDoc — no batching needed for one document.
  */
 export async function deleteQuestion(uid: string, appId: string, questionId: string): Promise<void> {
+  if (!navigator.onLine) {
+    throw new Error('Cannot delete while offline');
+  }
   await deleteDoc(doc(db, 'users', uid, 'jobApplications', appId, 'questions', questionId));
 }

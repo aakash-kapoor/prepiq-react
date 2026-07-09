@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, getDocs, doc, updateDoc, increment, addDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import LoadingState from '../components/LoadingState';
 import { updateOverallProgress } from '../lib/updateProgress';
 import { motion, AnimatePresence } from 'motion/react';
@@ -21,6 +21,7 @@ export default function Quiz() {
   const [loading, setLoading] = useState(true);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [sessionScores, setSessionScores] = useState<number[]>([]);
+  const [sessionResults, setSessionResults] = useState<{ topic: string, score: number }[]>([]);
 
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
@@ -38,12 +39,50 @@ export default function Quiz() {
         const dateB = b.nextReviewDate || 0;
         return dateA - dateB;
       });
-      
+
       // Limit session to top 15 most due questions to prevent burnout
       setQuestions(qList.slice(0, 15));
       setLoading(false);
     });
   }, [appId, user, navigate]);
+
+  const handleEndSession = async (results: { topic: string, score: number }[]) => {
+    if (!user || !appId || results.length === 0) return;
+
+    try {
+      const avgScore = results.reduce((a, b) => a + b.score, 0) / results.length;
+
+      // 1. Save Session History
+      const sessionRef = doc(collection(db, 'users', user.uid, 'jobApplications', appId, 'quizSessions'));
+      setDoc(sessionRef, {
+        date: Date.now(),
+        averageScore: parseFloat(avgScore.toFixed(2)),
+        questionsAnswered: results.length,
+        appName: appName
+      }).catch((err: any) => console.warn('Failed to save session history:', err));
+
+      // 2. Atomic Update for topicScores (Supports Offline & No Race Conditions)
+      const appDocRef = doc(db, 'users', user.uid, 'jobApplications', appId);
+
+      const updates: Record<string, any> = {};
+      results.forEach(result => {
+        // Using increment() handles initialization if the topic doesn't exist yet
+        updates[`topicScores.${result.topic}.sum`] = increment(result.score);
+        updates[`topicScores.${result.topic}.count`] = increment(1);
+      });
+
+      updateDoc(appDocRef, updates).catch(err =>
+        console.warn('Failed to update topic scores (will queue if offline):', err)
+      );
+
+      // 3. Update overall progress
+      updateOverallProgress(user.uid, appId).catch((err: any) =>
+        console.warn('Progress update failed silently:', err)
+      );
+    } catch (error) {
+      console.error('Error during end session cleanup:', error);
+    }
+  };
 
   const handleRateConfidence = async (score: number) => {
     if (!user || !appId) return;
@@ -51,6 +90,9 @@ export default function Quiz() {
 
     const newSessionScores = [...sessionScores, score];
     setSessionScores(newSessionScores);
+
+    const newSessionResults = [...sessionResults, { topic: currentQ.topic || 'General Specs', score }];
+    setSessionResults(newSessionResults);
 
     // Read the previous stored values to compute a true running average.
     // timesAnswered is already stored on the doc; we increment it atomically,
@@ -102,21 +144,7 @@ export default function Quiz() {
     } else {
       // Recompute progress before marking session complete so the dashboard
       // reflects the updated state as soon as the user navigates back.
-      if (user && appId) {
-        if (newSessionScores.length > 0) {
-          const avgScore = newSessionScores.reduce((a, b) => a + b, 0) / newSessionScores.length;
-          addDoc(collection(db, 'users', user.uid, 'jobApplications', appId, 'quizSessions'), {
-            date: Date.now(),
-            averageScore: parseFloat(avgScore.toFixed(2)),
-            questionsAnswered: newSessionScores.length,
-            appName: appName
-          }).catch((err: any) => console.warn('Failed to save session history:', err));
-        }
-
-        updateOverallProgress(user.uid, appId).catch((err: any) =>
-          console.warn('Progress update failed silently:', err)
-        );
-      }
+      handleEndSession(newSessionResults);
       setSessionCompleted(true);
       setTimeout(() => {
         navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
@@ -126,21 +154,7 @@ export default function Quiz() {
 
   const confirmExitSession = () => {
     setIsExitModalOpen(false);
-    if (user && appId) {
-      if (sessionScores.length > 0) {
-        const avgScore = sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length;
-        addDoc(collection(db, 'users', user.uid, 'jobApplications', appId, 'quizSessions'), {
-          date: Date.now(),
-          averageScore: parseFloat(avgScore.toFixed(2)),
-          questionsAnswered: sessionScores.length,
-          appName: appName
-        }).catch((err: any) => console.warn('Failed to save session history:', err));
-      }
-
-      updateOverallProgress(user.uid, appId).catch((err: any) =>
-        console.warn('Progress update failed silently:', err)
-      );
-    }
+    handleEndSession(sessionResults);
     navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
   };
 
@@ -260,8 +274,8 @@ export default function Quiz() {
                       whileHover={{ y: -2 }}
                       onClick={() => handleRateConfidence(num)}
                       className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-800/40' :
-                          num === 3 ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-800/40' :
-                            'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-800/40'
+                        num === 3 ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-800/40' :
+                          'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-800/40'
                         }`}
                     >
                       {num}
