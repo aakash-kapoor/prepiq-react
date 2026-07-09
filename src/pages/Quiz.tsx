@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
@@ -24,6 +24,28 @@ export default function Quiz() {
   const [sessionResults, setSessionResults] = useState<{ topic: string, score: number }[]>([]);
 
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const sessionResultsRef = useRef(sessionResults);
+  const hasSavedRef = useRef(false);
+
+  // Sync refs so the cleanup function has access to the latest values
+  useEffect(() => {
+    sessionResultsRef.current = sessionResults;
+  }, [sessionResults]);
+
+  useEffect(() => {
+    (window as any).quizActiveCount = ((window as any).quizActiveCount || 0) + 1;
+    (window as any).isQuizActive = true;
+    return () => {
+      (window as any).quizActiveCount = Math.max(0, ((window as any).quizActiveCount || 0) - 1);
+      if ((window as any).quizActiveCount === 0) {
+        (window as any).isQuizActive = false;
+      }
+      // Save session results on unmount if we haven't saved already
+      if (!hasSavedRef.current) {
+        handleEndSession(sessionResultsRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!user || !appId) {
@@ -47,7 +69,8 @@ export default function Quiz() {
   }, [appId, user, navigate]);
 
   const handleEndSession = async (results: { topic: string, score: number }[]) => {
-    if (!user || !appId || results.length === 0) return;
+    if (!user || !appId || results.length === 0 || hasSavedRef.current) return;
+    hasSavedRef.current = true;
 
     try {
       const avgScore = results.reduce((a, b) => a + b.score, 0) / results.length;
@@ -146,6 +169,8 @@ export default function Quiz() {
       // reflects the updated state as soon as the user navigates back.
       handleEndSession(newSessionResults);
       setSessionCompleted(true);
+      (window as any).isQuizActive = false;
+      (window as any).quizActiveCount = 0;
       setTimeout(() => {
         navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
       }, 2500);
@@ -154,6 +179,8 @@ export default function Quiz() {
 
   const confirmExitSession = () => {
     setIsExitModalOpen(false);
+    (window as any).isQuizActive = false;
+    (window as any).quizActiveCount = 0;
     handleEndSession(sessionResults);
     navigate('/dashboard/quiz', { state: { preSelectedAppId: appId } });
   };

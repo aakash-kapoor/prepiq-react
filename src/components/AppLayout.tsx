@@ -15,6 +15,30 @@ export default function AppLayout() {
   const location = useLocation();
 
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
+
+  const handleNavigation = (path: string, e: React.MouseEvent) => {
+    if ((window as any).isQuizActive) {
+      e.preventDefault();
+      setPendingPath(path);
+      return false;
+    }
+    return true;
+  };
+
+  const confirmExitSession = () => {
+    (window as any).isQuizActive = false;
+    (window as any).quizActiveCount = 0;
+    const targetPath = pendingPath;
+    setPendingPath(null);
+    if (targetPath) {
+      navigate(targetPath);
+    }
+  };
+
+  const cancelExitSession = () => {
+    setPendingPath(null);
+  };
 
   const getCurrentPageTitle = () => {
     const pathnames = location.pathname.split('/').filter((x) => x);
@@ -82,6 +106,10 @@ export default function AppLayout() {
         <span key={to} className="flex items-center">
           <Link
             to={to}
+            onClick={(e) => {
+              const allowed = handleNavigation(to, e);
+              if (!allowed) return;
+            }}
             className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition duration-150"
           >
             {label}
@@ -102,6 +130,7 @@ export default function AppLayout() {
           menuItems={[...primaryNavigation, ...secondaryNavigation]}
           pathname={location.pathname}
           onLogout={() => logout().then(() => navigate('/'))}
+          onNavigate={handleNavigation}
         />
 
         {/* 2. MOBILE TOP NAVIGATION BAR */}
@@ -109,6 +138,7 @@ export default function AppLayout() {
           user={user}
           pathname={location.pathname}
           currentPageTitle={getCurrentPageTitle()}
+          onNavigate={handleNavigation}
         />
 
         {/* 3. MAIN WORKSPACE CONTAINER CONTENT WRAPPER */}
@@ -149,6 +179,7 @@ export default function AppLayout() {
           pathname={location.pathname}
           onMoreClick={() => setIsMoreMenuOpen(true)}
           isMoreMenuOpen={isMoreMenuOpen}
+          onNavigate={handleNavigation}
         />
 
         <MoreMenu
@@ -159,7 +190,62 @@ export default function AppLayout() {
             setIsMoreMenuOpen(false);
             logout().then(() => navigate("/"));
           }}
+          onNavigate={handleNavigation}
         />
+
+        {/* Quiz Exit Modal */}
+        <AnimatePresence>
+          {pendingPath !== null && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                onClick={cancelExitSession}
+              />
+              <motion.div
+                className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
+              >
+                <motion.div
+                  className="bg-white dark:bg-slate-800 max-w-sm w-full rounded-2xl border border-gray-100 dark:border-slate-700 shadow-2xl p-6 space-y-4 pointer-events-auto"
+                  initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: 12 }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 text-red-500 rounded-full flex items-center justify-center text-xl mx-auto shadow-sm">
+                    ⚠️
+                  </div>
+                  <div className="text-center space-y-1">
+                    <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">Exit Quiz?</h3>
+                    <p className="text-xs text-slate-400 font-medium leading-normal px-2">
+                      Your progress up to this question has been saved.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5 pt-2">
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={cancelExitSession}
+                      className="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition border border-gray-200 dark:border-slate-600"
+                    >
+                      Keep Going
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={confirmExitSession}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wide transition shadow-md shadow-red-600/10"
+                    >
+                      Exit Quiz
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
       </div>
     </MotionConfig>

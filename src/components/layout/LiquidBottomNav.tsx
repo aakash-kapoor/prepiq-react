@@ -9,6 +9,7 @@ type LiquidBottomNavProps = {
   pathname: string;
   onMoreClick: () => void;
   isMoreMenuOpen: boolean;
+  onNavigate?: (path: string, e: React.MouseEvent) => void;
 };
 
 const MotionLink = motion.create(Link);
@@ -34,6 +35,7 @@ export default function LiquidBottomNav({
   pathname,
   onMoreClick,
   isMoreMenuOpen,
+  onNavigate,
 }: LiquidBottomNavProps) {
   const isMoreSectionActive = isMoreMenuOpen || moreItems.some((item) => isNavItemActive(item, pathname));
 
@@ -125,6 +127,11 @@ export default function LiquidBottomNav({
                 <MotionLink
                   whileTap={{ scale: 0.94 }}
                   to={item.path}
+                  onClick={(e) => {
+                    if (onNavigate) {
+                      onNavigate(item.path, e as any);
+                    }
+                  }}
                   className={`relative z-10 flex flex-col items-center justify-center flex-1 min-w-0 px-0.5 h-full transition-all duration-300 ease-out ${isActive ? "text-[#6366F1]" : "text-slate-400"
                     }`}
                 >

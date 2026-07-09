@@ -24,9 +24,9 @@ export const changelog: readonly ChangelogEntry[] = [
   {
   version: 'v0.18.0',
   date: 'Jul 9, 2026',
-  title: 'Direct Quiz Launching & Codebase Refactoring',
+  title: 'Direct Quiz Launching & Progress Protection',
   description:
-    'You can now launch quizzes directly from Weak Spots and Study Plans with the current job track pre-selected, plus internal code improvements.',
+    'Protected quiz progress from accidental navigation, added direct quiz launching from Weak Spots and Study Plans with the current track pre-selected, and improved code organization.',
   tags: ['feat', 'fix', 'refactor', 'ui'],
 },
   {
