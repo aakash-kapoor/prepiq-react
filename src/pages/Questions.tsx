@@ -207,23 +207,21 @@ export default function Questions() {
 
   const handleDeleteQuestion = async (questionId: string) => {
     if (!user || !selectedApp) return;
-    // Optimistic remove — update UI immediately, then delete from Firestore
-    setQuestions(prev => prev.filter(q => q.id !== questionId));
 
-    if (!navigator.onLine) {
-      deleteQuestion(user.uid, selectedApp.id, questionId).catch(err => {
-        console.error('Offline delete failed:', err);
-      });
-      showSuccessToast('Question removed offline — the change will sync automatically when you\'re back online.');
-      return;
-    }
+    // Optimistic remove — update UI immediately, then delete from Firestore.
+    // deleteQuestion uses deleteDoc which is safe offline: Firestore queues
+    // the operation locally and syncs automatically on reconnect.
+    setQuestions(prev => prev.filter(q => q.id !== questionId));
 
     try {
       await deleteQuestion(user.uid, selectedApp.id, questionId);
-      showSuccessToast('Question removed.');
+      showSuccessToast(
+        navigator.onLine
+          ? 'Question removed.'
+          : 'Question removed offline — will sync when reconnected.'
+      );
     } catch (err) {
-      // Rollback isn't straightforward without caching the removed item,
-      // so re-fetch from Firestore to restore truth
+      // Firestore threw unexpectedly — roll back the optimistic removal
       const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
       const snapshot = await getDocs(questionsRef);
       setQuestions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));

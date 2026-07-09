@@ -97,11 +97,10 @@ export async function deleteJobApplication(uid: string, appId: string): Promise<
 /**
  * Deletes a single question from a job application's questions subcollection.
  *
- * Single deleteDoc — no batching needed for one document.
+ * Uses a single deleteDoc — no batching needed for one document.
+ * Unlike writeBatch, deleteDoc is safe to call offline: Firestore queues
+ * the operation locally and syncs it automatically on reconnect.
  */
 export async function deleteQuestion(uid: string, appId: string, questionId: string): Promise<void> {
-  if (!navigator.onLine) {
-    throw new Error('Cannot delete while offline');
-  }
   await deleteDoc(doc(db, 'users', uid, 'jobApplications', appId, 'questions', questionId));
 }
