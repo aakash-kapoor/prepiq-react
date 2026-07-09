@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
+import { useNavigate } from 'react-router-dom';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { StudyPlanSkeleton, StudyPlanContentSkeleton, StudyPlanTimelineSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
@@ -11,6 +12,8 @@ import { useGemini } from '../hooks/useGemini';
 import StudyPlanPDFExport from '../components/StudyPlanPDFExport';
 import { useJobApplications, type JobApp, type TimelineDay } from '../context/JobApplicationContext';
 import { pdf } from '@react-pdf/renderer';
+import InterviewDatePicker from '../components/InterviewDatePicker';
+import TimelineCard from '../components/TimelineCard';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -20,6 +23,7 @@ const minDate = today.toISOString().split("T")[0];
 
 export default function StudyPlan() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { applications, loading: appsLoading } = useJobApplications();
   const [selectedApp, setSelectedApp] = useState<JobApp | null>(null);
   const [weakTopics, setWeakTopics] = useState<string[]>([]);
@@ -239,15 +243,7 @@ export default function StudyPlan() {
     }
   };
 
-  // Format the stored ISO date string to the yyyy-MM-dd value the date input expects
-  const toInputValue = (dateStr?: string) => {
-    if (!dateStr) return '';
-    try {
-      return new Date(dateStr).toISOString().split('T')[0];
-    } catch {
-      return '';
-    }
-  };
+  // Date value conversion helper is now encapsulated in InterviewDatePicker.tsx
 
   if (componentLoading || appsLoading) {
     return <StudyPlanSkeleton />;
@@ -286,6 +282,8 @@ export default function StudyPlan() {
               icon="🚀"
               title="We've upgraded our tracking engine!"
               description="Complete one new quiz in this track to instantly calibrate your weak spots and unlock your custom study plan."
+              actionText="Launch Quiz"
+              onAction={() => navigate('/dashboard/quiz', { state: { preSelectedAppId: selectedApp.id } })}
             />
           </div>
         ) : (
@@ -297,57 +295,17 @@ export default function StudyPlan() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">Timeline Engine</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{selectedApp.company} — {selectedApp.role}</p>
             </div>
-            
-            {/* Interview Date Picker */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="interview-date"
-                  className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
-                >
-                  Interview Date
-                </label>
-                {selectedApp.interviewDate && (
-                  <button
-                    onClick={handleClearInterviewDate}
-                    disabled={isSavingDate}
-                    className="text-[10px] font-bold text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 transition disabled:opacity-50"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  id="interview-date"
-                  type="date"
-                  min={minDate}
-                  value={toInputValue(selectedApp.interviewDate)}
-                  disabled={isSavingDate}
-                  onChange={(e) => handleInterviewDateChange(e.target.value)}
-                  onBlur={(e) => {
-                    if (e.target.validity.badInput) {
-                      showErrorToast("Please enter a valid interview date.");
-                    } else if (e.target.validity.rangeUnderflow) {
-                      showErrorToast("Interview date cannot be in the past.");
-                    }
-                  }}
-                  className="w-full text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition disabled:opacity-60 cursor-pointer"
-                />
-                {isSavingDate && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
-                  </div>
-                )}
-              </div>
-              {!selectedApp.interviewDate && (
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug">
-                  No date set — showing default 5-day sprint. Set your interview date for a real countdown.
-                </p>
-              )}
-            </div>
 
-            {/* Days Remaining Card */}
+            <InterviewDatePicker
+              interviewDate={selectedApp.interviewDate}
+              minDate={minDate}
+              isSavingDate={isSavingDate}
+              onDateChange={handleInterviewDateChange}
+              onClearDate={handleClearInterviewDate}
+              onError={showErrorToast}
+            />
+
+            {/* Days Remaining Card (uses interviewDate purely for styling) */}
             <div className={`p-4 rounded-xl space-y-1 border transition-all ${
               selectedApp.interviewDate
                 ? 'bg-indigo-50/50 dark:bg-indigo-900/30 border-indigo-100 dark:border-indigo-800'
@@ -366,6 +324,7 @@ export default function StudyPlan() {
               </p>
             </div>
 
+            {/* Identified Gaps list */}
             <div className="space-y-2">
               <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Identified Gaps to Close</h4>
               <div className="flex flex-wrap gap-1">
@@ -381,7 +340,7 @@ export default function StudyPlan() {
             <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
               <button
                 onClick={handleGeneratePlan}
-                disabled={isGenerating}
+                disabled={isGenerating || isSavingDate || isExportingPDF}
                 className="w-full bg-[#6366F1] hover:bg-indigo-600 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isGenerating ? (
@@ -395,7 +354,6 @@ export default function StudyPlan() {
                   'Generate AI Plan ⚡'
                 )}
               </button>
-              
 
               {timeline.length > 0 && (
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug mt-3 text-center">
@@ -453,44 +411,13 @@ export default function StudyPlan() {
                   No AI study plan generated yet. Click the generate button to create your custom timeline.
                 </div>
               ) : (
-                timeline.map((day) => {
-                  
-                  let markerColors = 'bg-[#6366F1] border-indigo-200 dark:border-indigo-800 ring-indigo-100 dark:ring-indigo-900/50';
-                  if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 dark:border-amber-800 ring-amber-100 dark:ring-amber-900/50';
-                  if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 dark:border-red-800 ring-red-100 dark:ring-red-900/50';
-
-                  return (
-                    <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
-                      
-                      {/* Timeline Dot Marker */}
-                      <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
-
-                      {/* Timeline content details box card */}
-                      <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 dark:hover:border-slate-600 transition">
-                        <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 dark:border-slate-700 pb-2">
-                          <span className="text-[10px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
-                            Day {day.dayNumber} of {selectedApp.studyPlanDays || daysRemaining}
-                          </span>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">{day.title}</h4>
-                        </div>
-                        
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                          {day.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1 pt-1 items-center">
-                          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1">Target Module:</span>
-                          {day.focusTopics.map((topic, tIdx) => (
-                            <span key={tIdx} className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
-                              {topic}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                    </div>
-                  );
-                })
+                timeline.map((day) => (
+                  <TimelineCard
+                    key={day.dayNumber}
+                    day={day}
+                    totalDays={selectedApp.studyPlanDays || daysRemaining}
+                  />
+                ))
               )}
             </div>
           </div>

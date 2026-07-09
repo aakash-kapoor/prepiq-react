@@ -22,6 +22,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+  version: 'v0.18.0',
+  date: 'Jul 9, 2026',
+  title: 'Direct Quiz Launching & Codebase Refactoring',
+  description:
+    'You can now launch quizzes directly from Weak Spots and Study Plans with the current job track pre-selected, plus internal code improvements.',
+  tags: ['feat', 'fix', 'refactor', 'ui'],
+},
+  {
     version: 'v0.17.0',
     date: 'Jul 8, 2026',
     title: 'Cloudflare Proxy, PWA Support & Offline Improvements',

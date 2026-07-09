@@ -1,6 +1,7 @@
 import ProgressBar from '../../components/ProgressBar';
 import Spinner from '../../components/Spinner';
 import { showErrorToast } from '../../lib/toast';
+import InterviewDatePicker from '../../components/InterviewDatePicker';
 
 interface InputPanelProps {
     company: string;
@@ -48,32 +49,15 @@ export default function InputPanel({
                     />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-                            Interview Date
-                        </label>
-                        <span className="text-[10px] text-slate-300 dark:text-slate-600 font-medium">optional</span>
-                    </div>
-                    <input
-                    type="date"
-                    value={interviewDate}
-                    min={minDate}
+                <InterviewDatePicker
+                    interviewDate={interviewDate}
+                    minDate={minDate}
                     disabled={isLoading}
-                    onChange={(e) => onInterviewDateChange(e.target.value)}
-                    onBlur={(e) => {
-                        if (e.target.validity.badInput) {
-                            showErrorToast("Please enter a valid interview date.");
-                        } else if (e.target.validity.rangeUnderflow) {
-                            showErrorToast("Interview date cannot be in the past.");
-                        }
-                    }}
-                    className="w-full p-3 border border-gray-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-1 focus:ring-indigo-500 transition font-medium text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-slate-900/50 cursor-pointer bg-white dark:bg-slate-900"
-                    />
-                    <p className="text-[10px] text-slate-300 dark:text-slate-500 font-medium leading-snug">
-                        Sets your Study Plan countdown from day one.
-                    </p>
-                </div>
+                    onDateChange={onInterviewDateChange}
+                    showOptionalBadge={true}
+                    helpText="Sets your Study Plan countdown from day one."
+                    onError={showErrorToast}
+                />
 
                 <div className="flex flex-col gap-1 flex-1 min-h-[320px]">
                     <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Job Description Text</label>

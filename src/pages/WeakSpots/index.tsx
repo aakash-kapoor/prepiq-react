@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 // import { db } from '../../config/firebase';
 // import { collection } from 'firebase/firestore';
 import EmptyState from '../../components/EmptyState';
+import { useNavigate } from 'react-router-dom';
 import { type TopicStats } from './types';
 import TrackSelector from '../../components/TrackSelector';
 import SummaryCards from './SummaryCards';
@@ -13,6 +14,7 @@ import { useJobApplications } from '../../context/JobApplicationContext';
 
 export default function WeakSpots() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const { applications, loading: appsLoading } = useJobApplications();
     const [selectedApp, setSelectedApp] = useState<any>(null);
     const [topicMetrics, setTopicMetrics] = useState<TopicStats[]>([]);
@@ -125,6 +127,8 @@ export default function WeakSpots() {
                             icon="🚀"
                             title="We've upgraded our tracking engine!"
                             description="Complete one new quiz in this track to instantly calibrate your weak spots and unlock your custom study plan."
+                            actionText="Launch Quiz"
+                            onAction={() => navigate('/dashboard/quiz', { state: { preSelectedAppId: selectedApp.id } })}
                         />
                     </div>
                 ) : (

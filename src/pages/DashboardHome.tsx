@@ -345,7 +345,7 @@ export default function DashboardHome() {
                       <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
                         <span className="text-slate-400 dark:text-slate-500 font-medium text-[11px]">Overall Progress</span>
                         <span className="text-[11px]">
-                          {app.overallProgress > 0 ? `${app.overallProgress}% learned` : 'Not started'}
+                          {(app.overallProgress ?? 0) > 0 ? `${app.overallProgress}% learned` : 'Not started'}
                         </span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
