@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { auth } from '../config/firebase';
 
 export const useGemini = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -29,6 +30,9 @@ export const useGemini = () => {
     setIsLoading(true);
     setError(null);
 
+    const currentUser = auth.currentUser;
+    const idToken = currentUser ? await currentUser.getIdToken() : '';
+
     const systemPrompt = `You are a technical recruiter and senior developer. Analyze this job description and return ONLY a valid JSON object with no markdown, no explanation, no backticks. Structure:
     {
       "extractedSkills": [{ "skill": "string", "priority": 5, "category": "Core/NiceToHave/RedFlag" }],
@@ -42,12 +46,19 @@ export const useGemini = () => {
     try {
       const response = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Action-Type': 'analyze',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify({
           contents: [{ parts: [{ text: `${systemPrompt}\n\nJob Description:\n${jdText}` }] }]
         })
       });
 
+      if (response.status === 429) {
+        throw new Error('You have reached your daily limit of 5 analyses. Please try again tomorrow.');
+      }
       if (!response.ok) throw new Error('Failed to reach Gemini proxy server');
 
       const data = await response.json();
@@ -56,7 +67,7 @@ export const useGemini = () => {
     } catch (err: any) {
       console.error('Error parsing JD:', err);
       setError(err.message || 'Something went wrong');
-      return null;
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +81,9 @@ export const useGemini = () => {
     }
     setIsLoading(true);
     setError(null);
+
+    const currentUser = auth.currentUser;
+    const idToken = currentUser ? await currentUser.getIdToken() : '';
     
     const systemPrompt = `You are a senior technical interviewer at a top tech company. 
     Generate exactly ${count} technical interview questions based on this role and skill list. 
@@ -89,11 +103,18 @@ export const useGemini = () => {
     try {
       const response = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Action-Type': 'generate-questions',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify({
           contents: [{ parts: [{ text: `${systemPrompt}\n\nCandidate Prep Context:\n${contextMessage}` }] }]
         })
       });
+      if (response.status === 429) {
+        throw new Error('You have reached your daily limit of questions. Please try again tomorrow.');
+      }
       if (!response.ok) throw new Error(`Failed to generate ${count} interview questions.`);
       const data = await response.json();
       const textResponse = data.candidates[0].content.parts[0].text;
@@ -101,7 +122,7 @@ export const useGemini = () => {
     } catch (err: any) {
       console.error('Error creating questions:', err);
       setError(err.message || 'Failed to populate question deck.');
-      return null;
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +135,9 @@ export const useGemini = () => {
     }
     setIsLoading(true);
     setError(null);
+
+    const currentUser = auth.currentUser;
+    const idToken = currentUser ? await currentUser.getIdToken() : '';
     
     const systemPrompt = `You are an expert technical career coach. Create a ${daysRemaining}-day study plan for a ${roleTitle} role.
 
@@ -138,11 +162,19 @@ export const useGemini = () => {
     try {
       const response = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Action-Type': 'generate-study-plan',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify({
           contents: [{ parts: [{ text: systemPrompt }] }]
         })
       });
+      console.log('Study plan response status:', response.status, response);
+      if (response.status === 429) {
+        throw new Error('You have reached your daily limit of 5 study plans. Please try again tomorrow.');
+      }
       if (!response.ok) throw new Error(`Failed to generate study plan.`);
       const data = await response.json();
       const textResponse = data.candidates[0].content.parts[0].text;
@@ -150,7 +182,7 @@ export const useGemini = () => {
     } catch (err: any) {
       console.error('Error creating study plan:', err);
       setError(err.message || 'Failed to generate study plan.');
-      return null;
+      throw err;
     } finally {
       setIsLoading(false);
     }

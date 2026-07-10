@@ -192,6 +192,8 @@ src/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.19.0 | Jul 10, 2026 | Secure AI Requests & Rate Limit Handling |
+| v0.18.0 | Jul 9, 2026 | Direct Quiz Launching & Progress Protection |
 | v0.17.0 | Jul 8, 2026 | Cloudflare Worker Proxy, PWA Support & Offline Improvements |
 | v0.16.0 | Jul 7, 2026 | Custom Dropdowns, Collapsible Job Blueprints & Layout Enhancements |
 | v0.15.0 | Jul 6, 2026 | Native PDF Study Plan Export |

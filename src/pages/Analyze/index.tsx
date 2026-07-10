@@ -70,20 +70,24 @@ export default function Analyze() {
             return;
         }
 
-        const data = await analyzeJobDescription(jdText);
-        if (data) {
-            setAnalysisResult(data);
-            showSuccessToast('Analysis complete.');
-            if (window.innerWidth < 1024) {
-                setTimeout(() => {
-                    resultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
+        try {
+            const data = await analyzeJobDescription(jdText);
+            if (data) {
+                setAnalysisResult(data);
+                showSuccessToast('Analysis complete.');
+                if (window.innerWidth < 1024) {
+                    setTimeout(() => {
+                        resultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                }
+            } else {
+                // `apiError` is React state — it may not have flushed yet after the await.
+                // The hook always sets error before returning null, so we read it via the
+                // module-level `apiError` ref as a best-effort, with a safe fallback message.
+                showErrorToast(apiError || 'Analysis failed. Check your API key or connection and try again.');
             }
-        } else {
-            // `apiError` is React state — it may not have flushed yet after the await.
-            // The hook always sets error before returning null, so we read it via the
-            // module-level `apiError` ref as a best-effort, with a safe fallback message.
-            showErrorToast(apiError || 'Analysis failed. Check your API key or connection and try again.');
+        } catch (err: any) {
+            showErrorToast(err.message || 'Analysis failed. Check your API key or connection and try again.');
         }
     };
 

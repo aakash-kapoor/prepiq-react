@@ -199,7 +199,7 @@ export default function Questions() {
       }
     } catch (err: any) {
       console.error('Error building question deck:', err);
-      showErrorToast('An error occurred while building the deck.');
+      showErrorToast(err.message || 'An error occurred while building the deck.');
     } finally {
       setIsBuildingDeck(false);
     }

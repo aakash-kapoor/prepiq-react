@@ -33,7 +33,7 @@ export default function StudyPlan() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasTopicScores, setHasTopicScores] = useState<boolean>(true);
   
-  const { generateStudyPlan } = useGemini();
+  const { generateStudyPlan, error: apiError } = useGemini();
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
@@ -204,11 +204,11 @@ export default function StudyPlan() {
         });
         showSuccessToast('AI Study Plan generated successfully!');
       } else {
-        showErrorToast('Failed to generate a valid plan structure.');
+        showErrorToast(apiError || 'Failed to generate a valid plan structure.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Plan generation failed:', err);
-      showErrorToast('Could not generate the plan. Please try again.');
+      showErrorToast(err.message || 'Could not generate the plan. Please try again.');
     } finally {
       setIsGenerating(false);
     }
