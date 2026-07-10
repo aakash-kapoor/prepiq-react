@@ -22,6 +22,22 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.19.0',
+    date: 'Jul 10, 2026',
+    title: 'Secure AI Requests & Rate Limit Handling',
+    description:
+      'Improved AI request security and added clear rate limit messages across job analysis, quizzes, and study plans.',
+    tags: ['feat', 'fix', 'refactor'],
+  },
+  {
+    version: 'v0.18.0',
+    date: 'Jul 9, 2026',
+    title: 'Direct Quiz Launching & Progress Protection',
+    description:
+      'Protected quiz progress from accidental navigation, added direct quiz launching from Weak Spots and Study Plans with the current track pre-selected, and improved code organization.',
+    tags: ['feat', 'fix', 'refactor', 'ui'],
+  },
+  {
     version: 'v0.17.0',
     date: 'Jul 8, 2026',
     title: 'Cloudflare Proxy, PWA Support & Offline Improvements',

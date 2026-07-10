@@ -10,6 +10,7 @@ type DesktopSidebarProps = {
     menuItems: NavigationItem[];
     pathname: string;
     onLogout: () => void;
+    onNavigate?: (path: string, e: React.MouseEvent) => void;
 };
 
 export default function DesktopSidebar({
@@ -17,6 +18,7 @@ export default function DesktopSidebar({
     menuItems,
     pathname,
     onLogout,
+    onNavigate,
 }: DesktopSidebarProps) {
     // 1. Add state to manage collapsed status
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -87,6 +89,11 @@ export default function DesktopSidebar({
                                 <Link
                                     key={item.path}
                                     to={item.path}
+                                    onClick={(e) => {
+                                        if (onNavigate) {
+                                            onNavigate(item.path, e);
+                                        }
+                                    }}
                                     title={isCollapsed ? item.name : undefined}
                                     className={`relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 ${
                                         isCollapsed
@@ -133,6 +140,11 @@ export default function DesktopSidebar({
                 >
                     <Link
                         to="/dashboard/profile"
+                        onClick={(e) => {
+                            if (onNavigate) {
+                                onNavigate("/dashboard/profile", e);
+                            }
+                        }}
                         className={`flex items-center overflow-hidden rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors p-1 -m-1 ${
                             isCollapsed ? "justify-center" : "gap-3"
                         }`}

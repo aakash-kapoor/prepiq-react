@@ -1,73 +1,60 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import EmptyState from '../components/EmptyState';
+import { useNavigate } from 'react-router-dom';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
 import { StudyPlanSkeleton, StudyPlanContentSkeleton, StudyPlanTimelineSkeleton } from '../components/Skeleton';
 import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import TrackSelector from '../components/TrackSelector';
 import { useGemini } from '../hooks/useGemini';
 import StudyPlanPDFExport from '../components/StudyPlanPDFExport';
+import { useJobApplications, type JobApp, type TimelineDay } from '../context/JobApplicationContext';
 import { pdf } from '@react-pdf/renderer';
+import InterviewDatePicker from '../components/InterviewDatePicker';
+import TimelineCard from '../components/TimelineCard';
 
 const today = new Date();
 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
 const minDate = today.toISOString().split("T")[0];
 
-export interface JobApp {
-  id: string;
-  company: string;
-  role: string;
-  interviewDate?: string;
-  studyPlan?: TimelineDay[];
-  studyPlanGaps?: string[];
-  studyPlanDays?: number;
-}
 
-export interface TimelineDay {
-  dayNumber: number;
-  title: string;
-  focusTopics: string[];
-  type: 'review' | 'mock' | 'final';
-  description: string;
-}
 
 export default function StudyPlan() {
   const { user } = useAuth();
-  const [applications, setApplications] = useState<JobApp[]>([]);
+  const navigate = useNavigate();
+  const { applications, loading: appsLoading } = useJobApplications();
   const [selectedApp, setSelectedApp] = useState<JobApp | null>(null);
   const [weakTopics, setWeakTopics] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<TimelineDay[]>([]);
   const [daysRemaining, setDaysRemaining] = useState<number>(5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasTopicScores, setHasTopicScores] = useState<boolean>(true);
   
-  const { generateStudyPlan } = useGemini();
+  const { generateStudyPlan, error: apiError } = useGemini();
   const [isSavingDate, setIsSavingDate] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const prevSelectedAppIdRef = useRef<string | null>(null);
-  const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
+  const { loading: componentLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
 
-  // 1. Sync Job Applications from Firestore
+  // 1. Sync Job Applications from Context
   useEffect(() => {
-    if (!user) return;
-    const appsRef = collection(db, 'users', user.uid, 'jobApplications');
-    const unsubscribe = onSnapshot(appsRef, (snapshot) => {
-      const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobApp));
-      setApplications(apps);
-      markDone();
-      if (apps.length > 0 && !selectedApp) {
-        setSelectedApp(apps[0]);
-      } else if (selectedApp) {
-        // Keep selectedApp fresh after Firestore doc updates (e.g. after date save)
-        const refreshed = apps.find(a => a.id === selectedApp.id);
-        if (refreshed) setSelectedApp(refreshed);
+    if (appsLoading) return;
+    markDone();
+    
+    if (applications.length > 0 && !selectedApp) {
+      setSelectedApp(applications[0]);
+    } else if (selectedApp) {
+      const refreshed = applications.find(a => a.id === selectedApp.id);
+      if (refreshed && JSON.stringify(refreshed) !== JSON.stringify(selectedApp)) {
+        setSelectedApp(refreshed);
       }
-    });
-    return () => { unsubscribe(); cancelTimer(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    }
+    
+    return () => cancelTimer();
+  }, [applications, appsLoading, markDone, cancelTimer, selectedApp]);
 
   // 2. Identify Gaps & Build Timeline dynamically based on data
   useEffect(() => {
@@ -79,67 +66,56 @@ export default function StudyPlan() {
     if (isTrackSwitch) {
       setIsLoading(true);
     }
-    const startTime = Date.now();
-    const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
     
-    const unsubscribe = onSnapshot(questionsRef, (snapshot) => {
-      const questions = snapshot.docs.map(doc => doc.data());
-      
-      // Group confidence by topic to find problem areas
-      const topicScores: { [key: string]: { sum: number; count: number } } = {};
-      questions.forEach((q: any) => {
-        const topic = q.topic || 'General Specs';
-        if (q.lastConfidence && q.lastConfidence > 0) {
-          if (!topicScores[topic]) topicScores[topic] = { sum: 0, count: 0 };
-          topicScores[topic].sum += q.lastConfidence;
-          topicScores[topic].count += 1;
-        }
-      });
-
-      // Filter down to topics with an average score under 3.5 (Critical Gaps or Needs Work)
-      const gaps = Object.keys(topicScores).filter(topic => {
-        const avg = topicScores[topic].sum / topicScores[topic].count;
-        return avg < 3.5;
-      });
-      
-      // Calculate real schedule window if an interview date is set, otherwise default to a 5-day rush sprint
-      let windowSize = 5;
-      if (selectedApp.interviewDate) {
-        // Do NOT use Math.abs — a past date should produce a negative diff
-        // and fall back to the minimum sprint, not a bogus positive window.
-        const diffTime = new Date(selectedApp.interviewDate).getTime() - new Date().getTime();
-        const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        windowSize = Math.max(daysUntil, 3);
-      }
-
-      // 3. Set the current timeline to the saved one, if any.
-      // If none, it will remain empty until the user generates it.
-      let currentTimeline: TimelineDay[] = [];
-      if (selectedApp.studyPlan) {
-        currentTimeline = selectedApp.studyPlan;
-      }
-
+    const topicScores = selectedApp.topicScores;
+    
+    if (!topicScores) {
+      setHasTopicScores(false);
+      setWeakTopics([]);
+      setDaysRemaining(5);
+      setTimeline([]);
       if (isTrackSwitch) {
-        const elapsed = Date.now() - startTime;
-        const delay = Math.max(0, 400 - elapsed);
-        setTimeout(() => {
-          setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
-          setDaysRemaining(windowSize);
-          setTimeline(currentTimeline);
-          setIsLoading(false);
-        }, delay);
+        setTimeout(() => setIsLoading(false), 400);
       } else {
+        setIsLoading(false);
+      }
+      return;
+    }
+    setHasTopicScores(true);
+
+    // Filter down to topics with an average score under 3.5 (Critical Gaps or Needs Work)
+    const gaps = Object.keys(topicScores).filter(topic => {
+      const avg = topicScores[topic].sum / topicScores[topic].count;
+      return avg < 3.5;
+    });
+    
+    // Calculate real schedule window if an interview date is set, otherwise default to a 5-day rush sprint
+    let windowSize = 5;
+    if (selectedApp.interviewDate) {
+      const diffTime = new Date(selectedApp.interviewDate).getTime() - new Date().getTime();
+      const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      windowSize = Math.max(daysUntil, 3);
+    }
+
+    // 3. Set the current timeline to the saved one, if any.
+    let currentTimeline: TimelineDay[] = [];
+    if (selectedApp.studyPlan) {
+      currentTimeline = selectedApp.studyPlan;
+    }
+
+    if (isTrackSwitch) {
+      setTimeout(() => {
         setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
         setDaysRemaining(windowSize);
         setTimeline(currentTimeline);
         setIsLoading(false);
-      }
-    }, (error) => {
-      console.error("Error listening to questions for study plan:", error);
+      }, 400);
+    } else {
+      setWeakTopics(gaps.length > 0 ? gaps : ['Core System Architecture', 'Performance Optimization']);
+      setDaysRemaining(windowSize);
+      setTimeline(currentTimeline);
       setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, [selectedApp, user]);
 
   // Save interview date to Firestore — onSnapshot will refresh selectedApp
@@ -228,11 +204,11 @@ export default function StudyPlan() {
         });
         showSuccessToast('AI Study Plan generated successfully!');
       } else {
-        showErrorToast('Failed to generate a valid plan structure.');
+        showErrorToast(apiError || 'Failed to generate a valid plan structure.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Plan generation failed:', err);
-      showErrorToast('Could not generate the plan. Please try again.');
+      showErrorToast(err.message || 'Could not generate the plan. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -267,17 +243,9 @@ export default function StudyPlan() {
     }
   };
 
-  // Format the stored ISO date string to the yyyy-MM-dd value the date input expects
-  const toInputValue = (dateStr?: string) => {
-    if (!dateStr) return '';
-    try {
-      return new Date(dateStr).toISOString().split('T')[0];
-    } catch {
-      return '';
-    }
-  };
+  // Date value conversion helper is now encapsulated in InterviewDatePicker.tsx
 
-  if (appsLoading) {
+  if (componentLoading || appsLoading) {
     return <StudyPlanSkeleton />;
   }
 
@@ -308,6 +276,16 @@ export default function StudyPlan() {
       {selectedApp && (
         isLoading ? (
           <StudyPlanContentSkeleton />
+        ) : !hasTopicScores ? (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-12 mt-8">
+            <EmptyState
+              icon="🚀"
+              title="We've upgraded our tracking engine!"
+              description="Complete one new quiz in this track to instantly calibrate your weak spots and unlock your custom study plan."
+              actionText="Launch Quiz"
+              onAction={() => navigate('/dashboard/quiz', { state: { preSelectedAppId: selectedApp.id } })}
+            />
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           
@@ -317,57 +295,17 @@ export default function StudyPlan() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">Timeline Engine</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{selectedApp.company} — {selectedApp.role}</p>
             </div>
-            
-            {/* Interview Date Picker */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="interview-date"
-                  className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
-                >
-                  Interview Date
-                </label>
-                {selectedApp.interviewDate && (
-                  <button
-                    onClick={handleClearInterviewDate}
-                    disabled={isSavingDate}
-                    className="text-[10px] font-bold text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 transition disabled:opacity-50"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  id="interview-date"
-                  type="date"
-                  min={minDate}
-                  value={toInputValue(selectedApp.interviewDate)}
-                  disabled={isSavingDate}
-                  onChange={(e) => handleInterviewDateChange(e.target.value)}
-                  onBlur={(e) => {
-                    if (e.target.validity.badInput) {
-                      showErrorToast("Please enter a valid interview date.");
-                    } else if (e.target.validity.rangeUnderflow) {
-                      showErrorToast("Interview date cannot be in the past.");
-                    }
-                  }}
-                  className="w-full text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition disabled:opacity-60 cursor-pointer"
-                />
-                {isSavingDate && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
-                  </div>
-                )}
-              </div>
-              {!selectedApp.interviewDate && (
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug">
-                  No date set — showing default 5-day sprint. Set your interview date for a real countdown.
-                </p>
-              )}
-            </div>
 
-            {/* Days Remaining Card */}
+            <InterviewDatePicker
+              interviewDate={selectedApp.interviewDate}
+              minDate={minDate}
+              isSavingDate={isSavingDate}
+              onDateChange={handleInterviewDateChange}
+              onClearDate={handleClearInterviewDate}
+              onError={showErrorToast}
+            />
+
+            {/* Days Remaining Card (uses interviewDate purely for styling) */}
             <div className={`p-4 rounded-xl space-y-1 border transition-all ${
               selectedApp.interviewDate
                 ? 'bg-indigo-50/50 dark:bg-indigo-900/30 border-indigo-100 dark:border-indigo-800'
@@ -386,6 +324,7 @@ export default function StudyPlan() {
               </p>
             </div>
 
+            {/* Identified Gaps list */}
             <div className="space-y-2">
               <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Identified Gaps to Close</h4>
               <div className="flex flex-wrap gap-1">
@@ -401,7 +340,7 @@ export default function StudyPlan() {
             <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
               <button
                 onClick={handleGeneratePlan}
-                disabled={isGenerating}
+                disabled={isGenerating || isSavingDate || isExportingPDF}
                 className="w-full bg-[#6366F1] hover:bg-indigo-600 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isGenerating ? (
@@ -415,7 +354,6 @@ export default function StudyPlan() {
                   'Generate AI Plan ⚡'
                 )}
               </button>
-              
 
               {timeline.length > 0 && (
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-snug mt-3 text-center">
@@ -473,44 +411,13 @@ export default function StudyPlan() {
                   No AI study plan generated yet. Click the generate button to create your custom timeline.
                 </div>
               ) : (
-                timeline.map((day) => {
-                  
-                  let markerColors = 'bg-[#6366F1] border-indigo-200 dark:border-indigo-800 ring-indigo-100 dark:ring-indigo-900/50';
-                  if (day.type === 'mock') markerColors = 'bg-[#F59E0B] border-amber-200 dark:border-amber-800 ring-amber-100 dark:ring-amber-900/50';
-                  if (day.type === 'final') markerColors = 'bg-[#EF4444] border-red-200 dark:border-red-800 ring-red-100 dark:ring-red-900/50';
-
-                  return (
-                    <div key={day.dayNumber} className="relative pl-6 md:pl-8 group">
-                      
-                      {/* Timeline Dot Marker */}
-                      <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 ring-4 transition group-hover:scale-110 ${markerColors}`} />
-
-                      {/* Timeline content details box card */}
-                      <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3 hover:border-slate-200 dark:hover:border-slate-600 transition">
-                        <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-50 dark:border-slate-700 pb-2">
-                          <span className="text-[10px] font-extrabold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
-                            Day {day.dayNumber} of {selectedApp.studyPlanDays || daysRemaining}
-                          </span>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">{day.title}</h4>
-                        </div>
-                        
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                          {day.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1 pt-1 items-center">
-                          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1">Target Module:</span>
-                          {day.focusTopics.map((topic, tIdx) => (
-                            <span key={tIdx} className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
-                              {topic}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                    </div>
-                  );
-                })
+                timeline.map((day) => (
+                  <TimelineCard
+                    key={day.dayNumber}
+                    day={day}
+                    totalDays={selectedApp.studyPlanDays || daysRemaining}
+                  />
+                ))
               )}
             </div>
           </div>

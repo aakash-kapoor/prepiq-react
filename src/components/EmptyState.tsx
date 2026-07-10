@@ -4,10 +4,20 @@ interface EmptyStateProps {
     title: string;
     description: string;
     icon: string;
+    actionText?: string;
+    onAction?: () => void;
 }
 
-export default function EmptyState({ title, description, icon }: EmptyStateProps) {
+export default function EmptyState({
+    title,
+    description,
+    icon,
+    actionText = "Analyze First Role",
+    onAction,
+}: EmptyStateProps) {
     const navigate = useNavigate();
+
+    const handleAction = onAction || (() => navigate('/dashboard/analyze'));
 
     return (
         <div className="flex flex-col items-center justify-center text-center p-12 max-w-sm mx-auto my-16 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm animate-fadeIn">
@@ -17,10 +27,10 @@ export default function EmptyState({ title, description, icon }: EmptyStateProps
                 {description}
             </p>
             <button
-                onClick={() => navigate('/dashboard/analyze')}
+                onClick={handleAction}
                 className="mt-5 bg-[#6366F1] hover:bg-opacity-95 text-white font-bold text-[11px] uppercase tracking-wider px-5 py-2.5 rounded-xl transition shadow-md shadow-indigo-500/10"
             >
-                Analyze First Role
+                {actionText}
             </button>
         </div>
     );

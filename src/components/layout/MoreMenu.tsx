@@ -8,6 +8,7 @@ type MoreMenuProps = {
   items: NavigationItem[];
   onClose: () => void;
   onLogout: () => void;
+  onNavigate?: (path: string, e: React.MouseEvent) => void;
 };
 
 export default function MoreMenu({
@@ -15,6 +16,7 @@ export default function MoreMenu({
   items,
   onClose,
   onLogout,
+  onNavigate,
 }: MoreMenuProps) {
   return (
     <AnimatePresence>
@@ -106,7 +108,12 @@ export default function MoreMenu({
                     >
                       <Link
                         to={item.path}
-                        onClick={onClose}
+                        onClick={(e) => {
+                          onClose();
+                          if (onNavigate) {
+                            onNavigate(item.path, e);
+                          }
+                        }}
                         className="
                           flex
                           items-center

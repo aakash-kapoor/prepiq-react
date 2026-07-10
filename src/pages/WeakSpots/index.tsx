@@ -1,38 +1,44 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../config/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+// import { db } from '../../config/firebase';
+// import { collection } from 'firebase/firestore';
 import EmptyState from '../../components/EmptyState';
+import { useNavigate } from 'react-router-dom';
 import { type TopicStats } from './types';
 import TrackSelector from '../../components/TrackSelector';
 import SummaryCards from './SummaryCards';
 import TopicRail from './TopicRail';
 import { WeakSpotsSkeleton, WeakSpotsContentSkeleton } from '../../components/Skeleton';
 import { useMinLoadingDelay } from '../../hooks/useMinLoadingDelay';
+import { useJobApplications } from '../../context/JobApplicationContext';
 
 export default function WeakSpots() {
     const { user } = useAuth();
-    const [applications, setApplications] = useState<any[]>([]);
+    const navigate = useNavigate();
+    const { applications, loading: appsLoading } = useJobApplications();
     const [selectedApp, setSelectedApp] = useState<any>(null);
     const [topicMetrics, setTopicMetrics] = useState<TopicStats[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const { loading: appsLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
+    const [hasTopicScores, setHasTopicScores] = useState<boolean>(true);
+    const { loading: componentLoading, markDone, cancelTimer } = useMinLoadingDelay(600);
     const prevSelectedAppIdRef = useRef<string | null>(null);
 
-    // Sync job tracks from Firestore
+    // Sync job tracks from Context
     useEffect(() => {
-        if (!user) return;
-        const appsRef = collection(db, 'users', user.uid, 'jobApplications');
-        const unsubscribe = onSnapshot(appsRef, (snapshot) => {
-            const apps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setApplications(apps);
-            markDone();
-            if (apps.length > 0 && !selectedApp) {
-                setSelectedApp(apps[0]);
+        if (appsLoading) return;
+        markDone();
+
+        if (applications.length > 0 && !selectedApp) {
+            setSelectedApp(applications[0]);
+        } else if (selectedApp) {
+            const refreshed = applications.find(a => a.id === selectedApp.id);
+            if (refreshed && JSON.stringify(refreshed) !== JSON.stringify(selectedApp)) {
+                setSelectedApp(refreshed);
             }
-        });
-        return () => { unsubscribe(); cancelTimer(); };
-    }, [user]);
+        }
+
+        return () => cancelTimer();
+    }, [applications, appsLoading, markDone, cancelTimer, selectedApp]);
 
     // Fetch and aggregate confidence metrics
     useEffect(() => {
@@ -44,54 +50,40 @@ export default function WeakSpots() {
         if (isTrackSwitch) {
             setIsLoading(true);
         }
-        const startTime = Date.now();
-        const questionsRef = collection(db, 'users', user.uid, 'jobApplications', selectedApp.id, 'questions');
+        const topicScores = selectedApp.topicScores;
 
-        const unsubscribe = onSnapshot(questionsRef, (snapshot) => {
-            const questionsData = snapshot.docs.map(doc => doc.data());
-            const groups: { [key: string]: { total: number; sum: number; difficulties: { [key: string]: number } } } = {};
-
-            questionsData.forEach((q: any) => {
-                const topic = q.topic || 'General';
-                const conf = q.lastConfidence || 0;
-                const diff = q.difficulty || 'Medium';
-                if (!groups[topic]) {
-                    groups[topic] = { total: 0, sum: 0, difficulties: {} };
-                }
-                if (conf > 0) {
-                    groups[topic].total += 1;
-                    groups[topic].sum += conf;
-                }
-                groups[topic].difficulties[diff] = (groups[topic].difficulties[diff] || 0) + 1;
-            });
-
-            const formattedStats: TopicStats[] = Object.keys(groups).map(topicName => {
-                const item = groups[topicName];
-                return {
-                    topic: topicName,
-                    totalQuestions: item.total || Object.values(item.difficulties).reduce((a, b) => a + b, 0),
-                    avgConfidence: item.total > 0 ? parseFloat((item.sum / item.total).toFixed(1)) : 0,
-                    difficultyBreakdown: item.difficulties,
-                };
-            });
-
+        if (!topicScores) {
+            setHasTopicScores(false);
+            setTopicMetrics([]);
             if (isTrackSwitch) {
-                const elapsed = Date.now() - startTime;
-                const delay = Math.max(0, 400 - elapsed);
-                setTimeout(() => {
-                    setTopicMetrics(formattedStats);
-                    setIsLoading(false);
-                }, delay);
+                setTimeout(() => setIsLoading(false), 400);
             } else {
-                setTopicMetrics(formattedStats);
                 setIsLoading(false);
             }
-        }, (error) => {
-            console.error("Error listening to questions for weak spots:", error);
-            setIsLoading(false);
+            return;
+        }
+
+        setHasTopicScores(true);
+
+        const formattedStats: TopicStats[] = Object.keys(topicScores).map(topicName => {
+            const item = topicScores[topicName];
+            return {
+                topic: topicName,
+                totalQuestions: item.count,
+                avgConfidence: item.count > 0 ? parseFloat((item.sum / item.count).toFixed(1)) : 0,
+                difficultyBreakdown: {}, // we don't track difficulty breakdown in topicScores right now
+            };
         });
 
-        return () => unsubscribe();
+        if (isTrackSwitch) {
+            setTimeout(() => {
+                setTopicMetrics(formattedStats);
+                setIsLoading(false);
+            }, 400);
+        } else {
+            setTopicMetrics(formattedStats);
+            setIsLoading(false);
+        }
     }, [selectedApp, user]);
 
     const practicedTopics = topicMetrics.filter(t => t.avgConfidence > 0);
@@ -99,7 +91,7 @@ export default function WeakSpots() {
         ? (topicMetrics.reduce((sum, item) => sum + item.avgConfidence, 0) / practicedTopics.length).toFixed(1)
         : '0.0';
 
-    if (appsLoading) {
+    if (componentLoading || appsLoading) {
         return <WeakSpotsSkeleton />;
     }
 
@@ -129,6 +121,16 @@ export default function WeakSpots() {
             {selectedApp && (
                 isLoading ? (
                     <WeakSpotsContentSkeleton />
+                ) : !hasTopicScores ? (
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-12 mt-8">
+                        <EmptyState
+                            icon="🚀"
+                            title="We've upgraded our tracking engine!"
+                            description="Complete one new quiz in this track to instantly calibrate your weak spots and unlock your custom study plan."
+                            actionText="Launch Quiz"
+                            onAction={() => navigate('/dashboard/quiz', { state: { preSelectedAppId: selectedApp.id } })}
+                        />
+                    </div>
                 ) : (
                     <>
                         <SummaryCards topicMetrics={topicMetrics} globalAvg={globalAvg} />

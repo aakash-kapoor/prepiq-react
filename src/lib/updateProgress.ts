@@ -1,4 +1,4 @@
-import { collection, getDocs, getDocsFromCache, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 /**
@@ -18,15 +18,11 @@ export async function updateOverallProgress(uid: string, appId: string): Promise
   const questionsRef = collection(db, 'users', uid, 'jobApplications', appId, 'questions');
   
   let snapshot;
-  if (!navigator.onLine) {
-    try {
-      snapshot = await getDocsFromCache(questionsRef);
-    } catch (err) {
-      console.warn('Failed to load questions from cache for progress recalculation:', err);
-      return;
-    }
-  } else {
+  try {
     snapshot = await getDocs(questionsRef);
+  } catch (err) {
+    console.warn('Failed to load questions for progress recalculation:', err);
+    return;
   }
 
   if (snapshot.empty) return;

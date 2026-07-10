@@ -1,5 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
-import type { TimelineDay, JobApp } from '../pages/StudyPlan';
+import type { TimelineDay, JobApp } from '../context/JobApplicationContext';
 
 interface StudyPlanPDFExportProps {
   timeline: TimelineDay[];

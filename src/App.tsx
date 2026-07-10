@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { JobApplicationProvider } from './context/JobApplicationContext';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
@@ -85,10 +86,12 @@ function App() {
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    {/* Level 2 — catches layout/sidebar crashes without losing the whole app */}
-                    <ErrorBoundary variant="page" label="Dashboard">
-                      <AppLayout />
-                    </ErrorBoundary>
+                    <JobApplicationProvider>
+                      {/* Level 2 — catches layout/sidebar crashes without losing the whole app */}
+                      <ErrorBoundary variant="page" label="Dashboard">
+                        <AppLayout />
+                      </ErrorBoundary>
+                    </JobApplicationProvider>
                   </ProtectedRoute>
                 }
               >

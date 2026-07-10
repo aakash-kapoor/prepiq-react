@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, getDocs, getDocsFromCache } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { motion, useSpring, useTransform, AnimatePresence } from 'motion/react';
 import { DashboardSkeleton } from '../components/Skeleton';
@@ -9,16 +9,9 @@ import { useMinLoadingDelay } from '../hooks/useMinLoadingDelay';
 import DeleteJobModal from '../components/DeleteJobModal';
 import { deleteJobApplication } from '../lib/deleteUserData';
 import { showSuccessToast, showErrorToast } from '../lib/toast';
+import { useJobApplications, type JobApp } from '../context/JobApplicationContext';
 
-interface JobApp {
-  id: string;
-  company: string;
-  role: string;
-  estimatedDifficulty: string;
-  overallProgress: number;
-  extractedSkills: any[];
-  focusAreas: string[];
-}
+
 
 /** Spring-animated counter that counts up when value changes */
 function AnimatedNumber({ value, className }: { value: number; className?: string }) {
@@ -38,8 +31,13 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [applications, setApplications] = useState<JobApp[]>([]);
+  const { applications, loading: appsLoading } = useJobApplications();
   const { loading, markDone, cancelTimer } = useMinLoadingDelay(600);
+
+  useEffect(() => {
+    if (!appsLoading) markDone();
+    return () => cancelTimer();
+  }, [appsLoading, markDone, cancelTimer]);
   const [totalQuestions, setTotalQuestions] = useState<number>(0);
   const [globalAvgConfidence, setGlobalAvgConfidence] = useState<number>(0);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -48,19 +46,6 @@ export default function DashboardHome() {
   const [deleteTarget, setDeleteTarget] = useState<JobApp | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 1. Fetch real-time job applications tracker ledger (lightweight — no subcollection reads here)
-  useEffect(() => {
-    if (!user) return;
-
-    const appsRef = collection(db, 'users', user.uid, 'jobApplications');
-    const unsubscribe = onSnapshot(appsRef, (snapshot) => {
-      const appsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JobApp));
-      setApplications(appsList);
-      markDone();
-    });
-
-    return () => { unsubscribe(); cancelTimer(); };
-  }, [user]);
 
   // 2. Aggregate question stats separately — only re-runs when the applications list changes.
   // Keeping this outside onSnapshot prevents a Firestore read storm (N getDocs calls
@@ -75,14 +60,12 @@ export default function DashboardHome() {
     let cancelled = false;
 
     const getDocsData = async (ref: any) => {
-      if (!navigator.onLine) {
-        try {
-          return await getDocsFromCache(ref);
-        } catch (err) {
-          console.warn('Failed to load from cache:', err);
-        }
+      try {
+        return await getDocs(ref);
+      } catch (err) {
+        console.warn('Failed to load data:', err);
+        return { size: 0, docs: [] };
       }
-      return await getDocs(ref);
     };
 
     const fetchStats = async () => {
@@ -140,9 +123,13 @@ export default function DashboardHome() {
       await deleteJobApplication(user.uid, deleteTarget.id);
       showSuccessToast(`${deleteTarget.role} at ${deleteTarget.company} removed.`);
       setDeleteTarget(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete job application:', err);
-      showErrorToast('Could not remove this application. Please try again.');
+      if (!navigator.onLine || err?.message?.includes('offline')) {
+        showErrorToast('You\'re offline. Please reconnect to delete this application.');
+      } else {
+        showErrorToast('Could not remove this application. Please try again.');
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -358,7 +345,7 @@ export default function DashboardHome() {
                       <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
                         <span className="text-slate-400 dark:text-slate-500 font-medium text-[11px]">Overall Progress</span>
                         <span className="text-[11px]">
-                          {app.overallProgress > 0 ? `${app.overallProgress}% learned` : 'Not started'}
+                          {(app.overallProgress ?? 0) > 0 ? `${app.overallProgress}% learned` : 'Not started'}
                         </span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
