@@ -5,18 +5,19 @@ import { JobApplicationProvider } from './context/JobApplicationContext';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import DashboardHome from './pages/DashboardHome';
-import Analyze from './pages/Analyze';
-import Questions from './pages/Questions';
-import QuizLauncher from './pages/QuizLauncher';
-import Quiz from './pages/Quiz';
-import WeakSpots from './pages/WeakSpots';
-import StudyPlan from './pages/StudyPlan';
-import Profile from './pages/Profile';
-import ChangelogPage from './pages/Changelog';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+
+const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const DashboardHome = lazy(() => import('./pages/DashboardHome'));
+const Analyze = lazy(() => import('./pages/Analyze'));
+const Questions = lazy(() => import('./pages/Questions'));
+const QuizLauncher = lazy(() => import('./pages/QuizLauncher'));
+const Quiz = lazy(() => import('./pages/Quiz'));
+const WeakSpots = lazy(() => import('./pages/WeakSpots'));
+const StudyPlan = lazy(() => import('./pages/StudyPlan'));
+const Profile = lazy(() => import('./pages/Profile'));
+const ChangelogPage = lazy(() => import('./pages/Changelog'));
 import { ThemeProvider } from './context/ThemeContext';
 
 // Spinner shown while Firebase resolves auth state
@@ -71,94 +72,96 @@ function App() {
         <ThemeProvider>
           <Router>
             <ScrollToTop />
-            <Routes>
-              {/* Public Marketing Landing Root — redirects to dashboard if already logged in */}
-              <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
+            <Suspense fallback={<AuthSpinner />}>
+              <Routes>
+                {/* Public Marketing Landing Root — redirects to dashboard if already logged in */}
+                <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
 
-              {/* Dedicated Authentication Access Node — same redirect behaviour */}
-              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                {/* Dedicated Authentication Access Node — same redirect behaviour */}
+                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
 
-              {/* Public Changelog Page — accessible whether logged in or out */}
-              <Route path="/changelog" element={<ChangelogPage />} />
+                {/* Public Changelog Page — accessible whether logged in or out */}
+                <Route path="/changelog" element={<ChangelogPage />} />
 
-              {/* Secure Protected Dashboard App Scope */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <JobApplicationProvider>
-                      {/* Level 2 — catches layout/sidebar crashes without losing the whole app */}
-                      <ErrorBoundary variant="page" label="Dashboard">
-                        <AppLayout />
+                {/* Secure Protected Dashboard App Scope */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <JobApplicationProvider>
+                        {/* Level 2 — catches layout/sidebar crashes without losing the whole app */}
+                        <ErrorBoundary variant="page" label="Dashboard">
+                          <AppLayout />
+                        </ErrorBoundary>
+                      </JobApplicationProvider>
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<DashboardHome />} />
+
+                  {/* Level 3 — per-route section boundaries for Gemini-heavy pages */}
+                  <Route
+                    path="analyze"
+                    element={
+                      <ErrorBoundary variant="section" label="Analyze">
+                        <Analyze />
                       </ErrorBoundary>
-                    </JobApplicationProvider>
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<DashboardHome />} />
+                    }
+                  />
+                  <Route
+                    path="questions"
+                    element={
+                      <ErrorBoundary variant="section" label="Question Bank">
+                        <Questions />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="quiz"
+                    element={
+                      <ErrorBoundary variant="section" label="Quiz Launcher">
+                        <QuizLauncher />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="quiz-session"
+                    element={
+                      <ErrorBoundary variant="section" label="Quiz">
+                        <Quiz />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="weak-spots"
+                    element={
+                      <ErrorBoundary variant="section" label="Weak Spots">
+                        <WeakSpots />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="study-plan"
+                    element={
+                      <ErrorBoundary variant="section" label="Study Plan">
+                        <StudyPlan />
+                      </ErrorBoundary>
+                    }
+                  />
+                  <Route
+                    path="profile"
+                    element={
+                      <ErrorBoundary variant="section" label="Profile">
+                        <Profile />
+                      </ErrorBoundary>
+                    }
+                  />
+                </Route>
 
-                {/* Level 3 — per-route section boundaries for Gemini-heavy pages */}
-                <Route
-                  path="analyze"
-                  element={
-                    <ErrorBoundary variant="section" label="Analyze">
-                      <Analyze />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="questions"
-                  element={
-                    <ErrorBoundary variant="section" label="Question Bank">
-                      <Questions />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="quiz"
-                  element={
-                    <ErrorBoundary variant="section" label="Quiz Launcher">
-                      <QuizLauncher />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="quiz-session"
-                  element={
-                    <ErrorBoundary variant="section" label="Quiz">
-                      <Quiz />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="weak-spots"
-                  element={
-                    <ErrorBoundary variant="section" label="Weak Spots">
-                      <WeakSpots />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="study-plan"
-                  element={
-                    <ErrorBoundary variant="section" label="Study Plan">
-                      <StudyPlan />
-                    </ErrorBoundary>
-                  }
-                />
-                <Route
-                  path="profile"
-                  element={
-                    <ErrorBoundary variant="section" label="Profile">
-                      <Profile />
-                    </ErrorBoundary>
-                  }
-                />
-              </Route>
-
-              {/* Catch All Redirect */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                {/* Catch All Redirect */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
           </Router>
         </ThemeProvider>
       </AuthProvider>

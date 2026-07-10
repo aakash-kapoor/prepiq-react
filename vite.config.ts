@@ -33,4 +33,8 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    // Increase the warning limit to 1600 kB (1.6 MB) to account for the PDF renderer
+    chunkSizeWarningLimit: 1600, 
+  }
 })
