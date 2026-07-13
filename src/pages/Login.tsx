@@ -1,10 +1,12 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import LegalModal from '../components/LegalModal';
 import Spinner from '../components/Spinner';
 import { showErrorToast } from '../lib/toast';
 import { motion } from 'motion/react';
+import { privacyPolicyBody, termsOfServiceBody } from '../config/legalContent';
 
 const auroraBlobs = [
   {
@@ -34,7 +36,7 @@ export default function Login() {
   const { loginWithGoogle, user } = useAuth();
   const navigate = useNavigate();
 
-  const [legalContent, setLegalContent] = useState<{ title: string; text: string } | null>(null);
+  const [legalContent, setLegalContent] = useState<{ title: string; body: ReactNode } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const isReturningUser = localStorage.getItem('prepiq_visited') === '1';
 
@@ -172,7 +174,7 @@ export default function Login() {
               type="button"
               onClick={() => setLegalContent({
                 title: "Terms of Service",
-                text: "Welcome to PrepIQ. By authenticating with Google Sign-In and utilizing this platform, you agree that your data is processed entirely serverless via isolated Cloud Firestore instances. PrepIQ is a developmental technical interview preparation framework built for educational and benchmarking use. All generative insights are produced via the Gemini API as structural schema models."
+                body: termsOfServiceBody
               })}
               className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 underline font-bold transition"
             >
@@ -183,7 +185,7 @@ export default function Login() {
               type="button"
               onClick={() => setLegalContent({
                 title: "Privacy Policy",
-                text: "Your privacy is fully protected under our serverless data pipeline architecture. PrepIQ does not manage local user credential databases; authentication relies exclusively on secure Google OAuth tokens. Application data—including analyzed job descriptions, confidence logs, and flashcard metrics—is securely mapped to your isolated user identity record via Firebase Security Rules."
+                body: privacyPolicyBody
               })}
               className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 underline font-bold transition"
             >

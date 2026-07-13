@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react';
+
 interface LegalModalProps {
-    content: { title: string; text: string } | null;
+    content: { title: string; body: ReactNode } | null;
     onClose: () => void;
 }
 
@@ -7,12 +9,16 @@ export default function LegalModal({ content, onClose }: LegalModalProps) {
     if (!content) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-fadeIn">
-            <div 
-                className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 transform animate-in fade-in zoom-in-95 duration-150"
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-fadeIn"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl max-w-lg w-full shadow-xl flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 px-6 py-4 shrink-0">
                     <h3 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                         {content.title}
                     </h3>
@@ -23,9 +29,11 @@ export default function LegalModal({ content, onClose }: LegalModalProps) {
                         ✕
                     </button>
                 </div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed whitespace-pre-line">
-                    {content.text}
-                </p>
+
+                {/* Scrollable body */}
+                <div className="overflow-y-auto px-6 py-5 space-y-4 text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                    {content.body}
+                </div>
             </div>
         </div>
     );
