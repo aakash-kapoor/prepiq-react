@@ -29,23 +29,12 @@ function AuthSpinner() {
   );
 }
 
-// Redirects unauthenticated users to /login
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+// Wait for Firebase to resolve auth state before making a routing decision.
+// Without this guard, auth init (~300-800ms) causes a false redirect.
+function AuthGate({ children, require: requireAuth }: { children: React.ReactNode; require: 'auth' | 'guest' }) {
   const { user, loading } = useAuth();
-
-  // Wait for Firebase to resolve auth state before making a routing decision.
-  // Without this guard, auth init (~300-800ms) causes a false redirect to /login.
   if (loading) return <AuthSpinner />;
-
-  return user ? children : <Navigate to="/login" replace />;
-}
-
-// Redirects already-authenticated users to /dashboard
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-
-  if (loading) return <AuthSpinner />;
-
+  if (requireAuth === 'auth') return user ? children : <Navigate to="/login" replace />;
   return user ? <Navigate to="/dashboard" replace /> : children;
 }
 
@@ -74,32 +63,24 @@ function App() {
             <ScrollToTop />
             <Suspense fallback={<AuthSpinner />}>
               <Routes>
-                {/* Public Marketing Landing Root — redirects to dashboard if already logged in */}
-                <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
-
-                {/* Dedicated Authentication Access Node — same redirect behaviour */}
-                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-
-                {/* Public Changelog Page — accessible whether logged in or out */}
+                <Route path="/" element={<AuthGate require="guest"><Landing /></AuthGate>} />
+                <Route path="/login" element={<AuthGate require="guest"><Login /></AuthGate>} />
                 <Route path="/changelog" element={<ChangelogPage />} />
 
-                {/* Secure Protected Dashboard App Scope */}
                 <Route
                   path="/dashboard"
                   element={
-                    <ProtectedRoute>
+                    <AuthGate require="auth">
                       <JobApplicationProvider>
                         {/* Level 2 — catches layout/sidebar crashes without losing the whole app */}
                         <ErrorBoundary variant="page" label="Dashboard">
                           <AppLayout />
                         </ErrorBoundary>
                       </JobApplicationProvider>
-                    </ProtectedRoute>
+                    </AuthGate>
                   }
                 >
                   <Route index element={<DashboardHome />} />
-
-                  {/* Level 3 — per-route section boundaries for Gemini-heavy pages */}
                   <Route
                     path="analyze"
                     element={
