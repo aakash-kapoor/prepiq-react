@@ -6,6 +6,27 @@ import { db } from '../config/firebase';
 const BATCH_LIMIT = 450;
 
 /**
+ * Batch-deletes all documents in a subcollection reference.
+ * Commits in chunks of BATCH_LIMIT to respect the Firestore batch cap.
+ */
+async function deleteBatchedCollection(ref: ReturnType<typeof collection>): Promise<void> {
+  const snap = await getDocs(ref);
+  let batch = writeBatch(db);
+  let opCount = 0;
+
+  for (const d of snap.docs) {
+    batch.delete(d.ref);
+    opCount++;
+    if (opCount === BATCH_LIMIT) {
+      await batch.commit();
+      batch = writeBatch(db);
+      opCount = 0;
+    }
+  }
+  if (opCount > 0) await batch.commit();
+}
+
+/**
  * Deletes everything under users/{uid}/jobApplications/** — every job
  * application doc and its nested questions subcollection.
  *
@@ -19,57 +40,11 @@ export async function deleteAllUserData(uid: string): Promise<void> {
   if (!navigator.onLine) {
     throw new Error('Cannot delete while offline');
   }
-  const appsRef = collection(db, 'users', uid, 'jobApplications');
-  const appsSnap = await getDocs(appsRef);
+  const appsSnap = await getDocs(collection(db, 'users', uid, 'jobApplications'));
 
   for (const appDoc of appsSnap.docs) {
-    const questionsRef = collection(
-      db,
-      'users',
-      uid,
-      'jobApplications',
-      appDoc.id,
-      'questions'
-    );
-    const questionsSnap = await getDocs(questionsRef);
-
-    let batch = writeBatch(db);
-    let opCount = 0;
-
-    for (const qDoc of questionsSnap.docs) {
-      batch.delete(qDoc.ref);
-      opCount++;
-      if (opCount === BATCH_LIMIT) {
-        await batch.commit();
-        batch = writeBatch(db);
-        opCount = 0;
-      }
-    }
-    if (opCount > 0) {
-      await batch.commit();
-    }
-
-    // Delete quizSessions subcollection
-    const sessionsRef = collection(db, 'users', uid, 'jobApplications', appDoc.id, 'quizSessions');
-    const sessionsSnap = await getDocs(sessionsRef);
-
-    batch = writeBatch(db);
-    opCount = 0;
-
-    for (const sDoc of sessionsSnap.docs) {
-      batch.delete(sDoc.ref);
-      opCount++;
-      if (opCount === BATCH_LIMIT) {
-        await batch.commit();
-        batch = writeBatch(db);
-        opCount = 0;
-      }
-    }
-    if (opCount > 0) {
-      await batch.commit();
-    }
-
-    // Questions and sessions are gone — now remove the job application doc itself.
+    await deleteBatchedCollection(collection(db, 'users', uid, 'jobApplications', appDoc.id, 'questions'));
+    await deleteBatchedCollection(collection(db, 'users', uid, 'jobApplications', appDoc.id, 'quizSessions'));
     await deleteDoc(appDoc.ref);
   }
 }
@@ -84,60 +59,8 @@ export async function deleteJobApplication(uid: string, appId: string): Promise<
   if (!navigator.onLine) {
     throw new Error('Cannot delete while offline');
   }
-  const questionsRef = collection(
-    db,
-    'users',
-    uid,
-    'jobApplications',
-    appId,
-    'questions'
-  );
-  const questionsSnap = await getDocs(questionsRef);
-
-  let batch = writeBatch(db);
-  let opCount = 0;
-
-  for (const qDoc of questionsSnap.docs) {
-    batch.delete(qDoc.ref);
-    opCount++;
-    if (opCount === BATCH_LIMIT) {
-      await batch.commit();
-      batch = writeBatch(db);
-      opCount = 0;
-    }
-  }
-  if (opCount > 0) {
-    await batch.commit();
-  }
-
-  // Delete quizSessions
-  const sessionsRef = collection(
-    db,
-    'users',
-    uid,
-    'jobApplications',
-    appId,
-    'quizSessions'
-  );
-  const sessionsSnap = await getDocs(sessionsRef);
-
-  batch = writeBatch(db);
-  opCount = 0;
-
-  for (const sDoc of sessionsSnap.docs) {
-    batch.delete(sDoc.ref);
-    opCount++;
-    if (opCount === BATCH_LIMIT) {
-      await batch.commit();
-      batch = writeBatch(db);
-      opCount = 0;
-    }
-  }
-  if (opCount > 0) {
-    await batch.commit();
-  }
-
-  // Subcollections cleared — delete the application doc itself.
+  await deleteBatchedCollection(collection(db, 'users', uid, 'jobApplications', appId, 'questions'));
+  await deleteBatchedCollection(collection(db, 'users', uid, 'jobApplications', appId, 'quizSessions'));
   await deleteDoc(doc(db, 'users', uid, 'jobApplications', appId));
 }
 

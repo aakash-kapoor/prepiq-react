@@ -1,21 +1,21 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { changelog } from '../../config/changelog';
 import LegalModal from '../../components/LegalModal';
+import { privacyPolicyBody, termsOfServiceBody } from '../../config/legalContent';
 
 export default function Footer() {
     const navigate = useNavigate();
     const [isChangelogOpen, setIsChangelogOpen] = useState(false);
-    const [legalContent, setLegalContent] = useState<{ title: string; text: string } | null>(null);
+    const [legalContent, setLegalContent] = useState<{ title: string; body: ReactNode } | null>(null);
 
     return (
         <>
             <footer className="border-t border-gray-100 dark:border-slate-900 bg-white dark:bg-slate-950 py-8">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-[#6366F1] rounded-lg flex items-center justify-center font-black text-[9px] text-white">
-                            IQ
-                        </div>
+                        <img src="/prepiq.svg" alt="PrepIQ" className="w-6 h-6 shrink-0" />
                         <span className="text-xs font-bold text-slate-400 dark:text-slate-500">PrepIQ</span>
                     </div>
                     <div className="flex gap-6 text-xs font-semibold text-slate-400 dark:text-slate-500">
@@ -23,7 +23,7 @@ export default function Footer() {
                             type="button"
                             onClick={() => setLegalContent({
                                 title: "Privacy Policy",
-                                text: "Your privacy is fully protected under our serverless data pipeline architecture. PrepIQ does not manage local user credential databases; authentication relies exclusively on secure Google OAuth tokens. Application data—including analyzed job descriptions, confidence logs, and flashcard metrics—is securely mapped to your isolated user identity record via Firebase Security Rules."
+                                body: privacyPolicyBody
                             })}
                             className="hover:text-slate-900 dark:hover:text-slate-300 transition"
                         >
@@ -33,7 +33,7 @@ export default function Footer() {
                             type="button"
                             onClick={() => setLegalContent({
                                 title: "Terms of Service",
-                                text: "Welcome to PrepIQ. By authenticating with Google Sign-In and utilizing this platform, you agree that your data is processed entirely serverless via isolated Cloud Firestore instances. PrepIQ is a developmental technical interview preparation framework built for educational and benchmarking use. All generative insights are produced via the Gemini API as structural schema models."
+                                body: termsOfServiceBody
                             })}
                             className="hover:text-slate-900 dark:hover:text-slate-300 transition"
                         >
