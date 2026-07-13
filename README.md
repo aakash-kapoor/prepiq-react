@@ -2,7 +2,7 @@
 
 **Next-Gen AI Technical Interview Prep Platform**
 
-PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact knowledge gaps, simulate adaptive flashcard drills, and compile a personalized day-by-day study timeline — so you walk into every interview fully prepared.
+PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact knowledge gaps, evaluate your answers against an ideal rubric, and compile a personalized day-by-day study timeline — so you walk into every interview fully prepared.
 
 ![PrepIQ Tech Stack](https://img.shields.io/badge/React-19-6366F1?style=for-the-badge&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
@@ -17,7 +17,7 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 
 - **AI-Powered Job Description Analysis** — Paste any engineering job description and Gemini AI extracts the exact skills, priorities, and red flags you need to know.
 - **Precision Knowledge Gap Detection** — Pinpoints what you don't know, not just what the role requires.
-- **Adaptive AI Quiz Sessions** — Dynamic interview questions generated from the analyzed job description with confidence tracking.
+- **AI-Evaluated Quiz Sessions** — Type your answer to each tailored question and get an instant Gemini score (1–5) with one-line feedback and the ideal answer revealed post-submission.
 - **Weak Spots Radar** — Visual confidence charts surface your blind spots across every topic you've practised.
 - **Automated Study Timelines** — Generates a day-by-day sprint schedule tailored to your lowest-confidence areas and interview date.
 - **Delete Job Applications** — Remove individual roles from the dashboard at any time; all nested questions and confidence data are fully wiped from Firestore.
@@ -30,7 +30,7 @@ PrepIQ reverse-engineers job descriptions using Gemini AI to isolate your exact 
 
 1. Paste a job description.
 2. Gemini AI extracts required skills and generates targeted questions.
-3. Complete adaptive quizzes to build confidence.
+3. Answer tailored questions — Gemini grades each response on a 1–5 scale with instant feedback.
 4. Review Weak Spots analytics.
 5. View/export a personalized PDF study plan.
 
@@ -192,6 +192,7 @@ src/
 
 | Version | Date | Summary |
 |---|---|---|
+| v0.20.0 | Jul 13, 2026 | AI Answer Evaluation in Quiz |
 | v0.19.0 | Jul 10, 2026 | Secure AI Requests & Rate Limit Handling |
 | v0.18.0 | Jul 9, 2026 | Direct Quiz Launching & Progress Protection |
 | v0.17.0 | Jul 8, 2026 | Cloudflare Worker Proxy, PWA Support & Offline Improvements |

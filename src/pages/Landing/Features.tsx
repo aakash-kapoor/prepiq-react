@@ -13,8 +13,8 @@ const features = [
     {
         accent: 'amber',
         iconPath: 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
-        title: 'Adaptive quiz sandbox',
-        description: 'Drill down on tailored technical cards. Rate your confidence from 1 to 5 on each concept — the system tracks every score to build your weakness profile.',
+        title: 'AI-evaluated quiz',
+        description: 'Type your answer to each tailored question and let Gemini grade it on a 1–5 scale with one-line feedback. Every score feeds your weakness profile automatically.',
         bgClass: 'bg-amber-50 dark:bg-amber-900/30',
         textClass: 'text-amber-600 dark:text-amber-400',
         hoverBorder: 'hover:border-amber-200 dark:hover:border-amber-800',
