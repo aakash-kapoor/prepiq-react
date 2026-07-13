@@ -13,9 +13,7 @@ export default function Footer() {
             <footer className="border-t border-gray-100 dark:border-slate-900 bg-white dark:bg-slate-950 py-8">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-[#6366F1] rounded-lg flex items-center justify-center font-black text-[9px] text-white">
-                            IQ
-                        </div>
+                        <img src="/prepiq.svg" alt="PrepIQ" className="w-6 h-6 shrink-0" />
                         <span className="text-xs font-bold text-slate-400 dark:text-slate-500">PrepIQ</span>
                     </div>
                     <div className="flex gap-6 text-xs font-semibold text-slate-400 dark:text-slate-500">

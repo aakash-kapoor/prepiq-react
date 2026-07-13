@@ -10,6 +10,7 @@ import {
   reauthenticateWithPopup,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
+import { showSuccessToast } from '../lib/toast';
 
 interface AuthContextType {
   user: User | null;
@@ -41,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await signOut(auth);
+    showSuccessToast('You’ve been signed out.');
   };
 
   // Firebase mutates auth.currentUser in place on updateProfile/reload — it
@@ -67,6 +69,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const deleteAccount = async () => {
     if (!auth.currentUser) throw new Error('Not authenticated');
     await deleteUser(auth.currentUser);
+    // Clear the visited flag — a deleted account is a fresh start,
+    // so the next login on this device should show "Get started".
+    localStorage.removeItem('prepiq_visited');
   };
 
   return (

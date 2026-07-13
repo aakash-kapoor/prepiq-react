@@ -2,6 +2,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import LegalModal from '../components/LegalModal';
+import Spinner from '../components/Spinner';
+import { showErrorToast } from '../lib/toast';
 import { motion } from 'motion/react';
 
 const auroraBlobs = [
@@ -33,17 +35,28 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [legalContent, setLegalContent] = useState<{ title: string; text: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const isReturningUser = localStorage.getItem('prepiq_visited') === '1';
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 
   const handleLogin = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       await loginWithGoogle();
+      localStorage.setItem('prepiq_visited', '1');
       navigate('/dashboard');
-    } catch (error) {
-      console.error("Login authentication routine terminated:", error);
+    } catch (error: any) {
+      console.error('Login authentication routine terminated:', error);
+      // Don't surface "popup closed" — that's intentional user action
+      if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
+        showErrorToast('Sign-in failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,7 +73,7 @@ export default function Login() {
       bg: 'bg-amber-500/10',
       text: 'text-amber-400',
       iconPath: 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
-      label: 'Adaptive confidence mapping',
+      label: 'AI-graded answer feedback',
     },
     {
       color: 'emerald',
@@ -99,10 +112,12 @@ export default function Login() {
           {/* Heading */}
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              Welcome back
+              {isReturningUser ? 'Welcome back' : 'Get started'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium leading-relaxed">
-              Sign in to access your prep workspace — your gaps, quizzes, and study plan are waiting.
+              {isReturningUser
+                ? 'Sign in to access your prep workspace — your gaps, quizzes, and study plan are waiting.'
+                : 'Sign in with Google to build your personalized interview prep workspace in seconds.'}
             </p>
           </div>
 
@@ -110,14 +125,19 @@ export default function Login() {
           <div className="space-y-4">
             <button
               onClick={handleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 dark:active:bg-slate-700 border border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-sm hover:shadow-md text-xs tracking-wide"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 dark:active:bg-slate-700 border border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-sm hover:shadow-md text-xs tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <img
-                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                className="w-4 h-4"
-                alt="Google"
-              />
-              Continue with Google
+              {isLoading ? (
+                <Spinner size="sm" />
+              ) : (
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  className="w-4 h-4"
+                  alt="Google"
+                />
+              )}
+              {isLoading ? 'Signing in…' : 'Continue with Google'}
             </button>
 
             <div className="relative flex items-center gap-3">
@@ -227,7 +247,7 @@ export default function Login() {
               <span className="text-indigo-400">before they do.</span>
             </h2>
             <p className="text-xs text-slate-300 font-medium leading-relaxed">
-              PrepIQ reverse-engineers job descriptions with Gemini AI — mapping your exact knowledge gaps, drilling them with adaptive quizzes, and building a custom study sprint to your interview date.
+              PrepIQ reverse-engineers job descriptions with Gemini AI — mapping your exact knowledge gaps, evaluating your answers with instant AI grading, and building a custom study sprint to your interview date.
             </p>
           </div>
 
@@ -254,9 +274,7 @@ export default function Login() {
           {/* Bottom meta */}
           <div className="flex items-center justify-between pt-2 border-t border-white/5">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-[#6366F1] rounded-lg flex items-center justify-center font-black text-[9px] text-white">
-                IQ
-              </div>
+              <img src="/prepiq.svg" alt="PrepIQ" className="w-6 h-6 shrink-0" />
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PrepIQ</span>
             </div>
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">100% Free · Serverless</span>
