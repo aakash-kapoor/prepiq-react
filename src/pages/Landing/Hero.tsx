@@ -38,7 +38,7 @@ export default function Hero({ onCTA }: HeroProps) {
                 transition={{ duration: 0.45, delay: 0.2 }}
                 className="text-sm sm:text-base text-slate-500 dark:text-slate-400 font-medium max-w-xl mx-auto leading-relaxed mb-10"
             >
-                Stop parsing generic question banks. PrepIQ reverse-engineers job descriptions using Gemini AI to map your exact knowledge gaps, drill them with adaptive quizzes, and build a day-by-day study sprint.
+                Stop parsing generic question banks. PrepIQ reverse-engineers job descriptions using Gemini AI to map your exact knowledge gaps, evaluate your answers with instant AI grading, and build a day-by-day study sprint.
             </motion.p>
 
             <motion.div

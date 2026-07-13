@@ -22,6 +22,14 @@ export interface ChangelogEntry {
 
 export const changelog: readonly ChangelogEntry[] = [
   {
+    version: 'v0.20.0',
+    date: 'Jul 13, 2026',
+    title: 'AI Answer Evaluation in Quiz',
+    description:
+      'Quiz sessions now use Gemini to evaluate typed answers on a 1\u20135 scale with one-line feedback. Scores feed directly into Weak Spots. Includes prompt injection hardening, a 2000-character input cap, and a live character counter.',
+    tags: ['feat', 'ui', 'refactor'],
+  },
+  {
     version: 'v0.19.0',
     date: 'Jul 10, 2026',
     title: 'Secure AI Requests & Rate Limit Handling',

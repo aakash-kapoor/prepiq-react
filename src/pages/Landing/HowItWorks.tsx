@@ -126,14 +126,6 @@ function KnowledgeMapMockup() {
 /* ------------------------------------------------------------------ */
 
 function QuizMockup() {
-    const scores = [
-        { n: 1, tone: 'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 border-rose-100 dark:border-rose-800' },
-        { n: 2, tone: 'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400 border-rose-100 dark:border-rose-800' },
-        { n: 3, tone: 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800' },
-        { n: 4, tone: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800' },
-        { n: 5, tone: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800' },
-    ];
-
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -148,10 +140,10 @@ function QuizMockup() {
             <div className="space-y-1">
                 <div className="flex items-center justify-between text-[9px] font-semibold text-slate-400 dark:text-slate-500">
                     <span>Progress</span>
-                    <span>Question 1 of 20</span>
+                    <span>Question 1 of 15</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                    <div className="h-full w-[5%] bg-[#6366F1]" />
+                    <div className="h-full w-[7%] bg-[#6366F1]" />
                 </div>
             </div>
 
@@ -168,27 +160,28 @@ function QuizMockup() {
                     <Bar w="w-full" h="h-2.5" className="bg-slate-300 dark:bg-slate-600" />
                     <Bar w="w-4/5" h="h-2.5" className="bg-slate-300 dark:bg-slate-600" />
                 </div>
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 space-y-1.5">
-                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                        Ideal Structured Target Response
-                    </p>
-                    <Bar w="w-full" h="h-1.5" />
-                    <Bar w="w-full" h="h-1.5" />
-                    <Bar w="w-2/3" h="h-1.5" />
-                </div>
-                <div className="pt-2 border-t border-slate-50 dark:border-slate-800 space-y-2">
-                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 text-center">
-                        Rate Your Confidence
-                    </p>
-                    <div className="flex gap-1.5">
-                        {scores.map((s) => (
-                            <div
-                                key={s.n}
-                                className={`flex-1 h-7 rounded-lg border flex items-center justify-center text-[10px] font-bold ${s.tone}`}
-                            >
-                                {s.n}
+
+                {/* AI result panel */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                    <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                            <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500">AI Score</p>
+                            <div className="flex gap-0.5">
+                                {[1,2,3,4,5].map(d => (
+                                    <div key={d} className={`w-2 h-2 rounded-full ${d <= 4 ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-slate-600'}`} />
+                                ))}
                             </div>
-                        ))}
+                            <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">4/5</p>
+                        </div>
+                        <Bar w="w-full" h="h-1.5" className="bg-emerald-100 dark:bg-emerald-800" />
+                        <Bar w="w-3/4" h="h-1.5" className="bg-emerald-100 dark:bg-emerald-800" />
+                    </div>
+                    <div className="flex items-center gap-1 text-[8px] font-bold text-slate-400 dark:text-slate-500">
+                        <span className="inline-block">▸</span>
+                        <span>View Ideal Answer</span>
+                    </div>
+                    <div className="h-7 rounded-lg bg-[#6366F1] flex items-center justify-center">
+                        <p className="text-[9px] font-bold text-white tracking-wide">Next Question →</p>
                     </div>
                 </div>
             </div>
@@ -266,9 +259,9 @@ const steps = [
     },
     {
         number: '03',
-        title: 'Drill your weak spots',
+        title: 'Answer questions, get AI feedback',
         description:
-            'Work through adaptive flashcard quizzes and rate your confidence on each topic from 1 to 5.',
+            'Type your answer to each tailored question. Gemini grades it instantly on a 1–5 scale with a one-line verdict — then reveals the ideal answer so you know exactly what to improve.',
         url: 'prepiq.web.app/dashboard/quiz-session',
         mockup: <QuizMockup />,
     },

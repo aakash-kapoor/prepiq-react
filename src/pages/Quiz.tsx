@@ -6,6 +6,7 @@ import { collection, getDocs, doc, updateDoc, increment, setDoc } from 'firebase
 import LoadingState from '../components/LoadingState';
 import { updateOverallProgress } from '../lib/updateProgress';
 import { motion, AnimatePresence } from 'motion/react';
+import { useGemini } from '../hooks/useGemini';
 
 export default function Quiz() {
   const location = useLocation();
@@ -17,20 +18,44 @@ export default function Quiz() {
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [sessionScores, setSessionScores] = useState<number[]>([]);
   const [sessionResults, setSessionResults] = useState<{ topic: string, score: number }[]>([]);
 
+  // AI evaluation state
+  const [userAnswer, setUserAnswer] = useState('');
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
+  // When aiResult is null the result panel is hidden and the user can still type;
+  // when it is populated the result panel replaces the textarea.
+
+  // Fallback: if Gemini fails the user can self-rate instead of being blocked
+  const [showFallback, setShowFallback] = useState(false);
+
+  const { evaluateAnswer } = useGemini();
+
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const sessionResultsRef = useRef(sessionResults);
   const hasSavedRef = useRef(false);
+  // Prevents double-fire on "Next Question" and fallback rating buttons
+  // while handleRateConfidence awaits the Firestore updateDoc.
+  const isAdvancingRef = useRef(false);
+  // Mirrors aiResult state and questions[currentIndex] so the stale [] cleanup
+  // closure can read the current values at unmount time without React state access.
+  const aiResultRef = useRef<{ score: number; feedback: string } | null>(null);
+  const currentQuestionRef = useRef<any>(null);
 
   // Sync refs so the cleanup function has access to the latest values
   useEffect(() => {
     sessionResultsRef.current = sessionResults;
   }, [sessionResults]);
+
+  useEffect(() => {
+    if (questions.length > 0) {
+      currentQuestionRef.current = questions[currentIndex];
+    }
+  }, [currentIndex, questions]);
 
   useEffect(() => {
     (window as any).quizActiveCount = ((window as any).quizActiveCount || 0) + 1;
@@ -42,6 +67,36 @@ export default function Quiz() {
       }
       // Save session results on unmount if we haven't saved already
       if (!hasSavedRef.current) {
+        const pendingResult = aiResultRef.current;
+        const pendingQ     = currentQuestionRef.current;
+
+        // Auto-commit a pending AI result if the user navigated away while
+        // the result panel was visible but "Next Question" was never clicked.
+        // If Gemini was still in-flight (isEvaluating), pendingResult is null
+        // and this block is correctly skipped — you can't commit a score that
+        // hasn't arrived yet.
+        if (pendingResult && pendingQ && user && appId) {
+          const prevCount = pendingQ.timesAnswered ?? 0;
+          const prevAvg   = pendingQ.averageConfidence ?? 0;
+          const newCount  = prevCount + 1;
+          const newAvg    = parseFloat(((prevAvg * prevCount + pendingResult.score) / newCount).toFixed(2));
+
+          // Fire-and-forget: Firestore's local write visibility guarantees this
+          // write is seen by updateOverallProgress's getDocs on the same client.
+          // SM-2 fields are intentionally omitted — they'll be recalculated
+          // correctly on the next normal session for this question.
+          updateDoc(
+            doc(db, 'users', user.uid, 'jobApplications', appId, 'questions', pendingQ.id),
+            { timesAnswered: increment(1), lastConfidence: pendingResult.score, averageConfidence: newAvg }
+          ).catch(err => console.warn('Cleanup: failed to write pending question confidence:', err));
+
+          // Append to results so handleEndSession includes it in topicScores and session history
+          sessionResultsRef.current = [
+            ...sessionResultsRef.current,
+            { topic: pendingQ.topic || 'General Specs', score: pendingResult.score }
+          ];
+        }
+
         handleEndSession(sessionResultsRef.current);
       }
     };
@@ -116,6 +171,9 @@ export default function Quiz() {
 
     const newSessionResults = [...sessionResults, { topic: currentQ.topic || 'General Specs', score }];
     setSessionResults(newSessionResults);
+    // Sync immediately — don't wait for the useEffect to run after React commits.
+    // Prevents a same-tick navigation from catching a stale ref.
+    sessionResultsRef.current = newSessionResults;
 
     // Read the previous stored values to compute a true running average.
     // timesAnswered is already stored on the doc; we increment it atomically,
@@ -161,8 +219,15 @@ export default function Quiz() {
       nextReviewDate
     });
 
+    // Reset per-question AI state before advancing so the next question starts clean
+    isAdvancingRef.current = false;
+    setUserAnswer('');
+    setAiResult(null);
+    aiResultRef.current = null; // sync immediately so the cleanup sees a clean state
+    setIsEvaluating(false);
+    setShowFallback(false);
+
     if (currentIndex < questions.length - 1) {
-      setShowAnswer(false);
       setCurrentIndex(prev => prev + 1);
     } else {
       // Recompute progress before marking session complete so the dashboard
@@ -201,7 +266,7 @@ export default function Quiz() {
         </div>
         <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Quiz Complete!</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-          Your confidence scores have been saved. Head to Weak Spots to see your updated gap analysis.
+          Your AI-evaluated scores have been saved. Head to Weak Spots to see your updated gap analysis.
         </p>
       </motion.div>
     );
@@ -259,62 +324,181 @@ export default function Quiz() {
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug mb-6">
               {currentQuestion.question}
             </h2>
-            {/* Answer reveal with subtle upward fade */}
-            <AnimatePresence>
-              {showAnswer && (
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3">
+            <AnimatePresence mode="wait">
+              {/* ── Phase 1: textarea + submit ──────────────────────────────── */}
+              {!aiResult && !isEvaluating && !showFallback && (
                 <motion.div
+                  key="input-phase"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-3"
+                >
+                  <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                    Your Answer
+                  </label>
+                  <textarea
+                    value={userAnswer}
+                    onChange={e => setUserAnswer(e.target.value)}
+                    rows={4}
+                    maxLength={2000}
+                    placeholder="Type your answer here…"
+                    className="w-full resize-y rounded-xl border border-gray-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500 transition font-medium leading-relaxed"
+                  />
+                  <p className={`text-right text-[10px] font-bold tabular-nums transition-colors ${userAnswer.length >= 1800 ? 'text-amber-500 dark:text-amber-400' : 'text-slate-300 dark:text-slate-600'}`}>
+                    {userAnswer.length} / 2000
+                  </p>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    disabled={userAnswer.trim() === ''}
+                    onClick={async () => {
+                      setIsEvaluating(true);
+                      try {
+                        const result = await evaluateAnswer(
+                          currentQuestion.question,
+                          currentQuestion.idealAnswer,
+                          userAnswer.trim()
+                        );
+                        if (result) {
+                          setAiResult(result);
+                          aiResultRef.current = result; // sync immediately for stale-closure cleanup
+                        } else {
+                          // Gemini returned null — surface fallback self-rating
+                          setShowFallback(true);
+                        }
+                      } finally {
+                        setIsEvaluating(false);
+                      }
+                    }}
+                    className="w-full bg-[#6366F1] hover:bg-opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10"
+                  >
+                    Submit Answer
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* ── Phase 2: evaluating spinner ─────────────────────────────── */}
+              {isEvaluating && (
+                <motion.div
+                  key="evaluating-phase"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex justify-center py-6"
+                >
+                  <LoadingState variant="inline" message="Evaluating with AI…" size="sm" />
+                </motion.div>
+              )}
+
+              {/* ── Phase 3: AI result panel ────────────────────────────────── */}
+              {aiResult && !isEvaluating && (
+                <motion.div
+                  key="result-phase"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 4 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed"
+                  className="space-y-3"
                 >
-                  <strong className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase tracking-wider font-bold">Ideal Answer:</strong>
-                  {currentQuestion.idealAnswer}
+                  {/* Score + feedback */}
+                  <div className={`rounded-xl border p-4 space-y-2 ${
+                    aiResult.score <= 2
+                      ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                      : aiResult.score === 3
+                        ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                        : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${
+                        aiResult.score <= 2 ? 'text-red-500' : aiResult.score === 3 ? 'text-amber-500' : 'text-emerald-500'
+                      }`}>AI Score</span>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map(dot => (
+                          <div
+                            key={dot}
+                            className={`w-2.5 h-2.5 rounded-full transition-all ${
+                              dot <= aiResult.score
+                                ? aiResult.score <= 2 ? 'bg-red-400' : aiResult.score === 3 ? 'bg-amber-400' : 'bg-emerald-400'
+                                : 'bg-slate-200 dark:bg-slate-600'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className={`text-sm font-black ${
+                        aiResult.score <= 2 ? 'text-red-600 dark:text-red-400' : aiResult.score === 3 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+                      }`}>{aiResult.score}/5</span>
+                    </div>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{aiResult.feedback}</p>
+                  </div>
+
+                  {/* Collapsible ideal answer */}
+                  <details className="group">
+                    <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1 select-none list-none">
+                      <span className="transition-transform group-open:rotate-90 inline-block">▸</span>
+                      View Ideal Answer
+                    </summary>
+                    <div className="mt-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                      {currentQuestion.idealAnswer}
+                    </div>
+                  </details>
+
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={async () => {
+                      if (isAdvancingRef.current) return;
+                      isAdvancingRef.current = true;
+                      await handleRateConfidence(aiResult.score);
+                    }}
+                    className="w-full bg-[#6366F1] hover:bg-opacity-90 transition text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10"
+                  >
+                    {currentIndex < questions.length - 1 ? 'Next Question →' : 'Finish Session ✓'}
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* ── Phase 4: fallback self-rating (Gemini error path) ────────── */}
+              {showFallback && (
+                <motion.div
+                  key="fallback-phase"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-4 text-center"
+                >
+                  <p className="text-[10px] font-bold text-amber-500 dark:text-amber-400 uppercase tracking-widest">
+                    ⚠ AI evaluation failed — rate yourself:
+                  </p>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <motion.button
+                        key={num}
+                        whileTap={{ scale: 0.92 }}
+                        whileHover={{ y: -2 }}
+                        onClick={async () => {
+                          if (isAdvancingRef.current) return;
+                          isAdvancingRef.current = true;
+                          await handleRateConfidence(num);
+                        }}
+                        className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-800/40' :
+                          num === 3 ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-800/40' :
+                            'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-800/40'
+                          }`}
+                      >
+                        {num}
+                      </motion.button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-1 font-bold uppercase tracking-wider">
+                    <span>Struggled</span>
+                    <span>Nailed it</span>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-
-          <div className="mt-8 pt-4 border-t border-gray-100 dark:border-slate-700">
-            {!showAnswer ? (
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setShowAnswer(true)}
-                className="w-full bg-[#6366F1] hover:bg-opacity-95 transition text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md shadow-indigo-500/10"
-              >
-                Reveal Ideal Answer
-              </motion.button>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4 text-center"
-              >
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rate your confidence:</p>
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((num) => (
-                    <motion.button
-                      key={num}
-                      whileTap={{ scale: 0.92 }}
-                      whileHover={{ y: -2 }}
-                      onClick={() => handleRateConfidence(num)}
-                      className={`py-2.5 rounded-xl text-xs font-black transition border shadow-sm ${num <= 2 ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-800/40' :
-                        num === 3 ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-800/40' :
-                          'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-800/40'
-                        }`}
-                    >
-                      {num}
-                    </motion.button>
-                  ))}
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 px-1 font-bold uppercase tracking-wider">
-                  <span>Struggled</span>
-                  <span>Nailed it</span>
-                </div>
-              </motion.div>
-            )}
           </div>
         </motion.div>
       </AnimatePresence>
